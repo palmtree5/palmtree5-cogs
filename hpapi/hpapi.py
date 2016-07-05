@@ -5,7 +5,7 @@ import discord
 import aiohttp
 import asyncio
 import os
-from __main import send_cmd_help
+from __main__ import send_cmd_help
 
 class hpapi():
     def __init__(self, bot):
