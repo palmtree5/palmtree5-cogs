@@ -2,5 +2,6 @@
     "NAME" : "palmtree5's cogs",
     "AUTHOR" : "palmtree5",
     "SHORT" : "Various cogs",
-    "DESCRIPTION" : "Cogs created by palmtree5 for varying purposes, some related to Minecraft"
+    "DESCRIPTION" : "Cogs created by palmtree5 for varying purposes, some related to Minecraft",
+    "INSTALL_MSG" : "A repository of various cogs by palmtree5. Enjoy them!"
 }
