@@ -31,7 +31,11 @@ class hpapi():
         conn = aiohttp.TCPConnector(verify_ssl=False)
         sess = aiohttp.ClientSession(connector=conn)
         async with sess.get(url) as r:
-            data = await r.json()
+            try:
+                data = await r.json()
+            except JSONDecodeError as e:
+                await self.bot.say('```{}```'.format(e))
+
         sess.close()
         message = ""
         if data["success"]:
