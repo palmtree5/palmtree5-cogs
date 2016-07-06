@@ -27,7 +27,7 @@ class hpapi():
         """Get active boosters. A game can be specified, in which case only the active booster for that game and the number of queued boosters for that game will be shown"""
         apikey = self.hpapi_key
         game = None
-        url = 'http://api.hypixel.net/boosters?key=' + apikey
+        url = "http://api.hypixel.net/boosters?key=" + apikey
         conn = aiohttp.TCPConnector(verify_ssl=False)
         sess = aiohttp.ClientSession(connector=conn)
         async with sess.get(url) as r:
@@ -78,6 +78,7 @@ class hpapi():
                             game_name = "Crazy Walls"
                         elif item["gameType"] == 54:
                             game_name = "Speed UHC"
+                            
                         message += name + "\'s " + game_name + " booster has " + remaining + " left\n"
             else:
                 pass
