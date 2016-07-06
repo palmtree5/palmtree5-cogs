@@ -33,7 +33,7 @@ class hpapi():
         async with sess.get(url) as r:
             try:
                 data = await r.json()
-            except JSONDecodeError as e:
+            except json.decoder.JSONDecodeError as e:
                 await self.bot.say('```{}```'.format(e))
 
         sess.close()
