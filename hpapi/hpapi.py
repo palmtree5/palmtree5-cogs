@@ -2,7 +2,7 @@ from discord.ext import commands
 from .utils.dataIO import fileIO
 from .utils import checks
 import discord
-import aiohttp
+import requests
 import asyncio
 import os
 import datetime
@@ -30,17 +30,9 @@ class hpapi():
         game = None
         data = {}
         url = "http://api.hypixel.net/boosters?key=" + self.hpapi_key
-        conn = aiohttp.TCPConnector(verify_ssl=False)
-        sess = aiohttp.ClientSession(connector=conn)
-        r = await sess.get(url)
-        async with r:
-            print(url)
-            try:
-                data = await r.json()
-            except json.decoder.JSONDecodeError as e:
-                await self.bot.say('```{}```'.format(e))
+        r = requests.get(url)
+        data = r.json()
 
-        sess.close()
         message = ""
         print(data)
         if data["success"]:
@@ -51,11 +43,8 @@ class hpapi():
                         game_name = ""
                         remaining = str(datetime.timedelta(seconds=item["length"]))
                         name_get_url = "https://api.mojang.com/user/profiles/" + item["purchaserUuid"] + "/names"
-                        name_conn = aiohttp.TCPConnector(verify_ssl=False)
-                        name_sess = aiohttp.ClientSession(connector=name_conn)
-                        async with name_sess.get(name_get_url) as name_r:
-                            name_data = await name_r.json()
-                        name_sess.close()
+                        name_r = requests.get(name_get_url)
+                        name_data = name_r.json()
                         name = name_data[-1]["name"]
                         if item["gameType"] == 2:
                             game_name = "Quakecraft"
