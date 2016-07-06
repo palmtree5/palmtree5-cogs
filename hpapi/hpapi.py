@@ -46,6 +46,7 @@ class hpapi():
                         name_sess = aiohttp.ClientSession(connector=name_conn)
                         async with name_sess.get(name_get_url) as name_r:
                             name_data = await name_r.json()
+                        name_sess.close()
                         name = name_data[-1]["name"]
                         if item["gameType"] == 2:
                             game_name = "Quakecraft"
