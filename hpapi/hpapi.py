@@ -84,6 +84,7 @@ class hpapi():
                 pass
         else:
             message = "An error occurred in getting the data"
+            print(data)
         await self.bot.say('```{}```'.format(message))
 
     @_hpapi.command(pass_context=True, name='key')
