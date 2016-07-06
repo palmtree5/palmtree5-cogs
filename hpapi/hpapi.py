@@ -29,7 +29,7 @@ class hpapi():
         """Get active boosters. A game can be specified, in which case only the active booster for that game and the number of queued boosters for that game will be shown"""
         game = None
         data = {}
-        url = "http://api.hypixel.net/boosters?key=" + self.hpapi_key""
+        url = "http://api.hypixel.net/boosters?key=" + self.hpapi_key
         conn = aiohttp.TCPConnector(verify_ssl=False)
         sess = aiohttp.ClientSession(connector=conn)
         r = await sess.get(url)
