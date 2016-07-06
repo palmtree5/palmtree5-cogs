@@ -29,13 +29,12 @@ class hpapi():
         """Get active boosters. A game can be specified, in which case only the active booster for that game and the number of queued boosters for that game will be shown"""
         game = None
         data = {}
-        payload = self.payload
-        url = "http://api.hypixel.net/boosters"
+        url = "http://api.hypixel.net/boosters?key=" + self.hpapi_key""
         conn = aiohttp.TCPConnector(verify_ssl=False)
         sess = aiohttp.ClientSession(connector=conn)
-        r = await sess.get(url, params=payload)
+        r = await sess.get(url)
         async with r:
-            print(r.method)
+            print(url)
             try:
                 data = await r.json()
             except json.decoder.JSONDecodeError as e:
