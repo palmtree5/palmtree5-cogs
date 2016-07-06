@@ -15,6 +15,8 @@ class hpapi():
         self.settings_file = 'data/hpapi/hpapi.json'
         settings = fileIO(self.settings_file, 'load')
         self.hpapi_key = settings['API_KEY']
+        self.payload = {}
+        self.payload["key"] = self.hpapi_key
 
     @commands.group(pass_context=True, no_pm=True, name="hp")
     async def _hpapi(self, ctx):
@@ -27,10 +29,12 @@ class hpapi():
         """Get active boosters. A game can be specified, in which case only the active booster for that game and the number of queued boosters for that game will be shown"""
         game = None
         data = {}
-        url = "http://api.hypixel.net/boosters?key=" + self.hpapi_key
+        payload = {}
+        payload["boosters"] = self.payload
+        url = "http://api.hypixel.net/"
         conn = aiohttp.TCPConnector(verify_ssl=False)
         sess = aiohttp.ClientSession(connector=conn)
-        r = await sess.get(url)
+        r = await sess.get(url, params=payload)
         async with r:
             print(r.url)
             try:
