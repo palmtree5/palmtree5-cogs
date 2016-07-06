@@ -30,7 +30,8 @@ class hpapi():
         url = "http://api.hypixel.net/boosters?key=" + self.hpapi_key
         conn = aiohttp.TCPConnector(verify_ssl=False)
         sess = aiohttp.ClientSession(connector=conn)
-        async with sess.get(url) as r:
+        r = await sess.get(url)
+        async with r:
             try:
                 data = await r.json()
             except json.decoder.JSONDecodeError as e:
