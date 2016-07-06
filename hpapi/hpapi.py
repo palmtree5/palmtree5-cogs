@@ -5,6 +5,7 @@ import discord
 import aiohttp
 import asyncio
 import os
+import datetime
 from __main__ import send_cmd_help
 
 class hpapi():
@@ -23,7 +24,7 @@ class hpapi():
             await send_cmd_help(ctx)
 
     @_hpapi.command(pass_context=True, no_pm=True, name='booster')
-    async def _booster(self, ctx):
+    async def _booster(self, ctx, *game: str):
         """Get active boosters. A game can be specified, in which case only the active booster for that game and the number of queued boosters for that game will be shown"""
         payload = self.payload
         url = 'http://api.hypixel.net/boosters?key=' + payload["apikey"]
@@ -31,8 +32,57 @@ class hpapi():
         sess = aiohttp.ClientSession(connector=conn)
         async with sess.get(url) as r:
             data = await r.json()
+        sess.close()
+        message = ""
         if data["success"]:
-            await self.bot.say('```{}```'.format(ctx))
+            booster_list = data["boosters"]
+            if not game:
+                for item in booster_list:
+                    if item["length"] < item["originalLength"]:
+                        game_name = ""
+                        remaining = str(datetime.timedelta(seconds=item["length"]))
+                        name_get_url = "https://api.mojang.com/user/profiles/" + item["purchaserUuid"] + "/names"
+                        name_conn = aiohttp.TCPConnector(verify_ssl=False)
+                        name_sess = aiohttp.ClientSession(connector=name_conn)
+                        async with name_sess.get(name_get_url) as name_r:
+                            name_data = await name_r.json()
+                        name = name_data[-1]["name"]
+                        if item["gameType"] == 2:
+                            game_name = "Quakecraft"
+                        elif item["gameType"] == 3:
+                            game_name = "Blitz Survival Games"
+                        elif item["gameType"] == 6:
+                            game_name = "The TNT Games"
+                        elif item["gameType"] == 7:
+                            game_name = "VampireZ"
+                        elif item["gameType"] == 13:
+                            game_name = "Mega Walls"
+                        elif item["gameType"] == 14:
+                            game_name = "Arcade"
+                        elif item["gameType"] == 17:
+                            game_name = "Arena Brawl"
+                        elif item["gameType"] == 21:
+                            game_name = "Cops and Crims"
+                        elif item["gameType"] == 20:
+                            game_name = "UHC Champions"
+                        elif item["gameType"] == 23:
+                            game_name = "Warlords"
+                        elif item["gameType"] == 24:
+                            game_name = "Smash Heroes"
+                        elif item["gameType"] == 25:
+                            game_name = "Turbo Kart Racers"
+                        elif item["gameType"] == 51:
+                            game_name = "SkyWars"
+                        elif item["gameType"] == 52:
+                            game_name = "Crazy Walls"
+                        elif item["gameType"] == 54:
+                            game_name = "Speed UHC"
+                        message += name + "\'s " + game_name + " booster has " + remaining + " left\n"
+            else:
+                pass
+        else:
+            message = "An error occurred in getting the data"
+        await self.bot.say('```{}```'.format(message))
 
     @_hpapi.command(pass_context=True, name='key')
     @checks.is_owner()
