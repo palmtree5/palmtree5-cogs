@@ -38,6 +38,7 @@ class hpapi():
 
         sess.close()
         message = ""
+        print(data)
         if data["success"]:
             booster_list = data["boosters"]
             if not game:
