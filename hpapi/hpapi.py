@@ -36,7 +36,7 @@ class hpapi():
         sess = aiohttp.ClientSession(connector=conn)
         r = await sess.get(url, params=payload)
         async with r:
-            print(r.url)
+            print(r.method)
             try:
                 data = await r.json()
             except json.decoder.JSONDecodeError as e:
