@@ -18,6 +18,9 @@ class hpapi():
         self.payload = {}
         self.payload["key"] = self.hpapi_key
 
+    def get_json(self, url):
+        return requests.get(url).json()
+
     @commands.group(pass_context=True, no_pm=True, name="hp")
     async def _hpapi(self, ctx):
         """Get data from the Hypixel API"""
@@ -30,8 +33,7 @@ class hpapi():
         game = None
         data = {}
         url = "http://api.hypixel.net/boosters?key=" + self.hpapi_key
-        r = requests.get(url)
-        data = r.json()
+        data = self.get_json(url)
 
         message = ""
         print(data)
@@ -43,8 +45,7 @@ class hpapi():
                         game_name = ""
                         remaining = str(datetime.timedelta(seconds=item["length"]))
                         name_get_url = "https://api.mojang.com/user/profiles/" + item["purchaserUuid"] + "/names"
-                        name_r = requests.get(name_get_url)
-                        name_data = name_r.json()
+                        name_data = self.get_json(name_get_url)
                         name = name_data[-1]["name"]
                         if item["gameType"] == 2:
                             game_name = "Quakecraft"
