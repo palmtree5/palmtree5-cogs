@@ -19,7 +19,7 @@ class hpapi():
         self.payload["key"] = self.hpapi_key
 
     def get_json(self, url):
-        return requests.get(url).json()
+        return json.loads(requests.get(url).json())
 
     @commands.group(pass_context=True, no_pm=True, name="hp")
     async def _hpapi(self, ctx):
