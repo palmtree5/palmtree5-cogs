@@ -154,6 +154,7 @@ class hpapi():
         """Gets data about the specified player"""
         message = ""
         url = "https://api.hypixel.net/player?key=" + self.hpapi_key + "&name=" + name[0]
+        print(name[0])
         data = self.get_json(url)
         if data["success"] and data["player"]:
             player_data = data["player"]
