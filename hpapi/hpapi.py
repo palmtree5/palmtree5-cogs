@@ -151,7 +151,6 @@ class hpapi():
                         message += name + "\'s " + game_name + " booster has " + remaining + " left\n"
         else:
             message = "An error occurred in getting the data\n\n" + json.dumps(data)
-            print(data)
         await self.bot.say('```{}```'.format(message))
 
     @_hpapi.command(pass_context=True, name='key')
