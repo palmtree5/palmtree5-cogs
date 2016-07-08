@@ -28,7 +28,7 @@ class hpapi():
             await send_cmd_help(ctx)
 
     @_hpapi.command(pass_context=True, no_pm=True, name='booster')
-    async def _booster(self, ctx, *game: list):
+    async def _booster(self, ctx, *game: str, *game1: str, *game2: str):
         """Get active boosters. A game can be specified, in which case only the active booster for that game will be shown"""
         data = {}
         url = "https://api.hypixel.net/boosters?key=" + self.hpapi_key
@@ -83,9 +83,12 @@ class hpapi():
                         message += name + "\'s " + game_name + " booster has " + remaining + " left\n"
             else:
                 game_name = ""
-                print(game)
-                for word in game:
-                    game_name = game_name + word + " "
+                if game and game1 and game2:
+                    game_name = game[0] + " " + game1[0] + " " + game2[0]
+                elif game and game1 and not game2:
+                    game_name = game[0] + " " + game1[0]
+                else:
+                    game_name = game[0]
                 game_name = game_name.lower().strip()
                 gameType = None
 
