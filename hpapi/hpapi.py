@@ -84,6 +84,7 @@ class hpapi():
                         message += name + "\'s " + game_name + " booster has " + remaining + " left\n"
             else:
                 game_name = ""
+                print(game)
                 for word in game:
                     game_name = game_name + word + " "
                 game_name = game_name.lower().strip()
