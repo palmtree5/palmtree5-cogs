@@ -28,7 +28,7 @@ class hpapi():
             await send_cmd_help(ctx)
 
     @_hpapi.command(pass_context=True, no_pm=True, name='booster')
-    async def _booster(self, ctx, *game: str, game1, game2):
+    async def _booster(self, ctx, *game: str, *game1: str, *game2: str):
         """Get active boosters. A game can be specified, in which case only the active booster for that game will be shown"""
         data = {}
         url = "https://api.hypixel.net/boosters?key=" + self.hpapi_key
