@@ -83,7 +83,10 @@ class hpapi():
 
                         message += name + "\'s " + game_name + " booster has " + remaining + " left\n"
             else:
-                game_name = game[0].lower()
+                game_name = ""
+                for word in game:
+                    game_name = game_name + word + " "
+                game_name = game_name.lower().strip()
                 gameType = None
 
                 if game_name == "Quakecraft".lower():
