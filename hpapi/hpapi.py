@@ -156,7 +156,7 @@ class hpapi():
         url = "https://api.hypixel.net/player?key=" + self.hpapi_key + "&name=" + name[0]
         print(name[0])
         data = self.get_json(url)
-        if data["success"] and data["player"] is not None:
+        if data["success"] and type(data["player"]) == dict:
             player_data = data["player"]
             message = "Player data for " + name[0] + "\n"
             if "buildTeam" in player_data and player_data["buildTeam"]:
