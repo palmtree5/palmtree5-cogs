@@ -86,7 +86,7 @@ class hpapi():
         else:
             message = "An error occurred in getting the data\n\n" + json.dumps(data)
             print(data)
-        await self.bot.say('```{}```'.format(message + "\n" + ctx))
+        await self.bot.say('```{}```'.format(message + "\n" + type(ctx))
 
     @_hpapi.command(pass_context=True, name='key')
     @checks.is_owner()
