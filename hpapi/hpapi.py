@@ -35,7 +35,6 @@ class hpapi():
         data = self.get_json(url)
 
         message = ""
-        print(data)
         if data["success"]:
             booster_list = data["boosters"]
             if not game:
