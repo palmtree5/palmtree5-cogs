@@ -28,7 +28,7 @@ class hpapi():
             await send_cmd_help(ctx)
 
     @_hpapi.command(pass_context=True, no_pm=True, name='booster')
-    async def _booster(self, ctx, *game: str, *game1: str, *game2: str):
+    async def _booster(self, ctx, *game: str):
         """Get active boosters. A game can be specified, in which case only the active booster for that game will be shown"""
         data = {}
         url = "https://api.hypixel.net/boosters?key=" + self.hpapi_key
@@ -82,13 +82,8 @@ class hpapi():
 
                         message += name + "\'s " + game_name + " booster has " + remaining + " left\n"
             else:
-                game_name = ""
-                if game and game1 and game2:
-                    game_name = game + " " + game1 + " " + game2
-                elif game and game1 and not game2:
-                    game_name = game + " " + game1
-                else:
-                    game_name = game
+                game_n = " ".join(game)
+
                 game_name = game_name.lower().strip()
                 gameType = None
 
@@ -150,7 +145,7 @@ class hpapi():
                         name_get_url = "https://api.mojang.com/user/profiles/" + item["purchaserUuid"] + "/names"
                         name_data = self.get_json(name_get_url)
                         name = name_data[-1]["name"]
-                        message += name + "\'s " + game_name + " booster has " + remaining + " left\n"
+                        message += name + "\'s " + game_n + " booster has " + remaining + " left\n"
         else:
             message = "An error occurred in getting the data\n\n" + json.dumps(data)
         await self.bot.say('```{}```'.format(message))
