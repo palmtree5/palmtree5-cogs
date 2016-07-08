@@ -146,8 +146,60 @@ class hpapi():
                         name = name_data[-1]["name"]
                         message += name + "\'s " + game_name + " booster has " + remaining + " left\n"
         else:
-            message = "An error occurred in getting the data\n\n" + json.dumps(data)
+            message = "An error occurred in getting the data"
         await self.bot.say('```{}```'.format(message))
+
+    @_hpapi.command(pass_context=True, name='player')
+    async def _player(self, ctx, name):
+        """Gets data about the specified player"""
+        message = ""
+        url = "https://api.hypixel.net/player?key=" + self.hpapi_key + "&name=" + name[0]
+        data = get_json(url)
+        if data["success"] and data["player"]:
+            player_data = data["player"]
+            message = "Player data for " + name[0] + "\n"
+            if "buildTeam" in player_data and player_data["buildTeam"]:
+                message += "Rank: Build Team\n"
+            elif "rank" in player_data:
+                if player_data["rank"] == "ADMIN":
+                    message += "Rank: Admin\n"
+                elif player_data["rank"] == "MODERATOR":
+                    message += "Rank: Moderator\n"
+                elif player_data["rank"] == "HELPER":
+                    message += "Rank: Helper\n"
+            elif "newPackageRank" in player_data:
+                if player_data["newPackageRank"] == "MVP_PLUS":
+                    message += "Rank: MVP+\n"
+                elif player_data["newPackageRank"] == "MVP":
+                    message += "Rank: MVP\n"
+                elif player_data["newPackageRank"] == "VIP_PLUS":
+                    message += "Rank: VIP+\n"
+                elif player_data["newPackageRank"] == "VIP":
+                    message += "Rank: VIP\n"
+            elif "packageRank" in player_data:
+                if player_data["packageRank"] == "MVP_PLUS":
+                    message += "Rank: MVP+\n"
+                elif player_data["packageRank"] == "MVP":
+                    message += "Rank: MVP\n"
+                elif player_data["packageRank"] == "VIP_PLUS":
+                    message += "Rank: VIP+\n"
+                elif player_data["packageRank"] == "VIP":
+                    message += "Rank: VIP\n"
+            else:
+                message += "Rank: None\n"
+            message += "Level: " + str(player_data["networkLevel"]) + "\n"
+            message += "First login (UTC): " + datetime.datetime.utcfromtimestamp(player_data["firstLogin"]/1000).strftime('%m-%d-%Y %H:%M:%S') + "\n"
+            message += "Last login (UTC): " + datetime.datetime.utcfromtimestamp(player_data["lastLogin"]/1000).strftime('%m-%d-%Y %H:%M:%S') + "\n"
+            if "vanityTokens" in player_data:
+                message += "Credits: " + player_data["vanityTokens"] + "\n"
+            else:
+                message += "Credits: 0\n"
+        elif data["success"] and not data["player"]:
+            message = "That player has never logged into Hypixel"
+        else:
+            message = "An error occurred in getting the data."
+        await self.bot.say('```{}```'.format(message))
+
 
     @_hpapi.command(pass_context=True, name='key')
     @checks.is_owner()
