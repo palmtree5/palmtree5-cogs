@@ -83,7 +83,7 @@ class hpapi():
 
                         message += name + "\'s " + game_name + " booster has " + remaining + " left\n"
             else:
-                game_name = game.lower()
+                game_name = game[0].lower()
                 gameType = None
 
                 if game_name == "Quakecraft".lower():
@@ -127,7 +127,7 @@ class hpapi():
                         name_get_url = "https://api.mojang.com/user/profiles/" + item["purchaserUuid"] + "/names"
                         name_data = self.get_json(name_get_url)
                         name = name_data[-1]["name"]
-                        message += name + "\'s " + game + " booster has " + remaining + " left\n"
+                        message += name + "\'s " + game[0] + " booster has " + remaining + " left\n"
         else:
             message = "An error occurred in getting the data\n\n" + json.dumps(data)
             print(data)
