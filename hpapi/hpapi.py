@@ -50,6 +50,8 @@ class hpapi():
                             game_name = "Quakecraft"
                         elif item["gameType"] == 3:
                             game_name = "Walls"
+                        elif item["gameType"] == 4:
+                            game_name = "Paintball"
                         elif item["gameType"] == 5:
                             game_name = "Blitz Survival Games"
                         elif item["gameType"] == 6:
