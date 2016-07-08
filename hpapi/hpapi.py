@@ -50,6 +50,8 @@ class hpapi():
                         if item["gameType"] == 2:
                             game_name = "Quakecraft"
                         elif item["gameType"] == 3:
+                            game_name = "Walls"
+                        elif item["gameType"] == 5:
                             game_name = "Blitz Survival Games"
                         elif item["gameType"] == 6:
                             game_name = "The TNT Games"
@@ -84,7 +86,7 @@ class hpapi():
         else:
             message = "An error occurred in getting the data\n\n" + json.dumps(data)
             print(data)
-        await self.bot.say('```{}```'.format(message))
+        await self.bot.say('```{}```'.format(message + "\n" + ctx))
 
     @_hpapi.command(pass_context=True, name='key')
     @checks.is_owner()
