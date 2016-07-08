@@ -28,9 +28,8 @@ class hpapi():
             await send_cmd_help(ctx)
 
     @_hpapi.command(pass_context=True, no_pm=True, name='booster')
-    async def _booster(self, ctx):
+    async def _booster(self, ctx, *game: str):
         """Get active boosters. A game can be specified, in which case only the active booster for that game and the number of queued boosters for that game will be shown"""
-        game = None
         data = {}
         url = "https://api.hypixel.net/boosters?key=" + self.hpapi_key
         data = self.get_json(url)
@@ -86,7 +85,7 @@ class hpapi():
         else:
             message = "An error occurred in getting the data\n\n" + json.dumps(data)
             print(data)
-        await self.bot.say('```{}```'.format(message + "\n" + type(ctx)))
+        await self.bot.say('```{}```'.format(message))
 
     @_hpapi.command(pass_context=True, name='key')
     @checks.is_owner()
