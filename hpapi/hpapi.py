@@ -29,7 +29,7 @@ class hpapi():
 
     @_hpapi.command(pass_context=True, no_pm=True, name='booster')
     async def _booster(self, ctx, *game: str):
-        """Get active boosters. A game can be specified, in which case only the active booster for that game and the number of queued boosters for that game will be shown"""
+        """Get active boosters. A game can be specified, in which case only the active booster for that game will be shown"""
         data = {}
         url = "https://api.hypixel.net/boosters?key=" + self.hpapi_key
         data = self.get_json(url)
@@ -83,7 +83,51 @@ class hpapi():
 
                         message += name + "\'s " + game_name + " booster has " + remaining + " left\n"
             else:
-                pass
+                game = lower(game)
+                gameType = None
+
+                if game == lower("Quakecraft"):
+                    gameType = 2
+                elif game == lower("Walls"):
+                    gameType = 3
+                elif game == lower("Paintball"):
+                    game_name = 4
+                elif game == lower("Blitz Survival Games"):
+                    gameType = 5
+                elif game == lower("The TNT Games"):
+                    gameType = 6
+                elif game == lower("VampireZ"):
+                    gameType = 7
+                elif game == lower("Mega Walls"):
+                    gameType = 13
+                elif game == lower("Arcade"):
+                    gameType= 14
+                elif game == lower("Arena Brawl"):
+                    gameType = 17
+                elif game == lower("Cops and Crims"):
+                    gameType = 21
+                elif game == lower("UHC Champions"):
+                    gameType = 20
+                elif game == lower("Warlords"):
+                    gameType = 23
+                elif game == lower("Smash Heroes"):
+                    gameType = 24
+                elif game == lower("Turbo Kart Racers"):
+                    gameType = 25
+                elif game == lower("SkyWars"):
+                    gameType = 51
+                elif game == lower("Crazy Walls"):
+                    gameType = 52
+                elif game == lower("Speed UHC"):
+                    gameType = 54
+
+                for item in booster_list:
+                    if item["length"] < item["originalLength"] and item["gameType"] == gameType:
+                        remaining = str(datetime.timedelta(seconds=item["length"]))
+                        name_get_url = "https://api.mojang.com/user/profiles/" + item["purchaserUuid"] + "/names"
+                        name_data = self.get_json(name_get_url)
+                        name = name_data[-1]["name"]
+                        message += name + "\'s " + game + " booster has " + remaining + " left\n"
         else:
             message = "An error occurred in getting the data\n\n" + json.dumps(data)
             print(data)
