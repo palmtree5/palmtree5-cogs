@@ -83,42 +83,42 @@ class hpapi():
 
                         message += name + "\'s " + game_name + " booster has " + remaining + " left\n"
             else:
-                game = lower(game)
+                game_name = game.lower()
                 gameType = None
 
-                if game == lower("Quakecraft"):
+                if game_name == "Quakecraft".lower():
                     gameType = 2
-                elif game == lower("Walls"):
+                elif game_name == "Walls".lower():
                     gameType = 3
-                elif game == lower("Paintball"):
-                    game_name = 4
-                elif game == lower("Blitz Survival Games"):
+                elif game == "Paintball".lower():
+                    gameType = 4
+                elif game_name == "Blitz Survival Games".lower():
                     gameType = 5
-                elif game == lower("The TNT Games"):
+                elif game_name == "The TNT Games".lower():
                     gameType = 6
-                elif game == lower("VampireZ"):
+                elif game_name == "VampireZ".lower():
                     gameType = 7
-                elif game == lower("Mega Walls"):
+                elif game_name == "Mega Walls".lower():
                     gameType = 13
-                elif game == lower("Arcade"):
+                elif game_name == "Arcade".lower():
                     gameType= 14
-                elif game == lower("Arena Brawl"):
+                elif game_name == "Arena Brawl".lower():
                     gameType = 17
-                elif game == lower("Cops and Crims"):
+                elif game_name == "Cops and Crims".lower():
                     gameType = 21
-                elif game == lower("UHC Champions"):
+                elif game_name == "UHC Champions".lower():
                     gameType = 20
-                elif game == lower("Warlords"):
+                elif game_name == "Warlords".lower():
                     gameType = 23
-                elif game == lower("Smash Heroes"):
+                elif game_name == "Smash Heroes".lower():
                     gameType = 24
-                elif game == lower("Turbo Kart Racers"):
+                elif game_name == "Turbo Kart Racers".lower():
                     gameType = 25
-                elif game == lower("SkyWars"):
+                elif game_name == "SkyWars".lower():
                     gameType = 51
-                elif game == lower("Crazy Walls"):
+                elif game_name == "Crazy Walls".lower():
                     gameType = 52
-                elif game == lower("Speed UHC"):
+                elif game_name == "Speed UHC".lower():
                     gameType = 54
 
                 for item in booster_list:
