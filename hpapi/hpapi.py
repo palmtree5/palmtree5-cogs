@@ -156,7 +156,7 @@ class hpapi():
         url = "https://api.hypixel.net/player?key=" + self.hpapi_key + "&name=" + name[0]
         print(name[0])
         data = self.get_json(url)
-        if data["success"] and data["player"]:
+        if data["success"] and data["player"] is not None:
             player_data = data["player"]
             message = "Player data for " + name[0] + "\n"
             if "buildTeam" in player_data and player_data["buildTeam"]:
@@ -195,7 +195,7 @@ class hpapi():
                 message += "Credits: " + player_data["vanityTokens"] + "\n"
             else:
                 message += "Credits: 0\n"
-        elif data["success"] and not data["player"]:
+        elif data["success"] and data["player"] is None:
             message = "That player has never logged into Hypixel"
         else:
             message = "An error occurred in getting the data."
