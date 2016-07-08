@@ -88,38 +88,55 @@ class hpapi():
 
                 if game_name == "Quakecraft".lower():
                     gameType = 2
+                    game_name = "Quakecraft"
                 elif game_name == "Walls".lower():
                     gameType = 3
+                    game_name = "Walls"
                 elif game == "Paintball".lower():
                     gameType = 4
+                    game_name = "Paintball"
                 elif game_name == "Blitz Survival Games".lower():
                     gameType = 5
+                    game_name = "Blitz Survival Games"
                 elif game_name == "The TNT Games".lower():
                     gameType = 6
+                    game_name = "The TNT Games"
                 elif game_name == "VampireZ".lower():
                     gameType = 7
+                    game_name = "VampireZ"
                 elif game_name == "Mega Walls".lower():
                     gameType = 13
+                    game_name = "Mega Walls"
                 elif game_name == "Arcade".lower():
                     gameType= 14
+                    game_name = "Arcade"
                 elif game_name == "Arena Brawl".lower():
                     gameType = 17
+                    game_name = "Arena Brawl"
                 elif game_name == "Cops and Crims".lower():
                     gameType = 21
+                    game_name = "Cops and Crims"
                 elif game_name == "UHC Champions".lower():
                     gameType = 20
+                    game_name = "UHC Champions"
                 elif game_name == "Warlords".lower():
                     gameType = 23
+                    game_name = "Warlords"
                 elif game_name == "Smash Heroes".lower():
                     gameType = 24
+                    game_name = "Smash Heroes"
                 elif game_name == "Turbo Kart Racers".lower():
                     gameType = 25
+                    game_name = "Turbo Kart Racers"
                 elif game_name == "SkyWars".lower():
                     gameType = 51
+                    game_name = "SkyWars"
                 elif game_name == "Crazy Walls".lower():
                     gameType = 52
+                    game_name = "Crazy Walls"
                 elif game_name == "Speed UHC".lower():
                     gameType = 54
+                    game_name = "Speed UHC"
 
                 for item in booster_list:
                     if item["length"] < item["originalLength"] and item["gameType"] == gameType:
@@ -127,7 +144,7 @@ class hpapi():
                         name_get_url = "https://api.mojang.com/user/profiles/" + item["purchaserUuid"] + "/names"
                         name_data = self.get_json(name_get_url)
                         name = name_data[-1]["name"]
-                        message += name + "\'s " + game[0] + " booster has " + remaining + " left\n"
+                        message += name + "\'s " + game_name + " booster has " + remaining + " left\n"
         else:
             message = "An error occurred in getting the data\n\n" + json.dumps(data)
             print(data)
