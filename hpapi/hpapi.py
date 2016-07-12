@@ -196,7 +196,7 @@ class hpapi():
             message += "First login (UTC): " + datetime.datetime.utcfromtimestamp(player_data["firstLogin"]/1000).strftime('%m-%d-%Y %H:%M:%S') + "\n"
             message += "Last login (UTC): " + datetime.datetime.utcfromtimestamp(player_data["lastLogin"]/1000).strftime('%m-%d-%Y %H:%M:%S') + "\n"
             if "vanityTokens" in player_data:
-                message += "Credits: " + player_data["vanityTokens"] + "\n"
+                message += "Credits: " + str(player_data["vanityTokens"]) + "\n"
             else:
                 message += "Credits: 0\n"
         else:
