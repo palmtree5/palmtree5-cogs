@@ -154,7 +154,8 @@ class hpapi():
         """Gets data about the specified player"""
 
         message = ""
-        url = "https://api.hypixel.net/player?key=" + self.hpapi_key + "&name=" + name[0]
+        print(name)
+        url = "https://api.hypixel.net/player?key=" + self.hpapi_key + "&name=" + name
 
         data = self.get_json(url)
         print(json.dumps(data, indent=4))
