@@ -152,9 +152,10 @@ class hpapi():
     @_hpapi.command(pass_context=True, name='player')
     async def _player(self, ctx, name):
         """Gets data about the specified player"""
+        
         message = ""
-        url = "https://api.hypixel.net/player?key=" + self.hpapi_key + "&name=" + name[0]
-        print(url)
+        url = "https://api.hypixel.net/player?key=" + self.hpapi_key + "&uuid=" + name[0]
+
         data = self.get_json(url)
         if data["success"] and bool(data["player"]) == True:
             player_data = data["player"]
