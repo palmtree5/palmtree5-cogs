@@ -160,8 +160,9 @@ class hpapi():
         if data["success"]:
             player_data = data["player"]
             message = "Player data for " + name[0] + "\n"
-            if "buildTeam" in player_data and player_data["buildTeam"]:
-                message += "Rank: Build Team\n"
+            if "buildTeam" in player_data:
+                if player_data["buildTeam"] == True:
+                    message += "Rank: Build Team\n"
             elif "rank" in player_data:
                 if player_data["rank"] == "ADMIN":
                     message += "Rank: Admin\n"
