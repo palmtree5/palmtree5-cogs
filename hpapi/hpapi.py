@@ -159,7 +159,7 @@ class hpapi():
         data = self.get_json(url)
         if data["success"]:
             player_data = data["player"]
-            message = "Player data for " + name[0] + "\n"
+            message = "Player data for " + name + "\n"
             if "buildTeam" in player_data:
                 if player_data["buildTeam"] == True:
                     message += "Rank: Build Team\n"
