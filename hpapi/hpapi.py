@@ -152,12 +152,12 @@ class hpapi():
     @_hpapi.command(pass_context=True, name='player')
     async def _player(self, ctx, name):
         """Gets data about the specified player"""
-        
+
         message = ""
-        url = "https://api.hypixel.net/player?key=" + self.hpapi_key + "&uuid=" + name[0]
+        url = "https://api.hypixel.net/player?key=" + self.hpapi_key + "&name=" + name[0]
 
         data = self.get_json(url)
-        if data["success"] and bool(data["player"]) == True:
+        if data["success"]:
             player_data = data["player"]
             message = "Player data for " + name[0] + "\n"
             if "buildTeam" in player_data and player_data["buildTeam"]:
@@ -187,8 +187,10 @@ class hpapi():
                     message += "Rank: VIP+\n"
                 elif player_data["packageRank"] == "VIP":
                     message += "Rank: VIP\n"
-            else:
+            elif bool(player_data):
                 message += "Rank: None\n"
+            else:
+                message = "That player has never logged into Hypixel"
             message += "Level: " + str(player_data["networkLevel"]) + "\n"
             message += "First login (UTC): " + datetime.datetime.utcfromtimestamp(player_data["firstLogin"]/1000).strftime('%m-%d-%Y %H:%M:%S') + "\n"
             message += "Last login (UTC): " + datetime.datetime.utcfromtimestamp(player_data["lastLogin"]/1000).strftime('%m-%d-%Y %H:%M:%S') + "\n"
@@ -196,8 +198,6 @@ class hpapi():
                 message += "Credits: " + player_data["vanityTokens"] + "\n"
             else:
                 message += "Credits: 0\n"
-        elif data["success"] and bool(data["player"]) == False:
-            message = "That player has never logged into Hypixel"
         else:
             message = "An error occurred in getting the data."
         await self.bot.say('```{}```'.format(message))
