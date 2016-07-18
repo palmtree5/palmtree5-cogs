@@ -69,7 +69,7 @@ class Tweets():
     @checks.is_owner()
     async def set_consumer_secret(self, ctx, cons_secret):
         message = ""
-        if cons_key is not None:
+        if cons_secret is not None:
             settings = fileIO(self.settings_file, 'load')
             settings["consumer_secret"] = cons_secret
             settings = fileIO(self.settings_file, 'save', settings)
@@ -82,9 +82,9 @@ class Tweets():
     @checks.is_owner()
     async def set_access_token(self, ctx, token):
         message = ""
-        if cons_key is not None:
+        if token is not None:
             settings = fileIO(self.settings_file, 'load')
-            settings["access_token"] = cons_key
+            settings["access_token"] = token
             settings = fileIO(self.settings_file, 'save', settings)
             message = "Access token saved!"
         else:
@@ -95,9 +95,9 @@ class Tweets():
     @checks.is_owner()
     async def set_access_secret(self, ctx, secret):
         message = ""
-        if cons_key is not None:
+        if secret is not None:
             settings = fileIO(self.settings_file, 'load')
-            settings["access_secret"] = cons_key
+            settings["access_secret"] = secret
             settings = fileIO(self.settings_file, 'save', settings)
             message = "Access secret saved!"
         else:
