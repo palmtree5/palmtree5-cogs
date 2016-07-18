@@ -13,13 +13,13 @@ class Tweets():
         self.bot = bot
         self.settings_file = 'data/tweets/settings.json'
         settings = fileIO(self.settings_file, 'load')
-        if "consumer_key" in settings.keys():
+        if "consumer_key" in list(settings.keys()):
             self.consumer_key = settings["consumer_key"]
-        if "consumer_secret" in settings.keys():
+        if "consumer_secret" in list(settings.keys()):
             self.consumer_secret = settings["consumer_secret"]
-        if "access_token" in settings.keys():
+        if "access_token" in list(settings.keys()):
             self.access_token = settings["access_token"]
-        if "access_secret" in settings.keys():
+        if "access_secret" in list(settings.keys()):
             self.access_secret = settings["access_secret"]
 
     def authenticate():
