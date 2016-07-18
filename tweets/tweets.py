@@ -110,11 +110,7 @@ def check_folder():
         os.makedirs("data/tweets")
 
 def check_file():
-    data = {}
-    data['consumer_key'] = ''
-    data['consumer_secret'] = ''
-    data['access_token'] = ''
-    data['access_secret'] = ''
+    data = {'consumer_key': '', 'consumer_secret': '', 'access_token': '', 'access_secret': ''}
     f = "data/tweets/settings.json"
     if not fileIO(f, "check"):
         print("Creating default settings.json...")
