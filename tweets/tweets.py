@@ -22,7 +22,7 @@ class Tweets():
         if 'access_secret' in list(settings.keys()):
             self.access_secret = settings['access_secret']
 
-    def authenticate():
+    def authenticate(self):
         auth = tw.OAuthHandler(self.consumer_key, self.consumer_secret)
         auth.set_access_token(self.access_token, self.access_secret)
         return tw.API(auth)
