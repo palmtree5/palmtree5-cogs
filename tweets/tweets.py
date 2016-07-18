@@ -36,7 +36,7 @@ class Tweets():
     async def get_tweets(self, ctx, username):
         message = ""
         if username is not None:
-            api = authenticate()
+            api = self.authenticate()
             message += "Last 5 tweets for " + username + ":\n\n"
             for status in tw.Cursor(api.user_timeline, id=username).items(5):
                 message += status.text
