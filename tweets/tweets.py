@@ -13,14 +13,14 @@ class Tweets():
         self.bot = bot
         self.settings_file = 'data/tweets/settings.json'
         settings = fileIO(self.settings_file, 'load')
-        if "consumer_key" in list(settings.keys()):
-            self.consumer_key = settings["consumer_key"]
-        if "consumer_secret" in list(settings.keys()):
-            self.consumer_secret = settings["consumer_secret"]
-        if "access_token" in list(settings.keys()):
-            self.access_token = settings["access_token"]
-        if "access_secret" in list(settings.keys()):
-            self.access_secret = settings["access_secret"]
+        if 'consumer_key' in list(settings.keys()):
+            self.consumer_key = settings['consumer_key']
+        if 'consumer_secret' in list(settings.keys()):
+            self.consumer_secret = settings['consumer_secret']
+        if 'access_token' in list(settings.keys()):
+            self.access_token = settings['access_token']
+        if 'access_secret' in list(settings.keys()):
+            self.access_secret = settings['access_secret']
 
     def authenticate():
         auth = tw.OAuthHandler(self.consumer_key, self.consumer_secret)
@@ -111,10 +111,10 @@ def check_folder():
 
 def check_file():
     data = {}
-    data["consumer_key"] = ''
-    data["consumer_secret"] = ''
-    data["access_token"] = ''
-    data["access_secret"] = ''
+    data['consumer_key'] = ''
+    data['consumer_secret'] = ''
+    data['access_token'] = ''
+    data['access_secret'] = ''
     f = "data/tweets/settings.json"
     if not fileIO(f, "check"):
         print("Creating default settings.json...")
