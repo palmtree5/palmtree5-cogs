@@ -35,19 +35,27 @@ class Tweets():
     @_tweets.command(pass_context=True, no_pm=True, name='get')
     async def get_tweets(self, ctx, username: str, count: int):
         """Gets the specified number of tweets for the specified username"""
+        cnt = count
+        if count > 25:
+            cnt = 25
         message = ""
         if username is not None:
-            if count < 1:
+            if cnt < 1:
                 await self.bot.say("I can't do that, silly! Please specify a number greater than or equal to 1")
                 return
+
             api = self.authenticate()
-            if count == 1:
+            if cnt == 1:
                 message += "Last tweet for " + username + ":\n\n"
             else:
-                message += "Last " + str(count) + " tweets for " + username + ":\n\n"
-            for status in tw.Cursor(api.user_timeline, id=username).items(count):
-                message += status.text
-                message += "\n\n"
+                message += "Last " + str(cnt) + " tweets for " + username + ":\n\n"
+            try:
+                for status in tw.Cursor(api.user_timeline, id=username).items(cnt):
+                    message += status.text
+                    message += "\n\n"
+            except TweepError as e:
+                await self.bot.say("Whoops! Something went wrong here. The error code is " str(e.message[0]['code']))
+                return
         else:
             await self.bot.say("No username specified!")
             return
