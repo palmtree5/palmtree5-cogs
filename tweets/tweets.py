@@ -33,16 +33,24 @@ class Tweets():
             await send_cmd_help(ctx)
 
     @_tweets.command(pass_context=True, no_pm=True, name='get')
-    async def get_tweets(self, ctx, username):
+    async def get_tweets(self, ctx, username: str, count: int):
+        """Gets the specified number of tweets for the specified username"""
         message = ""
         if username is not None:
+            if count < 1:
+                await self.bot.say("I can't do that, silly! Please specify a number greater than or equal to 1")
+                return
             api = self.authenticate()
-            message += "Last 5 tweets for " + username + ":\n\n"
-            for status in tw.Cursor(api.user_timeline, id=username).items(5):
+            if count == 1:
+                message += "Last tweet for " + username + ":\n\n"
+            else:
+                message += "Last " + str(count) + " tweets for " + username + ":\n\n"
+            for status in tw.Cursor(api.user_timeline, id=username).items(count):
                 message += status.text
-                message += "\n"
+                message += "\n\n"
         else:
-            message = "No username specified!"
+            await self.bot.say("No username specified!")
+            return
         await self.bot.say('```{}```'.format(message))
 
     @commands.group(pass_context=True, name='tweetset')
