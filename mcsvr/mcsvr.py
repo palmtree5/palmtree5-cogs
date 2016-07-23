@@ -29,7 +29,7 @@ class Mcsvr():
     async def _version(self, ctx, server_ip: str):
         """Gets information about the required Minecraft version for the specified server"""
         server = MinecraftServer.lookup(server_ip).status()
-        message = "Required version for " + server_ip + ":\n\n" + status.version.name
+        message = "Required version for " + server_ip + ":\n\n" + server.version.name
 
 def setup(bot):
     n = Mcsvr(bot)
