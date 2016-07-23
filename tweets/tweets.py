@@ -54,7 +54,7 @@ class Tweets():
                     message += status.text
                     message += "\n\n"
             except TweepError as e:
-                await self.bot.say("Whoops! Something went wrong here. The error code is " str(e.message[0]['code']))
+                await self.bot.say("Whoops! Something went wrong here. The error code is " + str(e.message[0]['code']))
                 return
         else:
             await self.bot.say("No username specified!")
