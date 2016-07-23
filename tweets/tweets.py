@@ -53,7 +53,7 @@ class Tweets():
                 for status in tw.Cursor(api.user_timeline, id=username).items(cnt):
                     message += status.text
                     message += "\n\n"
-            except TweepError as e:
+            except tw.TweepError as e:
                 await self.bot.say("Whoops! Something went wrong here. The error code is " + str(e.message[0]['code']))
                 return
         else:
