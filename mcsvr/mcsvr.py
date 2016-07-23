@@ -30,6 +30,7 @@ class Mcsvr():
         """Gets information about the required Minecraft version for the specified server"""
         server = MinecraftServer.lookup(server_ip).status()
         message = "Required version for " + server_ip + ":\n\n" + str(server.version.name)
+        await self.bot.say("```{}```".format(message))
 
 def setup(bot):
     n = Mcsvr(bot)
