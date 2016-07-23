@@ -39,7 +39,7 @@ class Tweets():
         if count > 25:
             cnt = 25
         message = ""
-        
+
         if username is not None:
             if cnt < 1:
                 await self.bot.say("I can't do that, silly! Please specify a number greater than or equal to 1")
@@ -55,7 +55,7 @@ class Tweets():
                     message += status.text
                     message += "\n\n"
             except tw.TweepError as e:
-                await self.bot.say("Whoops! Something went wrong here. The error code is " + str(e.message[0]['code']))
+                await self.bot.say("Whoops! Something went wrong here. The error code is " + str(e))
                 return
         else:
             await self.bot.say("No username specified!")
