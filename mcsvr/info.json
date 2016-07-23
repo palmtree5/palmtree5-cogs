@@ -1,0 +1,8 @@
+{
+    "AUTHOR" : "palmtree5",
+    "INSTALL_MSG" : "[p]mcsvr to see commands. Make sure to do pip3 install mcstatus before using this plugin.",
+    "NAME" : "Mcsvr",
+    "DISABLED" : false,
+    "SHORT" : "Cog for getting Minecraft server status",
+    "DESCRIPTION" : "Gets the status of a Minecraft Server (specifically version and player count)"
+}

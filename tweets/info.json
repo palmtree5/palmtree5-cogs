@@ -4,5 +4,5 @@
     "NAME" : "Tweets",
     "DISABLED" : false,
     "SHORT" : "Cog for getting info from Twitter",
-    "DESCRIPTION" : "Gets public from Twitter's api"
+    "DESCRIPTION" : "Gets public information from Twitter's api"
 }
