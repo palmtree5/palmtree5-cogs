@@ -26,13 +26,20 @@ class Tweets():
         auth = tw.OAuthHandler(self.consumer_key, self.consumer_secret)
         auth.set_access_token(self.access_token, self.access_secret)
         return tw.API(auth)
+
     @commands.group(pass_context=True, no_pm=True, name='tweets')
     async def _tweets(self, ctx):
         """Gets various information from Twitter's API"""
         if ctx.invoked_subcommand is None:
             await send_cmd_help(ctx)
+            
+    @_tweets.command(pass_context=True, no_pm=True, name='getuser')
+    async def get_user(self, ctx, username: str):
+        """Get info about the specified user"""
+        api = self.authenticate()
+        await self.bot.say(api.get_user(username))
 
-    @_tweets.command(pass_context=True, no_pm=True, name='get')
+    @_tweets.command(pass_context=True, no_pm=True, name='gettweets')
     async def get_tweets(self, ctx, username: str, count: int):
         """Gets the specified number of tweets for the specified username"""
         cnt = count
