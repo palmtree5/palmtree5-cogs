@@ -1,3 +1,4 @@
+"""Extension for Red-DiscordBot"""
 from discord.ext import commands
 from .utils.dataIO import fileIO
 from .utils import checks
@@ -5,11 +6,13 @@ import discord
 import requests
 import asyncio
 import os
-import datetime
+import datetime as dt
 import json
 from __main__ import send_cmd_help
 
+
 class hpapi():
+    """Class for Hypixel API module for Red-DiscordBot"""
     def __init__(self, bot):
         self.bot = bot
         self.settings_file = 'data/hpapi/hpapi.json'
@@ -21,6 +24,10 @@ class hpapi():
     def get_json(self, url):
         return requests.get(url).json()
 
+    def get_time(self, ms):
+        time = dt.datetime.utcfromtimestamp(ms/1000)
+        return time.strftime('%m-%d-%Y %H:%M:%S') + "\n"
+
     @commands.group(pass_context=True, no_pm=True, name="hp")
     async def _hpapi(self, ctx):
         """Get data from the Hypixel API"""
@@ -29,7 +36,10 @@ class hpapi():
 
     @_hpapi.command(pass_context=True, no_pm=True, name='booster')
     async def _booster(self, ctx, *game: str):
-        """Get active boosters. A game can be specified, in which case only the active booster for that game will be shown"""
+        """
+        Get active boosters. A game can be specified, in which case only the
+        active booster for that game will be shown
+        """
         data = {}
         url = "https://api.hypixel.net/boosters?key=" + self.hpapi_key
         data = self.get_json(url)
@@ -41,9 +51,11 @@ class hpapi():
                 for item in booster_list:
                     if item["length"] < item["originalLength"]:
                         game_name = ""
-                        remaining = str(datetime.timedelta(seconds=item["length"]))
-                        name_get_url = "https://api.mojang.com/user/profiles/" + item["purchaserUuid"] + "/names"
-                        name_data = self.get_json(name_get_url)
+                        remaining = \
+                            str(dt.timedelta(seconds=item["length"]))
+                        name_url = "https://api.mojang.com/user/profiles/" \
+                            + item["purchaserUuid"] + "/names"
+                        name_data = self.get_json(name_url)
                         name = name_data[-1]["name"]
                         if item["gameType"] == 2:
                             game_name = "Quakecraft"
@@ -80,7 +92,9 @@ class hpapi():
                         elif item["gameType"] == 54:
                             game_name = "Speed UHC"
 
-                        message += name + "\'s " + game_name + " booster has " + remaining + " left\n"
+                        message += name + "\'s " + game_name + \
+                            " booster has " + remaining + " left\n"
+
             else:
                 game_n = " ".join(game)
                 game_name = game_n.lower().strip()
@@ -108,7 +122,7 @@ class hpapi():
                     gameType = 13
                     game_name = "Mega Walls"
                 elif game_name == "Arcade".lower():
-                    gameType= 14
+                    gameType = 14
                     game_name = "Arcade"
                 elif game_name == "Arena Brawl".lower():
                     gameType = 17
@@ -139,12 +153,18 @@ class hpapi():
                     game_name = "Speed UHC"
 
                 for item in booster_list:
-                    if item["length"] < item["originalLength"] and item["gameType"] == gameType:
-                        remaining = str(datetime.timedelta(seconds=item["length"]))
-                        name_get_url = "https://api.mojang.com/user/profiles/" + item["purchaserUuid"] + "/names"
+                    if item["length"] < item["originalLength"] and \
+                            item["gameType"] == gameType:
+                        remaining = \
+                           str(dt.timedelta(seconds=item["length"]))
+                        name_get_url = \
+                            "https://api.mojang.com/user/profiles/" + \
+                            item["purchaserUuid"] + "/names"
+
                         name_data = self.get_json(name_get_url)
                         name = name_data[-1]["name"]
-                        message += name + "\'s " + game_name + " booster has " + remaining + " left\n"
+                        message += name + "\'s " + game_name + \
+                            " booster has " + remaining + " left\n"
         else:
             message = "An error occurred in getting the data"
         await self.bot.say('```{}```'.format(message))
@@ -154,14 +174,15 @@ class hpapi():
         """Gets data about the specified player"""
 
         message = ""
-        url = "https://api.hypixel.net/player?key=" + self.hpapi_key + "&name=" + name
+        url = "https://api.hypixel.net/player?key=" + \
+            self.hpapi_key + "&name=" + name
 
         data = self.get_json(url)
         if data["success"]:
             player_data = data["player"]
             message = "Player data for " + name + "\n"
             if "buildTeam" in player_data:
-                if player_data["buildTeam"] == True:
+                if player_data["buildTeam"] is True:
                     message += "Rank: Build Team\n"
             elif "rank" in player_data:
                 if player_data["rank"] == "ADMIN":
@@ -193,16 +214,18 @@ class hpapi():
             else:
                 message = "That player has never logged into Hypixel"
             message += "Level: " + str(player_data["networkLevel"]) + "\n"
-            message += "First login (UTC): " + datetime.datetime.utcfromtimestamp(player_data["firstLogin"]/1000).strftime('%m-%d-%Y %H:%M:%S') + "\n"
-            message += "Last login (UTC): " + datetime.datetime.utcfromtimestamp(player_data["lastLogin"]/1000).strftime('%m-%d-%Y %H:%M:%S') + "\n"
+            message += "First login (UTC): " + \
+                self.get_time(player_data["firstLogin"]) + "\n"
+            message += "Last login (UTC): " + \
+                self.get_time(player_data["lastLogin"]) + "\n"
             if "vanityTokens" in player_data:
-                message += "Credits: " + str(player_data["vanityTokens"]) + "\n"
+                message += "Credits: " + str(player_data["vanityTokens"]) \
+                    + "\n"
             else:
                 message += "Credits: 0\n"
         else:
             message = "An error occurred in getting the data."
         await self.bot.say('```{}```'.format(message))
-
 
     @_hpapi.command(pass_context=True, name='key')
     @checks.is_owner()
@@ -214,10 +237,12 @@ class hpapi():
             fileIO(self.settings_file, "save", settings)
             await self.bot.say('```API key set```')
 
+
 def check_folder():
     if not os.path.exists("data/hpapi"):
         print("Creating data/hpapi folder")
         os.makedirs("data/hpapi")
+
 
 def check_file():
     data = {}
@@ -226,6 +251,7 @@ def check_file():
     if not fileIO(f, "check"):
         print("Creating default hpapi.json...")
         fileIO(f, "save", data)
+
 
 def setup(bot):
     check_folder()
