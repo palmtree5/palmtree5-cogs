@@ -1,0 +1,8 @@
+{
+    "AUTHOR" : "palmtree5",
+    "INSTALL_MSG" : "[p]reddit to see commands. Make sure to do pip3 install praw and pip3 install praw-OAuth2Util before using this plugin. Do [p]redditset to find commands for setting client ID and client secret. If you need these, visit https://www.reddit.com/prefs/apps/ and create an application. This plugin will not read private subreddits",
+    "NAME" : "RedReddit",
+    "DISABLED" : false,
+    "SHORT" : "Cog for getting info from Reddit",
+    "DESCRIPTION" : "Gets public information from Reddit's api"
+}
