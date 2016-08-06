@@ -1,5 +1,6 @@
 from discord.ext import commands
 from .utils import checks
+from .utils.dataIO import fileIO
 import discord
 import praw
 import OAuth2Util as o2u
@@ -37,7 +38,8 @@ class RedReddit():
         sorted by new"""
         message = "The " + str(count) + " newest posts for /r/" + subreddit\
             + "\n\n"
-        for submission in self.r.get_subreddit(subreddit, fetch=True).get_new(limit=count):
+        for submission in self.r.get_subreddit(subreddit, fetch=True).\
+                get_new(limit=count):
             message += submission.title + ":      https://redd.it" +\
                 submission.id + "\n"
         await self.bot.say('```{}```'.format(message))
@@ -48,10 +50,36 @@ class RedReddit():
         sorted by hot"""
         message = "The " + str(count) + " hottest posts for /r/" + subreddit\
             + "\n\n"
-        for submission in self.r.get_subreddit(subreddit, fetch=True).get_hot(limit=count):
+        for submission in self.r.get_subreddit(subreddit, fetch=True).\
+                get_hot(limit=count):
             message += submission.title + ":      https://redd.it" +\
                 submission.id + "\n"
         await self.bot.say('```{}```'.format(message))
+
+    @checks.is_owner()
+    @commands.group(pass_context=True, name="redditset")
+    async def _redditset(self, ctx):
+        """Commands for setting reddit settings"""
+        if ctx.invoked_subcommand is None:
+            send_cmd_help(ctx)
+
+    @checks.is_owner()
+    @_redditset.command(pass_context=True, name="key")
+    async def set_key(self, ctx, key):
+        """Sets the app key for the application"""
+        config = c.ConfigParser()
+        config.read("data/reddit/oauth.ini")
+        config["app_key"] = key
+        await self.bot.say("Set the app key!")
+
+    @checks.is_owner()
+    @_redditset.command(pass_context=True, name="secret")
+    async def set_secret(self, ctx, secret):
+        """Sets the app secret for the application"""
+        config = c.ConfigParser()
+        config.read("data/reddit/oauth.ini")
+        config["app_secret"] = secret
+        await self.bot.say("Set the app secret!")
 
 
 def check_folder():
@@ -76,6 +104,8 @@ def check_file():
             config.write(cfg)
     f2 = "data/reddit/settings.json"
     data = {"UserAgent": "PalmBot:RedBotRedditCog:v0.5 (by /u/palmtree5)"}
+    if not fileIO(f2, "check"):
+        fileIO(f2, "save", data)
 
 
 def setup(bot):
