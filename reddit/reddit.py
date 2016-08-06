@@ -15,7 +15,7 @@ class RedReddit():
 
     def __init__(self, bot):
         self.bot = bot
-        self.r = praw.Reddit("")
+        self.r = praw.Reddit("RedBotRedditCog/v0.1 by /u/palmtree5")
         self.o = o2u.OAuth2Util(self.r)
         self.o.refresh(force=True)
 
