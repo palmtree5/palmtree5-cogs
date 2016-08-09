@@ -16,10 +16,7 @@ class RedReddit():
 
     def __init__(self, bot):
         self.bot = bot
-        cfg_path = os.path.join(os.getcwd(), "data", "reddit")
-        cfg_file = os.path.join(cfg_path, "oauth.ini")
-        cur_dir = os.getcwd()
-        os.chdir(cfg_path)
+        cfg_file = "./data/reddit/oauth.ini"
         try:
             self.r = praw.Reddit("RedBotRedditCog/v0.1 by /u/palmtree5")
             self.o = o2u.OAuth2Util(self.r, configfile=cfg_file)
@@ -27,7 +24,6 @@ class RedReddit():
         except praw.errors.OAuthException:
             log.warning("Uh oh, something went wrong! Did you set the client \
                 key and secret?")
-        os.chdir(cur_dir)
 
     @commands.group(pass_context=True, no_pm=True, name="reddit")
     async def _reddit(self, ctx):
