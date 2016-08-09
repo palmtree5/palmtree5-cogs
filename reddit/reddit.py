@@ -16,9 +16,13 @@ class RedReddit():
 
     def __init__(self, bot):
         self.bot = bot
-        self.r = praw.Reddit("RedBotRedditCog/v0.1 by /u/palmtree5")
-        self.o = o2u.OAuth2Util(self.r)
-        self.o.refresh(force=True)
+        try:
+            self.r = praw.Reddit("RedBotRedditCog/v0.1 by /u/palmtree5")
+            self.o = o2u.OAuth2Util(self.r, configfile="data/reddit/oauth.ini")
+            self.o.refresh(force=True)
+        except praw.errors.OAuthException:
+            log.warning("Uh oh, something went wrong! Did you set the client \
+                key and secret?")
 
     @commands.group(pass_context=True, no_pm=True, name="reddit")
     async def _reddit(self, ctx):
@@ -69,7 +73,7 @@ class RedReddit():
         """Sets the app key for the application"""
         config = c.ConfigParser()
         config.read("data/reddit/oauth.ini")
-        config["app_key"] = key
+        config['app']["app_key"] = key
         await self.bot.say("Set the app key!")
 
     @checks.is_owner()
@@ -78,7 +82,7 @@ class RedReddit():
         """Sets the app secret for the application"""
         config = c.ConfigParser()
         config.read("data/reddit/oauth.ini")
-        config["app_secret"] = secret
+        config['app']["app_secret"] = secret
         await self.bot.say("Set the app secret!")
 
 
