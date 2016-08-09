@@ -16,10 +16,10 @@ class RedReddit():
 
     def __init__(self, bot):
         self.bot = bot
+        cfg_file = os.path.join(os.getcwd(), "data", "reddit", "oauth.ini")
         try:
             self.r = praw.Reddit("RedBotRedditCog/v0.1 by /u/palmtree5")
-            self.o = o2u.OAuth2Util(self.r, configfile="Red-DiscordBot/data/ \
-                reddit/oauth.ini")
+            self.o = o2u.OAuth2Util(self.r, configfile=cfg_file
             self.o.refresh(force=True)
         except praw.errors.OAuthException:
             log.warning("Uh oh, something went wrong! Did you set the client \
