@@ -38,8 +38,16 @@ class Tweets():
     @_tweets.command(pass_context=True, no_pm=True, name='getuser')
     async def get_user(self, ctx, username: str):
         """Get info about the specified user"""
-        api = self.authenticate()
-        await self.bot.say(api.get_user(username))
+        message = ""
+        if username is not None:
+            api = self.authenticate()
+            user = api.get_user(username)
+            message += "Info for " + user.screen_name + ":\n"
+            message += "Followers: " + user.followers_count + "\n"
+            message += "Friends: " + user.friends_count
+        else:
+            message = "Uh oh, an error occurred somewhere!"
+        await self.bot.say("```{}```".format(message))
 
     @_tweets.command(pass_context=True, no_pm=True, name='gettweets')
     async def get_tweets(self, ctx, username: str, count: int):

@@ -16,10 +16,17 @@ class RedReddit():
 
     def __init__(self, bot):
         self.bot = bot
-        cfg_file = "./data/reddit/oauth.ini"
+        cfg_file = "./data/reddit/oauth.json"
+        settings = fileIO(cfg_file, "load")
+
         try:
             self.r = praw.Reddit("RedBotRedditCog/v0.1 by /u/palmtree5")
-            self.o = o2u.OAuth2Util(self.r, configfile=cfg_file)
+            self.o = \
+                o2u.OAuth2Util(self.r, app_key=settings["app_key"],
+                               app_secret=settings["app_secret"],
+                               scope=settings["scope"],
+                               refreshable=settings["refreshable"],
+                               server_mode=settings["server_mode"])
             self.o.refresh(force=True)
         except praw.errors.OAuthException:
             log.warning("Uh oh, something went wrong! Did you set the client \
@@ -72,19 +79,28 @@ class RedReddit():
     @_redditset.command(pass_context=True, name="key")
     async def set_key(self, ctx, key):
         """Sets the app key for the application"""
-        config = c.ConfigParser()
-        config.read("data/reddit/oauth.ini")
-        config['app']["app_key"] = key
+        settings = fileIO("data/reddit/oauth.json", "load")
+        settings["app_key"] = key
+        fileIO("data/reddit/oauth.json", "save", settings)
         await self.bot.say("Set the app key!")
 
     @checks.is_owner()
     @_redditset.command(pass_context=True, name="secret")
     async def set_secret(self, ctx, secret):
         """Sets the app secret for the application"""
-        config = c.ConfigParser()
-        config.read("data/reddit/oauth.ini")
-        config['app']["app_secret"] = secret
+        settings = fileIO("data/reddit/oauth.json", "load")
+        settings["app_secret"] = secret
+        fileIO("data/reddit/oauth.json", "save", settings)
         await self.bot.say("Set the app secret!")
+
+    @checks.is_owner()
+    @_redditset.command(pass_context=True, name="useragent")
+    async def set_useragent(self, ctx, useragent: str):
+        """Sets the user agent string sent for the application"""
+        settings = fileIO("data/reddit/oauth.json", "load")
+        settings["UserAgent"] = useragent
+        fileIO("data/reddit/oauth.json", "save", settings)
+        await self.bot.say("Set the user agent!")
 
 
 def check_folder():
@@ -94,23 +110,14 @@ def check_folder():
 
 
 def check_file():
-    f = "data/reddit/oauth.ini"
-    if not os.path.isfile(f):
-        log.info("Creating default oauth.ini...")
-        config = c.ConfigParser()
-        config['app'] = \
-            {'scope': 'read', 'refreshable': True, 'app_key': '',
-                'app_secret': ''}
-        config['server'] = \
-            {'server_mode': False, 'url': '127.0.0.1',
-                'port': 65010, 'redirect_path': 'authorize_callback',
-                'link_path': 'oauth'}
-        with open(f, "w") as cfg:
-            config.write(cfg)
-    f2 = "data/reddit/settings.json"
-    data = {"UserAgent": "PalmBot:RedBotRedditCog:v0.5 (by /u/palmtree5)"}
-    if not fileIO(f2, "check"):
-        fileIO(f2, "save", data)
+    f = "data/reddit/oauth.json"
+    if not fileIO(f, "check"):
+        log.info("Creating default oauth.json...")
+        data = {"UserAgent": "", "scope": "read", "refreshable": True,
+                "app_key": "", "app_secret": "", "server_mode": False,
+                "url": "127.0.0.1", "port": 65010, "redirect_path":
+                "authorize_callback", "link_path": "oauth"}
+        fileIO(f, "save", data)
 
 
 def setup(bot):
