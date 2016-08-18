@@ -70,8 +70,7 @@ class Tweets():
                 message += "Last " + str(cnt) + " tweets for " + \
                     username + ":\n\n"
             try:
-                for status in
-                        tw.Cursor(api.user_timeline, id=username).items(cnt):
+                for status in tw.Cursor(api.user_timeline, id=username).items(cnt):
                     message += status.text
                     message += "\n\n"
             except tw.TweepError as e:
