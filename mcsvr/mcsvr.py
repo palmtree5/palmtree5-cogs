@@ -1,6 +1,9 @@
 from discord.ext import commands
-from mcstatus import MinecraftServer
-import discord
+try:
+    from mcstatus import MinecraftServer
+    mcstatusInstalled = True
+except:
+    mcstatusInstalled = False
 from __main__ import send_cmd_help
 
 
@@ -37,5 +40,8 @@ class Mcsvr():
 
 
 def setup(bot):
-    n = Mcsvr(bot)
-    bot.add_cog(n)
+    if mcstatusInstalled:
+        n = Mcsvr(bot)
+        bot.add_cog(n)
+    else:
+        raise RuntimeError("You need to do 'pip3 install mcstatus'")

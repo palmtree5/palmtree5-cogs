@@ -2,8 +2,7 @@
 from discord.ext import commands
 from .utils.dataIO import fileIO
 from .utils import checks
-import discord
-import requests
+import aiohttp
 import asyncio
 import os
 import datetime as dt
@@ -21,8 +20,10 @@ class hpapi():
         self.payload = {}
         self.payload["key"] = self.hpapi_key
 
-    def get_json(self, url):
-        return requests.get(url).json()
+    async def get_json(self, url):
+        async with aiohttp.get(url) as r:
+            ret = await r.json()
+        return ret
 
     def get_time(self, ms):
         time = dt.datetime.utcfromtimestamp(ms/1000)
@@ -42,7 +43,7 @@ class hpapi():
         """
         data = {}
         url = "https://api.hypixel.net/boosters?key=" + self.hpapi_key
-        data = self.get_json(url)
+        data = await self.get_json(url)
 
         message = ""
         if data["success"]:
@@ -55,7 +56,7 @@ class hpapi():
                             str(dt.timedelta(seconds=item["length"]))
                         name_url = "https://api.mojang.com/user/profiles/" \
                             + item["purchaserUuid"] + "/names"
-                        name_data = self.get_json(name_url)
+                        name_data = await self.get_json(name_url)
                         name = name_data[-1]["name"]
                         if item["gameType"] == 2:
                             game_name = "Quakecraft"

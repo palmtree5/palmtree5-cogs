@@ -2,8 +2,16 @@ from discord.ext import commands
 from .utils import checks
 from .utils.dataIO import fileIO
 import discord
-import praw
-import OAuth2Util as o2u
+try:
+    import praw
+    prawInstalled = True
+except:
+    prawInstalled = False
+try:
+    import OAuth2Util as o2u
+    o2uInstalled = True
+except:
+    o2uInstalled = False
 import datetime as dt
 import os
 import configparser as c
@@ -123,5 +131,12 @@ def check_file():
 def setup(bot):
     check_folder()
     check_file()
-    n = RedReddit(bot)
-    bot.add_cog(n)
+    if prawInstalled and o2uInstalled:
+        n = RedReddit(bot)
+        bot.add_cog(n)
+    elif prawInstalled and not o2uInstalled:
+        raise RuntimeError("You need to do 'pip3 install praw-OAuth2Util'")
+    elif o2uInstalled and not prawInstalled:
+        raise RuntimeError("You need to do 'pip3 install praw'")
+    else:
+        raise RuntimeError("You need to do 'pip3 install praw praw-OAuth2Util'")

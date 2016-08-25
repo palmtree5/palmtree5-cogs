@@ -1,8 +1,11 @@
 from discord.ext import commands
 from .utils.dataIO import fileIO
 from .utils import checks
-import discord
-import tweepy as tw
+try:
+    import tweepy as tw
+    twInstalled = True
+except:
+    twInstalled = False
 import os
 import datetime
 import json
@@ -157,5 +160,8 @@ def check_file():
 def setup(bot):
     check_folder()
     check_file()
-    n = Tweets(bot)
-    bot.add_cog(n)
+    if twInstalled:
+        n = Tweets(bot)
+        bot.add_cog(n)
+    else:
+        raise RuntimeError("You need to do 'pip3 install tweepy'")
