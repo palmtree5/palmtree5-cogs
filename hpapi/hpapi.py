@@ -4,7 +4,9 @@ from .utils.dataIO import fileIO
 from .utils import checks
 import aiohttp
 import asyncio
+import hashlib
 import os
+from copy import deepcopy
 import datetime as dt
 import json
 from __main__ import send_cmd_help
@@ -17,6 +19,7 @@ class hpapi():
         self.settings_file = 'data/hpapi/hpapi.json'
         settings = fileIO(self.settings_file, 'load')
         self.hpapi_key = settings['API_KEY']
+        self.games = settings['games']
         self.payload = {}
         self.payload["key"] = self.hpapi_key
 
@@ -58,41 +61,10 @@ class hpapi():
                             + item["purchaserUuid"] + "/names"
                         name_data = await self.get_json(name_url)
                         name = name_data[-1]["name"]
-                        if item["gameType"] == 2:
-                            game_name = "Quakecraft"
-                        elif item["gameType"] == 3:
-                            game_name = "Walls"
-                        elif item["gameType"] == 4:
-                            game_name = "Paintball"
-                        elif item["gameType"] == 5:
-                            game_name = "Blitz Survival Games"
-                        elif item["gameType"] == 6:
-                            game_name = "The TNT Games"
-                        elif item["gameType"] == 7:
-                            game_name = "VampireZ"
-                        elif item["gameType"] == 13:
-                            game_name = "Mega Walls"
-                        elif item["gameType"] == 14:
-                            game_name = "Arcade"
-                        elif item["gameType"] == 17:
-                            game_name = "Arena Brawl"
-                        elif item["gameType"] == 21:
-                            game_name = "Cops and Crims"
-                        elif item["gameType"] == 20:
-                            game_name = "UHC Champions"
-                        elif item["gameType"] == 23:
-                            game_name = "Warlords"
-                        elif item["gameType"] == 24:
-                            game_name = "Smash Heroes"
-                        elif item["gameType"] == 25:
-                            game_name = "Turbo Kart Racers"
-                        elif item["gameType"] == 51:
-                            game_name = "SkyWars"
-                        elif item["gameType"] == 52:
-                            game_name = "Crazy Walls"
-                        elif item["gameType"] == 54:
-                            game_name = "Speed UHC"
-
+                        for game in self.games:
+                            if item["gameType"] == game["id"]:
+                                game_name = game["name"]
+                                break
                         message += name + "\'s " + game_name + \
                             " booster has " + remaining + " left\n"
 
@@ -100,59 +72,11 @@ class hpapi():
                 game_n = " ".join(game)
                 game_name = game_n.lower().strip()
                 gameType = None
-
-                if game_name == "Quakecraft".lower():
-                    gameType = 2
-                    game_name = "Quakecraft"
-                elif game_name == "Walls".lower():
-                    gameType = 3
-                    game_name = "Walls"
-                elif game == "Paintball".lower():
-                    gameType = 4
-                    game_name = "Paintball"
-                elif game_name == "Blitz Survival Games".lower():
-                    gameType = 5
-                    game_name = "Blitz Survival Games"
-                elif game_name == "The TNT Games".lower():
-                    gameType = 6
-                    game_name = "The TNT Games"
-                elif game_name == "VampireZ".lower():
-                    gameType = 7
-                    game_name = "VampireZ"
-                elif game_name == "Mega Walls".lower():
-                    gameType = 13
-                    game_name = "Mega Walls"
-                elif game_name == "Arcade".lower():
-                    gameType = 14
-                    game_name = "Arcade"
-                elif game_name == "Arena Brawl".lower():
-                    gameType = 17
-                    game_name = "Arena Brawl"
-                elif game_name == "Cops and Crims".lower():
-                    gameType = 21
-                    game_name = "Cops and Crims"
-                elif game_name == "UHC Champions".lower():
-                    gameType = 20
-                    game_name = "UHC Champions"
-                elif game_name == "Warlords".lower():
-                    gameType = 23
-                    game_name = "Warlords"
-                elif game_name == "Smash Heroes".lower():
-                    gameType = 24
-                    game_name = "Smash Heroes"
-                elif game_name == "Turbo Kart Racers".lower():
-                    gameType = 25
-                    game_name = "Turbo Kart Racers"
-                elif game_name == "SkyWars".lower():
-                    gameType = 51
-                    game_name = "SkyWars"
-                elif game_name == "Crazy Walls".lower():
-                    gameType = 52
-                    game_name = "Crazy Walls"
-                elif game_name == "Speed UHC".lower():
-                    gameType = 54
-                    game_name = "Speed UHC"
-
+                for game in self.games:
+                    if game_name = game["name"].lower():
+                        game_name = game["name"]
+                        gameType = game["id"]
+                        break
                 for item in booster_list:
                     if item["length"] < item["originalLength"] and \
                             item["gameType"] == gameType:
@@ -246,13 +170,47 @@ def check_folder():
 
 
 def check_file():
+    f = "data/hpapi/hpapi.json"
+    games = 
+        [
+            {"id": 2, "name": "Quakecraft"},
+            {"id": 3, "name": "Walls"},
+            {"id": 4, "name": "Paintball"},
+            {"id": 5, "name": "Blitz Survival Games"},
+            {"id": 6, "name": "The TNT Games"},
+            {"id": 7, "name": "VampireZ"},
+            {"id": 13, "name": "Mega Walls"},
+            {"id": 14, "name": "Arcade"},
+            {"id": 17, "name": "Arena Brawl"},
+            {"id": 21, "name": "Cops and Crims"},
+            {"id": 20, "name": "UHC Champions"},
+            {"id": 23, "name": "Warlords"},
+            {"id": 24, "name": "Smash Heroes"},
+            {"id": 25, "name": "Turbo Kart Racers"},
+            {"id": 51, "name": "SkyWars"},
+            {"id": 52, "name": "Crazy Walls"},
+            {"id": 54, "name": "Speed UHC"}
+        ]
     data = {}
     data["API_KEY"] = ''
-    f = "data/hpapi/hpapi.json"
+    data["games"] = games
+        
     if not fileIO(f, "check"):
         print("Creating default hpapi.json...")
         fileIO(f, "save", data)
-
+    else:
+        cur_settings = fileIO(f, "load")
+        cur_games = cur_settings["games"]
+        for game in games:
+            game_exists = False
+            for g in cur_games:
+                if g["id"] == game["id"]:
+                    game_exists = True
+            if not game_exists:
+                cur_games.append(deepcopy(game))
+        print("Updating hpapi.json...")
+        cur_settings["games"] = cur_games
+        fileIO(f, save, cur_settings)
 
 def setup(bot):
     check_folder()
