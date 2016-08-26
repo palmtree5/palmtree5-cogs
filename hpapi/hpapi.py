@@ -32,7 +32,7 @@ class hpapi():
         time = dt.datetime.utcfromtimestamp(ms/1000)
         return time.strftime('%m-%d-%Y %H:%M:%S') + "\n"
 
-    @commands.group(pass_context=True, no_pm=True, name="hp")
+    @commands.group(pass_context=True, name="hp")
     async def _hpapi(self, ctx):
         """Get data from the Hypixel API"""
         if ctx.invoked_subcommand is None:
