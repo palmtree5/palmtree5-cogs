@@ -95,7 +95,7 @@ class Tweets():
     
 
     @commands.group(pass_context=True, name='tweetset')
-    @checks.is_owner()
+    @checks.admin_or_permissions(manage_server=True)
     async def _tweetset(self, ctx):
         """Command for setting required access information for the API"""
         if ctx.invoked_subcommand is None:
