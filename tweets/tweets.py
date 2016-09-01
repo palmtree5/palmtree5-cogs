@@ -12,7 +12,7 @@ import json
 from __main__ import send_cmd_help
 
 
-class TweetListener(tw.SteamListener):
+class TweetListener(tw.StreamListener):
 
     def on_status(self, status):
         message = status.user.name + ": " + status.text
