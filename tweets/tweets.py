@@ -130,6 +130,7 @@ class Tweets():
                 cur_terms = []
                 cur_terms.append(term_to_track)
                 settings["servers"] = {}
+                settings["servers"][ctx.message.server] = {}
                 settings["servers"][ctx.message.server]["terms"] = cur_terms
             fileIO(self.settings_file, "save", settings)
             await self.bot.say("Added the requested term!")
