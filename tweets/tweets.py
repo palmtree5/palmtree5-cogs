@@ -12,6 +12,13 @@ import json
 from __main__ import send_cmd_help
 
 
+class TweetListener(tw.SteamListener):
+
+    def on_status(self, status):
+        message = status.user.name + ": " + status.text
+        return message
+
+
 class Tweets():
 
     def __init__(self, bot):
@@ -26,6 +33,7 @@ class Tweets():
             self.access_token = settings['access_token']
         if 'access_secret' in list(settings.keys()):
             self.access_secret = settings['access_secret']
+        
 
     def authenticate(self):
         auth = tw.OAuthHandler(self.consumer_key, self.consumer_secret)
@@ -84,6 +92,7 @@ class Tweets():
             await self.bot.say("No username specified!")
             return
         await self.bot.say('```{}```'.format(message))
+    
 
     @commands.group(pass_context=True, name='tweetset')
     @checks.is_owner()
@@ -91,6 +100,57 @@ class Tweets():
         """Command for setting required access information for the API"""
         if ctx.invoked_subcommand is None:
             await send_cmd_help(ctx)
+
+    @_tweetset.group(pass_context=True, name="stream")
+    @checks.admin_or_permissions(manage_server=True)
+    async def _stream(self, ctx):
+        if ctx.invoked_subcommand is None:
+            await send_cmd_help(ctx)
+    
+
+    @_stream.group(pass_context=True, name="term")
+    @checks.admin_or_permissions(manage_server=True)
+    async def _term(self, ctx):
+        if ctx.invoked_subcommand is None:
+            await send_cmd_help(ctx)
+    
+
+    @_term.command(pass_context=True, name="add")
+    @checks.admin_or_permissions(manage_server=True)
+    async def _add(self, ctx, term_to_track):
+        if term_to_track is None:
+            await self.bot.say("I can't do that, silly!")
+        else:
+            settings = fileIO(self.settings_file, "load")
+            if ctx.message.server in settings:
+                cur_terms = settings["servers"][ctx.message.server]["terms"]
+                cur_terms.append(term_to_track)
+                settings["servers"][ctx.message.server]["terms"] = cur_terms
+            else:
+                cur_terms = []
+                cur_terms.append(term_to_track)
+                settings["servers"][ctx.message.server]["terms"] = cur_terms
+            fileIO(self.settings_file, "save", settings)
+            await self.bot.say("Added the requested term!")
+
+
+    @_term.command(pass_context=True, name="remove")
+    @checks.admin_or_permissions(manage_server=True)
+    async def _remove(self, ctx, term_to_remove):
+        settings = fileIO(self.settings_file, "load")
+        if term_to_remove is None:
+            await self.bot.say("You didn't specify a term to remove!")
+        elif term_to_remove == "all":
+            settings["servers"][ctx.message.server]["terms"] = []
+            fileIO(self.settings_file, "save", settings)
+            await self.bot.say("Cleared the tracking list!")
+        else:
+            cur_list = settings["servers"][ctx.message.server]["terms"]
+            cur_list.remove(term_to_remove)
+            settings["servers"][ctx.message.server]["terms"] = cur_list
+            fileIO(self.settings_file, "save", settings)
+            await self.bot.say("Removed the specified term!")
+
 
     @_tweetset.command(pass_context=True, name='consumerkey')
     @checks.is_owner()
