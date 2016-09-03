@@ -1,7 +1,7 @@
 {
     "AUTHOR" : "palmtree5",
     "INSTALL_MSG" : "[p]hp to see commands. Don't forget to set your key with [p]hp key <your_key>. If you need a key, log onto mc.hypixel.net and do /api",
-    "NAME" : "hpapi",
+    "NAME" : "Hpapi",
     "DISABLED" : false,
     "SHORT" : "Cog for getting info from the Hypixel API",
     "DESCRIPTION" : "Gets data from the Hypixel API including player stats, guild info, and active boosters"
