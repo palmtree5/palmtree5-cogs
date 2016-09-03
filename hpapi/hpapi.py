@@ -12,7 +12,7 @@ import json
 from __main__ import send_cmd_help
 
 
-class hpapi():
+class Hpapi():
     """Class for Hypixel API module for Red-DiscordBot"""
     def __init__(self, bot):
         self.bot = bot
@@ -215,5 +215,5 @@ def check_file():
 def setup(bot):
     check_folder()
     check_file()
-    n = hpapi(bot)
+    n = Hpapi(bot)
     bot.add_cog(n)
