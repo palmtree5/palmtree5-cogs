@@ -29,6 +29,7 @@ class Reddit():
         if settings["app_key"] and settings["app_secret"]:
             try:
                 self.r = praw.Reddit("RedBotRedditCog/v0.1 by /u/palmtree5")
+                print("Authorizing")
                 self.o = \
                     o2u.OAuth2Util(self.r, app_key=settings["app_key"],
                                 app_secret=settings["app_secret"],
@@ -36,6 +37,7 @@ class Reddit():
                                 refreshable=settings["refreshable"],
                                 configfile="data/reddit/oauth.ini",
                                 server_mode=settings["server_mode"])
+                print("Refreshing")
                 self.o.refresh(force=True)
             except praw.errors.OAuthException:
                 log.warning("Uh oh, something went wrong! Did you set the client \
