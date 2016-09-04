@@ -20,7 +20,7 @@ import logging
 log = logging.getLogger('red.reddit')
 
 
-class RedReddit():
+class Reddit():
 
     def __init__(self, bot):
         self.bot = bot
@@ -132,7 +132,7 @@ def setup(bot):
     check_folder()
     check_file()
     if prawInstalled and o2uInstalled:
-        n = RedReddit(bot)
+        n = Reddit(bot)
         bot.add_cog(n)
     elif prawInstalled and not o2uInstalled:
         raise RuntimeError("You need to do 'pip3 install praw-OAuth2Util'")
