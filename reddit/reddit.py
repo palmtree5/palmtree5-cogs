@@ -34,6 +34,7 @@ class Reddit():
                                app_secret=settings["app_secret"],
                                scope=settings["scope"],
                                refreshable=settings["refreshable"],
+                               configfile="data/reddit/oauth.ini"
                                server_mode=settings["server_mode"])
             self.o.refresh(force=True)
         except praw.errors.OAuthException:
