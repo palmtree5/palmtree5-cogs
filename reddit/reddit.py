@@ -26,22 +26,21 @@ class Reddit():
         self.bot = bot
         cfg_file = "./data/reddit/oauth.json"
         settings = fileIO(cfg_file, "load")
-        if settings["app_key"] and settings["app_secret"]:
-            try:
-                self.r = praw.Reddit("RedBotRedditCog/v0.1 by /u/palmtree5")
-                print("Authorizing")
-                self.o = \
-                    o2u.OAuth2Util(self.r, app_key=settings["app_key"],
-                                app_secret=settings["app_secret"],
-                                scope=settings["scope"],
-                                refreshable=settings["refreshable"],
-                                configfile="data/reddit/oauth.ini",
-                                server_mode=settings["server_mode"])
-                print("Refreshing")
-                self.o.refresh(force=True)
-            except praw.errors.OAuthException:
-                log.warning("Uh oh, something went wrong! Did you set the client \
-                    key and secret?")
+        try:
+            self.r = praw.Reddit("RedBotRedditCog/v0.1 by /u/palmtree5")
+            print("Authorizing")
+            self.o = \
+                o2u.OAuth2Util(self.r, app_key=settings["app_key"],
+                            app_secret=settings["app_secret"],
+                            scope=settings["scope"],
+                            refreshable=settings["refreshable"],
+                            configfile="data/reddit/oauth.ini",
+                            server_mode=settings["server_mode"])
+            print("Refreshing")
+            self.o.refresh(force=True)
+        except praw.errors.OAuthException:
+            log.warning("Uh oh, something went wrong! Did you set the client \
+                key and secret?")
 
     @commands.group(pass_context=True, no_pm=True, name="reddit")
     async def _reddit(self, ctx):

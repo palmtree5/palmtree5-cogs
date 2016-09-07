@@ -73,7 +73,7 @@ class Hpapi():
                 game_name = game_n.lower().strip()
                 gameType = None
                 for game in self.games:
-                    if game_name = game["name"].lower():
+                    if game_name == game["name"].lower():
                         game_name = game["name"]
                         gameType = game["id"]
                         break
