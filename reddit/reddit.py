@@ -1,7 +1,6 @@
 from discord.ext import commands
 from .utils import checks
 from .utils.dataIO import fileIO
-import discord
 try:
     import praw
     prawInstalled = True
