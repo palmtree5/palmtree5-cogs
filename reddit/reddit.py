@@ -11,9 +11,7 @@ try:
     o2uInstalled = True
 except:
     o2uInstalled = False
-import datetime as dt
 import os
-import configparser as c
 from __main__ import send_cmd_help
 import logging
 log = logging.getLogger('red.reddit')

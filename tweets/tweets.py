@@ -7,8 +7,6 @@ try:
 except:
     twInstalled = False
 import os
-import datetime
-import json
 from __main__ import send_cmd_help
 
 

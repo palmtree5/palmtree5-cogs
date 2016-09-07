@@ -3,12 +3,9 @@ from discord.ext import commands
 from .utils.dataIO import fileIO
 from .utils import checks
 import aiohttp
-import asyncio
-import hashlib
 import os
 from copy import deepcopy
 import datetime as dt
-import json
 from __main__ import send_cmd_help
 
 
