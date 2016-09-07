@@ -168,8 +168,7 @@ def check_folder():
 
 def check_file():
     f = "data/hpapi/hpapi.json"
-    games = 
-        [
+    games = [
             {"id": 2, "name": "Quakecraft"},
             {"id": 3, "name": "Walls"},
             {"id": 4, "name": "Paintball"},
@@ -191,7 +190,6 @@ def check_file():
     data = {}
     data["API_KEY"] = ''
     data["games"] = games
-        
     if not fileIO(f, "check"):
         print("Creating default hpapi.json...")
         fileIO(f, "save", data)
@@ -207,7 +205,7 @@ def check_file():
                 cur_games.append(deepcopy(game))
         print("Updating hpapi.json...")
         cur_settings["games"] = cur_games
-        fileIO(f, save, cur_settings)
+        fileIO(f, "save", cur_settings)
 
 def setup(bot):
     check_folder()
