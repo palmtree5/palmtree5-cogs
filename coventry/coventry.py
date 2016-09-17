@@ -1,6 +1,5 @@
 import discord
 from discord.ext import commands
-from .utils.dataIO import fileIO
 from .utils import checks
 from __main__ import send_cmd_help
 from __main__ import settings
@@ -11,7 +10,7 @@ class Coventry():
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.group(no_pm=True, name="coventry")
+    @commands.group(no_pm=True, pass_context=True, name="coventry")
     @checks.admin_or_permissions(manage_server=True)
     async def _coventry(self, ctx):
         """Commands for giving users their own private yelling space where
