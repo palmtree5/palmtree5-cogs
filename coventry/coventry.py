@@ -37,6 +37,7 @@ class Coventry():
                     if not is_mod_or_admin:
                         chrolename = usr.name + usr.discriminator
                         covrole = await self.bot.create_role(server, name=chrolename)
+                        await self.bot.add_roles(usr, covrole)
                         admin_role = discord.utils.get(server.roles, name=settings.get_server_admin(server))
                         mod_role = discord.utils.get(server.roles, name=settings.get_server_mod(server))
                         everyone_perms = discord.PermissionOverwrite(read_messages=False)
