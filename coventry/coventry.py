@@ -56,8 +56,5 @@ class Coventry():
 
 
 def setup(bot):
-    if mcstatusInstalled:
-        n = Mcsvr(bot)
-        bot.add_cog(n)
-    else:
-        raise RuntimeError("You need to do 'pip3 install mcstatus'")
+    n = Coventry(bot)
+    bot.add_cog(n)
