@@ -39,9 +39,9 @@ class Coventry():
                         covrole = await self.bot.create_role(server, name=chrolename)
                         admin_role = discord.utils.get(server.roles, name=settings.get_server_admin(server))
                         mod_role = discord.utils.get(server.roles, name=settings.get_server_mod(server))
-                        everyone_perms = discord.PermissionsOverwrite(read_messages=False)
-                        insilenced_perms = discord.PermissionsOverwrite(read_messages=True, send_messages=True)
-                        mod_admin_perms = discord.PermissionsOverwrite(read_messages=True, send_messages=True)
+                        everyone_perms = discord.PermissionOverwrite(read_messages=False)
+                        insilenced_perms = discord.PermissionOverwrite(read_messages=True, send_messages=True)
+                        mod_admin_perms = discord.PermissionOverwrite(read_messages=True, send_messages=True)
                         chn = await self.bot.create_channel(server, chrolename,\
                             (server.default_role, everyone_perms),\
                             (covrole, insilenced_perms),\
