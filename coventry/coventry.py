@@ -1,4 +1,5 @@
 import discord
+import asyncio
 from discord.ext import commands
 from .utils import checks
 from __main__ import send_cmd_help
@@ -43,11 +44,12 @@ class Coventry():
                         everyone_perms = discord.PermissionOverwrite(read_messages=False)
                         insilenced_perms = discord.PermissionOverwrite(read_messages=True, send_messages=True)
                         mod_admin_perms = discord.PermissionOverwrite(read_messages=True, send_messages=True)
-                        chn = yield from self.bot.create_channel(server, chrolename,\
+                        chn = await self.bot.create_channel(server, chrolename,\
                             (server.default_role, everyone_perms),\
                             (covrole, insilenced_perms),\
                             (mod_role, mod_admin_perms),\
                             (admin_role, mod_admin_perms))
+                        await asyncio.sleep(1)
                         for c in server.channels:
                             if c.name != chn.name:
                                 try:
