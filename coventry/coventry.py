@@ -18,7 +18,7 @@ class Coventry():
         if ctx.invoked_subcommand is None:
             await send_cmd_help(ctx)
 
-    @_coventry.command(no_pm=True, name="send")
+    @_coventry.command(no_pm=True, pass_context=True name="send")
     @checks.admin_or_permissions(manage_server=True)
     async def _send(self, ctx, user: discord.Member):
         """Send a user to Coventry"""
