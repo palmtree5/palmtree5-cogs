@@ -49,7 +49,10 @@ class Coventry():
                             (admin_role, mod_admin_perms))
                         for c in server.channels:
                             if c.name != chn.name:
-                                await self.bot.edit_channel_permissions(c, covrole, everyone_perms)
+                                try:
+                                    await self.bot.edit_channel_permissions(c, covrole, everyone_perms)
+                                except discord.errors.Forbidden:
+                                    pass
                 await self.bot.say("Done")
 
 
