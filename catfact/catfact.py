@@ -11,7 +11,7 @@ class Catfact():
     @commands.command(no_pm=True, pass_context=True, name="catfact")
     async def _catfact(self, ctx):
         """Gets a random cat fact"""
-        with aiohttp.get("http://catfacts-api.appspot.com/api/facts") as cfget:
+        async with aiohttp.get("http://catfacts-api.appspot.com/api/facts") as cfget:
             fact = await cfget.json()["fact"]
         await self.bot.say("Ok " + ctx.message.author + ", here is a cat fact.\n" + fact)
 
