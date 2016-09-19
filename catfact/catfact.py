@@ -18,5 +18,5 @@ class Catfact():
 
 
 def setup(bot):
-    n = Coventry(bot)
+    n = Catfact(bot)
     bot.add_cog(n)
