@@ -58,7 +58,30 @@ class Coventry():
                                     pass
                 await self.bot.say("Done")
 
-
+    @_coventry.command(no_pm=True, pass_context=True, name="retrieve")
+    @checks.admin_or_permissions(manage_server=True)
+    async def _retrieve(self, ctx, user: discord.Member):
+        """Retrieve a user from Coventry"""
+        server = ctx.message.server
+        if user is None:
+            await self.bot.say("Hey, you didn't specify a user!")
+        else:
+            for usr in ctx.message.mentions:
+                has_cov_role = False
+                cur_cov_role = usr.name + usr.discriminator
+                cov_role = None
+                for r in usr.roles:
+                    if r.name == cur_cov_role:
+                        has_cov_role = True
+                        cov_role = r
+                if has_cov_role:
+                    await self.bot.delete_role(server, cov_role)
+                    chn = None
+                    for c in list(server.channels):
+                        if c.name == cur_cov_role:
+                            chn = c
+                    await self.bot.delete_channel(chn)
+            await self.bot.say("Done")
 
 def setup(bot):
     n = Coventry(bot)
