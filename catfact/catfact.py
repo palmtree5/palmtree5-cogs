@@ -14,7 +14,7 @@ class Catfact():
         async with aiohttp.get("http://catfacts-api.appspot.com/api/facts") as cfget:
             fact_json = await cfget.json()
         fact = fact_json["facts"][0]
-        await self.bot.say("Ok @" + ctx.message.author.name + "#" + ctx.message.author.discriminator + ", here is a cat fact.\n" + fact)
+        await self.bot.say("Ok " + ctx.message.author + ", here is a cat fact.\n" + fact)
 
 
 
