@@ -82,7 +82,7 @@ class TicketSystem():
 
     @checks.serverowner_or_permissions(administrator=True)
     @commands.group(pass_context=True, name="ticketset")
-    async def ticketset(self, ctx):
+    async def _ticketset(self, ctx):
         """Settings for the ticket system"""
         if ctx.invoked_subcommand is None:
             await send_cmd_help(ctx)
