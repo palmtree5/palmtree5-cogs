@@ -170,7 +170,7 @@ def check_file():
     tickets_f = "data/ticketsystem/tickets.json"
     if not fileIO(tickets_f, "check"):
         print("Creating default tickets.json...")
-        fileIO(f, "save", data)
+        fileIO(tickets_f, "save", data)
 
 def setup(bot):
     check_folder()
