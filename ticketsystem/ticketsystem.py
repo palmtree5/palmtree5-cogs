@@ -105,7 +105,7 @@ class TicketSystem():
     @_addcat.command(pass_context=True, no_pm=True, name="mod")
     async def add_mod_cat(self, ctx, category_name):
         """Add a mod category"""
-        if ctx.message.server not in self.settings:
+        if ctx.message.server.id not in self.settings:
             await self.bot.say("The server owner has not set up the ticket system for this server!")
         else:
             await self.bot.say("Adding mod category " + category_name)
@@ -117,7 +117,7 @@ class TicketSystem():
     @_addcat.command(pass_context=True, no_pm=True, name="admin")
     async def add_admin_cat(self, ctx, category_name):
         """Add an admin category"""
-        if ctx.message.server not in self.settings:
+        if ctx.message.server.id not in self.settings:
             await self.bot.say("The server owner has not set up the ticket system for this server!")
         else:
             await self.bot.say("Adding admin category " + category_name)
