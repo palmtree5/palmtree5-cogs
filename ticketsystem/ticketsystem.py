@@ -80,8 +80,8 @@ class TicketSystem():
             self.tickets[str(server.id)]["tickets"].append(new_ticket)
             fileIO(self.ticketsfile, "save", self.tickets)
 
-        @checks.serverowner_or_permissions(administrator=True)
         @commands.group(pass_context=True, name="ticketset")
+        @checks.serverowner_or_permissions(administrator=True)
         async def _ticketset(self, ctx):
             """Settings for the ticket system"""
             if ctx.invoked_subcommand is None:
