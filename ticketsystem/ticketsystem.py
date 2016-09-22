@@ -3,6 +3,7 @@ from discord.ext import commands
 from .utils import checks
 from __main__ import send_cmd_help
 from .utils.dataIO import fileIO
+import os
 
 
 class TicketSystem():
