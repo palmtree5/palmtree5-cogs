@@ -8,7 +8,8 @@ import os
 
 class TicketSystem():
 
-    def __init__(self):
+    def __init__(self, bot):
+        self.bot = bot
         self.settingsfile = "data/ticketsystem/settings.json"
         self.ticketsfile = "data/ticketsystem/tickets.json"
         self.settings = fileIO(self.settingsfile, "load")
