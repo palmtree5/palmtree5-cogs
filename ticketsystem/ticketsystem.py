@@ -43,7 +43,7 @@ class TicketSystem():
             await self.bot.say("Try opening your ticket in a server!")
             return
         else:
-            if ctx.message.server not in self.tickets:
+            if ctx.message.server.id not in self.tickets:
                 await self.bot.say("The server owner has not set up the ticket system for this server!")
                 return
             server = ctx.message.server
