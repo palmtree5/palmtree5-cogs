@@ -48,9 +48,12 @@ class TicketSystem():
                 return
             server = ctx.message.server
             author = ctx.message.author
-            categories = settings[server.id]["categories"]
+            mod_cat = self.settings[server.id]["mod_categories"]
+            admin_cat = self.settings[server.id]["admin_categories"]
             categories_str = ""
-            for cat in categories:
+            for cat in mod_cat:
+                categories_str = categories_str + cat + ", "
+            for cat in admin_cat:
                 categories_str = categories_str + cat + ", "
             await self.bot.send_message(author, "You have requested to open a ticket. We will now proceed with that process.")
             await self.bot.send_message(author, "Please enter a title for your ticket: ")
@@ -65,7 +68,7 @@ class TicketSystem():
             if selected_cat is None:
                 await self.bot.send_message(author, "No input received. Ticket request cancelled")
                 return
-            elif selected_cat not in categories:
+            elif selected_cat not in mod_cat and selected_cat not in admin_cat:
                 await self.bot.send_message(author, "That is not a valid category. Cancelling request")
                 return
 
