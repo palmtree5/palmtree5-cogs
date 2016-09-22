@@ -80,79 +80,79 @@ class TicketSystem():
             self.tickets[str(server.id)]["tickets"].append(new_ticket)
             fileIO(self.ticketsfile, "save", self.tickets)
 
-        @commands.group(pass_context=True, name="ticketset")
-        @checks.serverowner_or_permissions(administrator=True)
-        async def ticketset(self, ctx):
-            """Settings for the ticket system"""
-            if ctx.invoked_subcommand is None:
-                await send_cmd_help(ctx)
+    @checks.serverowner_or_permissions(administrator=True)
+    @commands.group(pass_context=True, name="ticketset")
+    async def ticketset(self, ctx):
+        """Settings for the ticket system"""
+        if ctx.invoked_subcommand is None:
+            await send_cmd_help(ctx)
 
-        @checks.serverowner_or_permissions(administrator=True)
-        @_ticketset.group(pass_context=True, name="catset")
-        async def _catset(self, ctx):
-            """Category commands for a server"""
-            if ctx.invoked_subcommand is None:
-                await send_cmd_help(ctx)
+    @checks.serverowner_or_permissions(administrator=True)
+    @_ticketset.group(pass_context=True, name="catset")
+    async def _catset(self, ctx):
+        """Category commands for a server"""
+        if ctx.invoked_subcommand is None:
+            await send_cmd_help(ctx)
 
-        @checks.serverowner_or_permissions(administrator=True)
-        @_catset.group(pass_context=True, name="addcat")
-        async def _addcat(self, ctx):
-            """Commands for adding a category"""
-            if ctx.invoked_subcommand is None:
-                await send_cmd_help(ctx)
+    @checks.serverowner_or_permissions(administrator=True)
+    @_catset.group(pass_context=True, name="addcat")
+    async def _addcat(self, ctx):
+        """Commands for adding a category"""
+        if ctx.invoked_subcommand is None:
+            await send_cmd_help(ctx)
 
-        @checks.serverowner_or_permissions(administrator=True)
-        @_addcat.command(pass_context=True, no_pm=True, name="mod")
-        async def add_mod_cat(self, ctx, category_name):
-            """Add a mod category"""
-            if ctx.message.server not in self.settings:
-                await self.bot.say("The server owner has not set up the ticket system for this server!")
-            else:
-                await self.bot.say("Adding mod category " + category_name)
-                self.settings[str(ctx.message.server.id)]["mod_categories"].append(category_name)
-                fileIO(self.settingsfile, "save", self.settings)
-                await self.bot.say("Added mod category!")
-
-        @checks.serverowner_or_permissions(administrator=True)
-        @_addcat.command(pass_context=True, no_pm=True, name="admin")
-        async def add_admin_cat(self, ctx, category_name):
-            """Add an admin category"""
-            if ctx.message.server not in self.settings:
-                await self.bot.say("The server owner has not set up the ticket system for this server!")
-            else:
-                await self.bot.say("Adding admin category " + category_name)
-                self.settings[str(ctx.message.server.id)]["admin_categories"].append(category_name)
-                fileIO(self.settingsfile, "save", self.settings)
-                await self.bot.say("Added admin category!")
-
-        @checks.serverowner_or_permissions(administrator=True)
-        @_ticketset.command(pass_context=True, no_pm=True, name="initialize")
-        async def _initialize(self, ctx):
-            """Initialize ticket system for a server"""
-            server_id = ctx.message.server.id
-            await self.bot.say("Initializing ticket system for this server")
-            self.create_server(server_id)
-            await self.bot.say("Server initialized! Please see !ticketset catset for info on setting categories")
-
-        @checks.serverowner_or_permissions(administrator=True)
-        @_ticketset.command(pass_context=True, no_pm=True, name="modchannel")
-        async def set_mod_channel(self, ctx, channel : discord.Channel):
-            """Set the mod ticket channel"""
-            server_id = ctx.message.server.id
-            await self.bot.say("Setting mod channel")
-            self.settings[str(server_id)]["mod_ticket_channel"] = channel.name
+    @checks.serverowner_or_permissions(administrator=True)
+    @_addcat.command(pass_context=True, no_pm=True, name="mod")
+    async def add_mod_cat(self, ctx, category_name):
+        """Add a mod category"""
+        if ctx.message.server not in self.settings:
+            await self.bot.say("The server owner has not set up the ticket system for this server!")
+        else:
+            await self.bot.say("Adding mod category " + category_name)
+            self.settings[str(ctx.message.server.id)]["mod_categories"].append(category_name)
             fileIO(self.settingsfile, "save", self.settings)
-            await self.bot.say("Set the mod channel!")
+            await self.bot.say("Added mod category!")
 
-        @checks.serverowner_or_permissions(administrator=True)
-        @_ticketset.command(pass_context=True, no_pm=True, name="adminchannel")
-        async def set_admin_channel(self, ctx, channel : discord.Channel):
-            """Set the admin ticket channel"""
-            server_id = ctx.message.server.id
-            await self.bot.say("Setting admin channel")
-            self.settings[str(server_id)]["admin_ticket_channel"] = channel.name
+    @checks.serverowner_or_permissions(administrator=True)
+    @_addcat.command(pass_context=True, no_pm=True, name="admin")
+    async def add_admin_cat(self, ctx, category_name):
+        """Add an admin category"""
+        if ctx.message.server not in self.settings:
+            await self.bot.say("The server owner has not set up the ticket system for this server!")
+        else:
+            await self.bot.say("Adding admin category " + category_name)
+            self.settings[str(ctx.message.server.id)]["admin_categories"].append(category_name)
             fileIO(self.settingsfile, "save", self.settings)
-            await self.bot.say("Set the admin channel!")
+            await self.bot.say("Added admin category!")
+
+    @checks.serverowner_or_permissions(administrator=True)
+    @_ticketset.command(pass_context=True, no_pm=True, name="initialize")
+    async def _initialize(self, ctx):
+        """Initialize ticket system for a server"""
+        server_id = ctx.message.server.id
+        await self.bot.say("Initializing ticket system for this server")
+        self.create_server(server_id)
+        await self.bot.say("Server initialized! Please see !ticketset catset for info on setting categories")
+
+    @checks.serverowner_or_permissions(administrator=True)
+    @_ticketset.command(pass_context=True, no_pm=True, name="modchannel")
+    async def set_mod_channel(self, ctx, channel : discord.Channel):
+        """Set the mod ticket channel"""
+        server_id = ctx.message.server.id
+        await self.bot.say("Setting mod channel")
+        self.settings[str(server_id)]["mod_ticket_channel"] = channel.name
+        fileIO(self.settingsfile, "save", self.settings)
+        await self.bot.say("Set the mod channel!")
+
+    @checks.serverowner_or_permissions(administrator=True)
+    @_ticketset.command(pass_context=True, no_pm=True, name="adminchannel")
+    async def set_admin_channel(self, ctx, channel : discord.Channel):
+        """Set the admin ticket channel"""
+        server_id = ctx.message.server.id
+        await self.bot.say("Setting admin channel")
+        self.settings[str(server_id)]["admin_ticket_channel"] = channel.name
+        fileIO(self.settingsfile, "save", self.settings)
+        await self.bot.say("Set the admin channel!")
 
 def check_folder():
     if not os.path.exists("data/ticketsystem"):
