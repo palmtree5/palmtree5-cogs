@@ -31,7 +31,7 @@ class Tweets():
             self.access_token = settings['access_token']
         if 'access_secret' in list(settings.keys()):
             self.access_secret = settings['access_secret']
-        
+
 
     def authenticate(self):
         auth = tw.OAuthHandler(self.consumer_key, self.consumer_secret)
@@ -52,8 +52,8 @@ class Tweets():
             api = self.authenticate()
             user = api.get_user(username)
             message += "Info for " + user.screen_name + ":\n"
-            message += "Followers: " + user.followers_count + "\n"
-            message += "Friends: " + user.friends_count
+            message += "Followers: " + str(user.followers_count) + "\n"
+            message += "Friends: " + str(user.friends_count)
         else:
             message = "Uh oh, an error occurred somewhere!"
         await self.bot.say("```{}```".format(message))
@@ -90,7 +90,7 @@ class Tweets():
             await self.bot.say("No username specified!")
             return
         await self.bot.say('```{}```'.format(message))
-    
+
 
     @commands.group(pass_context=True, name='tweetset')
     @checks.admin_or_permissions(manage_server=True)
@@ -104,14 +104,14 @@ class Tweets():
     async def _stream(self, ctx):
         if ctx.invoked_subcommand is None:
             await send_cmd_help(ctx)
-    
+
 
     @_stream.group(pass_context=True, name="term")
     @checks.admin_or_permissions(manage_server=True)
     async def _term(self, ctx):
         if ctx.invoked_subcommand is None:
             await send_cmd_help(ctx)
-    
+
 
     @_term.command(pass_context=True, name="add")
     @checks.admin_or_permissions(manage_server=True)

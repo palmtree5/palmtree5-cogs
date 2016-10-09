@@ -1,4 +1,5 @@
 from discord.ext import commands
+from .utils import checks
 try:
     from mcstatus import MinecraftServer
     mcstatusInstalled = True
@@ -37,6 +38,18 @@ class Mcsvr():
         message = "Server version for " + server_ip + ":\n\n" + \
             str(server.version.name)
         await self.bot.say("```{}```".format(message))
+
+    @checks.admin_or_permissions(manage_server=True)
+    @commands.group(pass_context=True, name="mcsvrset")
+    async def _mcsvrset(self, ctx):
+        """Settings for being notified of server issues"""
+        if ctx.invoked_subcommand is None:
+            await send_cmd_help(ctx)
+
+    @checks.admin_or_permissions(manage_server=True)
+    @_mcsvrset.command(pass_context=True, name="chan")
+    async def set_chan(self, ctx, name):
+        pass
 
 
 def setup(bot):
