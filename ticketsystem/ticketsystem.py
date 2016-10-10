@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 from .utils import checks
 from __main__ import send_cmd_help
-from .utils.dataIO import fileIO
+from .utils.dataIO import dataIO
 import os
 
 
@@ -12,8 +12,8 @@ class TicketSystem():
         self.bot = bot
         self.settingsfile = "data/ticketsystem/settings.json"
         self.ticketsfile = "data/ticketsystem/tickets.json"
-        self.settings = fileIO(self.settingsfile, "load")
-        self.tickets = fileIO(self.ticketsfile, "load")
+        self.settings = dataIO.load_json(self.settingsfile)
+        self.tickets = dataIO.load_json(self.ticketsfile)
 
     def create_server(self, server_id):
         default_server_settings = {
@@ -27,9 +27,9 @@ class TicketSystem():
             "tickets": []
         }
         self.settings[str(server_id)] = default_server_settings
-        fileIO("data/ticketsystem/settings.json", "save", self.settings)
+        dataIO.save_json("data/ticketsystem/settings.json", self.settings)
         self.tickets[str(server_id)] = default_tickets
-        fileIO("data/ticketsystem/tickets.json", "save", self.tickets)
+        dataIO.save_json("data/ticketsystem/tickets.json", self.tickets)
 
     @commands.group(pass_context=True, name="ticket")
     async def _ticket(self, ctx):
@@ -81,7 +81,7 @@ class TicketSystem():
 
             new_ticket = {"title": title, "author": author.name, "category": selected_cat, "description": issue_desc, "open": True}
             self.tickets[str(server.id)]["tickets"].append(new_ticket)
-            fileIO(self.ticketsfile, "save", self.tickets)
+            dataIO.save_json(self.ticketsfile, self.tickets)
 
     @checks.serverowner_or_permissions(administrator=True)
     @commands.group(pass_context=True, name="ticketset")
@@ -113,7 +113,7 @@ class TicketSystem():
         else:
             await self.bot.say("Adding mod category " + category_name)
             self.settings[str(ctx.message.server.id)]["mod_categories"].append(category_name)
-            fileIO(self.settingsfile, "save", self.settings)
+            dataIO.save_json(self.settingsfile, self.settings)
             await self.bot.say("Added mod category!")
 
     @checks.serverowner_or_permissions(administrator=True)
@@ -125,7 +125,7 @@ class TicketSystem():
         else:
             await self.bot.say("Adding admin category " + category_name)
             self.settings[str(ctx.message.server.id)]["admin_categories"].append(category_name)
-            fileIO(self.settingsfile, "save", self.settings)
+            dataIO.save_json(self.settingsfile, self.settings)
             await self.bot.say("Added admin category!")
 
     @checks.serverowner_or_permissions(administrator=True)
@@ -144,7 +144,7 @@ class TicketSystem():
         server_id = ctx.message.server.id
         await self.bot.say("Setting mod channel")
         self.settings[str(server_id)]["mod_ticket_channel"] = channel.name
-        fileIO(self.settingsfile, "save", self.settings)
+        dataIO.save_json(self.settingsfile, self.settings)
         await self.bot.say("Set the mod channel!")
 
     @checks.serverowner_or_permissions(administrator=True)
@@ -154,7 +154,7 @@ class TicketSystem():
         server_id = ctx.message.server.id
         await self.bot.say("Setting admin channel")
         self.settings[str(server_id)]["admin_ticket_channel"] = channel.name
-        fileIO(self.settingsfile, "save", self.settings)
+        dataIO.save_json(self.settingsfile, self.settings)
         await self.bot.say("Set the admin channel!")
 
 def check_folder():
@@ -166,13 +166,13 @@ def check_folder():
 def check_file():
     f = "data/ticketsystem/settings.json"
     data = {}
-    if not fileIO(f, "check"):
+    if not dataIO.is_valid_json(f):
         print("Creating default settings.json...")
-        fileIO(f, "save", data)
+        dataIO.save_json(f, data)
     tickets_f = "data/ticketsystem/tickets.json"
-    if not fileIO(tickets_f, "check"):
+    if not dataIO.is_valid_json(tickets_f):
         print("Creating default tickets.json...")
-        fileIO(tickets_f, "save", data)
+        dataIO.save_json(tickets_f, data)
 
 def setup(bot):
     check_folder()

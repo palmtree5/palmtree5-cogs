@@ -1,6 +1,6 @@
 """Extension for Red-DiscordBot"""
 from discord.ext import commands
-from .utils.dataIO import fileIO
+from .utils.dataIO import dataIO
 from .utils import checks
 import aiohttp
 import os
@@ -14,7 +14,7 @@ class Hpapi():
     def __init__(self, bot):
         self.bot = bot
         self.settings_file = 'data/hpapi/hpapi.json'
-        settings = fileIO(self.settings_file, 'load')
+        settings = dataIO.load_json(self.settings_file)
         self.hpapi_key = settings['API_KEY']
         self.games = settings['games']
         self.payload = {}
@@ -153,10 +153,10 @@ class Hpapi():
     @checks.is_owner()
     async def _apikey(self, context, *key: str):
         """Sets the Hypixel API key - owner only"""
-        settings = fileIO(self.settings_file, "load")
+        settings = dataIO.load_json(self.settings_file)
         if key:
             settings['API_KEY'] = key[0]
-            fileIO(self.settings_file, "save", settings)
+            dataIO.save_json(self.settings_file, settings)
             await self.bot.say('```API key set```')
 
 
@@ -190,11 +190,11 @@ def check_file():
     data = {}
     data["API_KEY"] = ''
     data["games"] = games
-    if not fileIO(f, "check"):
+    if not dataIO.is_valid_json(f):
         print("Creating default hpapi.json...")
-        fileIO(f, "save", data)
+        dataIO.save_json(f, data)
     else:
-        cur_settings = fileIO(f, "load")
+        cur_settings = dataIO.load_json(f)
         cur_games = cur_settings["games"]
         for game in games:
             game_exists = False
@@ -205,7 +205,7 @@ def check_file():
                 cur_games.append(deepcopy(game))
         print("Updating hpapi.json...")
         cur_settings["games"] = cur_games
-        fileIO(f, "save", cur_settings)
+        dataIO.save_json(f, cur_settings)
 
 def setup(bot):
     check_folder()
