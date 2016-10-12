@@ -22,7 +22,7 @@ class Tweets():
     def __init__(self, bot):
         self.bot = bot
         self.settings_file = 'data/tweets/settings.json'
-        settings = dataIO.load_json(settings_file)
+        settings = dataIO.load_json(self.settings_file)
         if 'consumer_key' in list(settings.keys()):
             self.consumer_key = settings['consumer_key']
         if 'consumer_secret' in list(settings.keys()):
