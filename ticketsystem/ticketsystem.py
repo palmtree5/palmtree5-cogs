@@ -62,7 +62,7 @@ class TicketSystem():
                 await self.bot.send_message(author, "No input received. Ticket request cancelled")
                 return
 
-            await self.bot.send_message("Enter a category. Valid categories for this server are: " + categories_str[:-2])
+            await self.bot.send_message(author, "Enter a category. Valid categories for this server are: " + categories_str[:-2])
             selected_cat = await self.bot.wait_for_message(timeout=15, author=author)
 
             if selected_cat is None:
