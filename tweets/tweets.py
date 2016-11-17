@@ -7,7 +7,6 @@ try:
 except:
     twInstalled = False
 import os
-from __main__ import send_cmd_help
 
 
 class TweetListener(tw.StreamListener):
@@ -32,7 +31,6 @@ class Tweets():
         if 'access_secret' in list(settings.keys()):
             self.access_secret = settings['access_secret']
 
-
     def authenticate(self):
         auth = tw.OAuthHandler(self.consumer_key, self.consumer_secret)
         auth.set_access_token(self.access_token, self.access_secret)
@@ -42,7 +40,7 @@ class Tweets():
     async def _tweets(self, ctx):
         """Gets various information from Twitter's API"""
         if ctx.invoked_subcommand is None:
-            await send_cmd_help(ctx)
+            await self.bot.send_cmd_help(ctx)
 
     @_tweets.command(pass_context=True, no_pm=True, name='getuser')
     async def get_user(self, ctx, username: str):
@@ -79,7 +77,8 @@ class Tweets():
                 message += "Last " + str(cnt) + " tweets for " + \
                     username + ":\n\n"
             try:
-                for status in tw.Cursor(api.user_timeline, id=username).items(cnt):
+                for status in\
+                        tw.Cursor(api.user_timeline, id=username).items(cnt):
                     message += status.text
                     message += "\n\n"
             except tw.TweepError as e:
@@ -91,27 +90,24 @@ class Tweets():
             return
         await self.bot.say('```{}```'.format(message))
 
-
     @commands.group(pass_context=True, name='tweetset')
     @checks.admin_or_permissions(manage_server=True)
     async def _tweetset(self, ctx):
         """Command for setting required access information for the API"""
         if ctx.invoked_subcommand is None:
-            await send_cmd_help(ctx)
+            await self.bot.send_cmd_help(ctx)
 
     @_tweetset.group(pass_context=True, hidden=True, name="stream")
     @checks.admin_or_permissions(manage_server=True)
     async def _stream(self, ctx):
         if ctx.invoked_subcommand is None:
-            await send_cmd_help(ctx)
-
+            await self.bot.send_cmd_help(ctx)
 
     @_stream.group(pass_context=True, hidden=True, name="term")
     @checks.admin_or_permissions(manage_server=True)
     async def _term(self, ctx):
         if ctx.invoked_subcommand is None:
-            await send_cmd_help(ctx)
-
+            await self.bot.send_cmd_help(ctx)
 
     @_term.command(pass_context=True, hidden=True, name="add")
     @checks.admin_or_permissions(manage_server=True)
@@ -119,7 +115,7 @@ class Tweets():
         if term_to_track is None:
             await self.bot.say("I can't do that, silly!")
         else:
-            settings = fileIO(self.settings_file, "load")
+            settings = dataIO.load_json(self.settings_file)
             if ctx.message.server in settings:
                 cur_terms = settings["servers"][ctx.message.server]["terms"]
                 cur_terms.append(term_to_track)
@@ -130,27 +126,25 @@ class Tweets():
                 settings["servers"] = {}
                 settings["servers"][ctx.message.server] = {}
                 settings["servers"][ctx.message.server]["terms"] = cur_terms
-            fileIO(self.settings_file, "save", settings)
+            dataIO.save_json(self.settings_file, settings)
             await self.bot.say("Added the requested term!")
-
 
     @_term.command(pass_context=True, hidden=True, name="remove")
     @checks.admin_or_permissions(manage_server=True)
     async def _remove(self, ctx, term_to_remove):
-        settings = fileIO(self.settings_file, "load")
+        settings = dataIO.load_json(self.settings_file)
         if term_to_remove is None:
             await self.bot.say("You didn't specify a term to remove!")
         elif term_to_remove == "all":
             settings["servers"][ctx.message.server]["terms"] = []
-            fileIO(self.settings_file, "save", settings)
+            dataIO.save_json(self.settings_file, settings)
             await self.bot.say("Cleared the tracking list!")
         else:
             cur_list = settings["servers"][ctx.message.server]["terms"]
             cur_list.remove(term_to_remove)
             settings["servers"][ctx.message.server]["terms"] = cur_list
-            fileIO(self.settings_file, "save", settings)
+            dataIO.save_json(self.settings_file, settings)
             await self.bot.say("Removed the specified term!")
-
 
     @_tweetset.command(pass_context=True, name='consumerkey')
     @checks.is_owner()
@@ -204,18 +198,21 @@ class Tweets():
             message = "No access secret provided!"
         await self.bot.say('```{}```'.format(message))
 
+
 def check_folder():
     if not os.path.exists("data/tweets"):
         print("Creating data/tweets folder")
         os.makedirs("data/tweets")
 
+
 def check_file():
-    data = {'consumer_key': '', 'consumer_secret': '', \
-        'access_token': '', 'access_secret': ''}
+    data = {'consumer_key': '', 'consumer_secret': '',
+            'access_token': '', 'access_secret': ''}
     f = "data/tweets/settings.json"
     if not dataIO.is_valid_json(f):
         print("Creating default settings.json...")
         dataIO.save_json(f, data)
+
 
 def setup(bot):
     check_folder()

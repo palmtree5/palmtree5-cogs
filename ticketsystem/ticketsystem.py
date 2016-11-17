@@ -1,7 +1,6 @@
 import discord
 from discord.ext import commands
 from .utils import checks
-from __main__ import send_cmd_help
 from .utils.dataIO import dataIO
 import os
 
@@ -35,7 +34,7 @@ class TicketSystem():
     async def _ticket(self, ctx):
         """Commands for normal users to work with tickets"""
         if ctx.invoked_subcommand is None:
-            await send_cmd_help(ctx)
+            await self.bot.send_cmd_help(ctx)
 
     @_ticket.command(pass_context=True, name="open")
     async def _open(self, ctx):
@@ -88,21 +87,21 @@ class TicketSystem():
     async def _ticketset(self, ctx):
         """Settings for the ticket system"""
         if ctx.invoked_subcommand is None:
-            await send_cmd_help(ctx)
+            await self.bot.send_cmd_help(ctx)
 
     @checks.serverowner_or_permissions(administrator=True)
     @_ticketset.group(pass_context=True, name="catset")
     async def _catset(self, ctx):
         """Category commands for a server"""
         if ctx.invoked_subcommand is None:
-            await send_cmd_help(ctx)
+            await self.bot.send_cmd_help(ctx)
 
     @checks.serverowner_or_permissions(administrator=True)
     @_catset.group(pass_context=True, name="addcat")
     async def _addcat(self, ctx):
         """Commands for adding a category"""
         if ctx.invoked_subcommand is None:
-            await send_cmd_help(ctx)
+            await self.bot.send_cmd_help(ctx)
 
     @checks.serverowner_or_permissions(administrator=True)
     @_addcat.command(pass_context=True, no_pm=True, name="mod")

@@ -2,7 +2,6 @@ import discord
 import asyncio
 from discord.ext import commands
 from .utils import checks
-from __main__ import send_cmd_help
 from __main__ import settings
 
 
@@ -17,7 +16,7 @@ class Coventry():
         """Commands for giving users their own private yelling space where
            nobody but mods or admins can see their messages"""
         if ctx.invoked_subcommand is None:
-            await send_cmd_help(ctx)
+            await self.bot.send_cmd_help(ctx)
 
     @_coventry.command(no_pm=True, pass_context=True, name="send")
     @checks.admin_or_permissions(manage_server=True)

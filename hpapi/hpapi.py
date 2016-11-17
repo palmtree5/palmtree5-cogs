@@ -6,7 +6,6 @@ import aiohttp
 import os
 from copy import deepcopy
 import datetime as dt
-from __main__ import send_cmd_help
 
 
 class Hpapi():
@@ -33,7 +32,7 @@ class Hpapi():
     async def _hpapi(self, ctx):
         """Get data from the Hypixel API"""
         if ctx.invoked_subcommand is None:
-            await send_cmd_help(ctx)
+            await self.bot.send_cmd_help(ctx)
 
     @_hpapi.command(pass_context=True, no_pm=True, name='booster')
     async def _booster(self, ctx, *game: str):
