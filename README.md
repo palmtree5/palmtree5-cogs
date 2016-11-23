@@ -12,6 +12,6 @@ No extras for hpapi
 
 `mcstatus` for mcsvr
 
-`praw` and `praw-OAuth2Util` for reddit (still a work in progress)
-
 `tweepy` for tweets
+
+`stream-hostcheck` requires you to have set your Twitch client id via [p]streamset twitchtoken
