@@ -1,0 +1,8 @@
+{
+    "AUTHOR" : "palmtree5",
+    "INSTALL_MSG" : "[p]channelset to set the channel to check",
+    "NAME" : "StreamHostCheck",
+    "DISABLED" : false,
+    "SHORT" : "Cog for setting hosted channel",
+    "DESCRIPTION" : "Checks the specified channel for what channel that channel is hosting and sets the bot's status based on that"
+}
