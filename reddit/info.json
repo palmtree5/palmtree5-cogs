@@ -1,0 +1,8 @@
+{
+    "AUTHOR" : "palmtree5",
+    "INSTALL_MSG" : "[p]help Reddit to see commands. No additional dependencies needed.",
+    "NAME" : "Reddit",
+    "DISABLED" : false,
+    "SHORT" : "Cog for getting stuff from Reddit",
+    "DESCRIPTION" : "Gets posts, user info, etc from Reddit's API"
+}
