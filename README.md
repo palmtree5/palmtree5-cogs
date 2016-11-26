@@ -10,6 +10,8 @@ For assistance, post in the support_palmtree5-cogs channel in [the cog support s
 
 No extras for hpapi
 
+No extra libraries for reddit but it does require reactions to be allowed for navigation control
+
 `mcstatus` for mcsvr
 
 `tweepy` for tweets
