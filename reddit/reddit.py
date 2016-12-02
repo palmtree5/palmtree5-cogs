@@ -6,6 +6,7 @@ import aiohttp
 import asyncio
 import discord
 import os
+import time
 from datetime import datetime as dt
 
 numbs = {
@@ -40,6 +41,68 @@ class Reddit():
                 req_json = await req.json()
                 self.access_token = req_json["access_token"]
         await asyncio.sleep(3590)
+
+    async def modmail_check(self):
+        await asyncio.sleep(15)
+        for server in list(self.settings["modmail"].keys()):
+            current_sub = self.settings["modmail"][server]
+            cur_channel =\
+                discord.utils.get(self.bot.get_all_channels(), id=current_sub["channel"])
+            url =\
+                "https://oauth.reddit.com/r/" +\
+                "{}/about/message/inbox".format(current_sub["subreddit"])
+            headers = {
+                    "Authorization": "bearer " + self.access_token,
+                    "User-Agent": "Red-DiscordBotRedditCog/0.1 by /u/palmtree5"
+                }
+            async with aiohttp.get(url, headers=headers) as req:
+                resp_json = await req.json()
+            resp_json = resp_json["data"]["children"]
+            need_time_update = False
+            for message in resp_json:
+                if message["data"]["created_utc"] > current_sub["timestamp"]:
+                    need_time_update = True
+                    colour = ''.join([randchoice('0123456789ABCDEF') for x in range(6)])
+                    colour = int(colour, 16)
+                    created_at = dt.utcfromtimestamp(message["data"]["created_utc"])
+                    desc = "Created at " + created_at.strftime("%m/%d/%Y %H:%M:%S")
+                    em = discord.Embed(title=message["data"]["subject"],
+                                       colour=discord.Colour(value=colour),
+                                       url="https://reddit.com/r/"
+                                       + current_sub["subreddit"]
+                                       + "/about/message/inbox",
+                                       description="/r/"
+                                       + current_sub["subreddit"])
+                    em.add_field(name="Sent at (UTC)", value=desc)
+                    em.add_field(name="Author", value=message["data"]["author"])
+                    em.add_field(name="Message", value=message["data"]["body"])
+                    await self.bot.send_message(cur_channel, embed=em)
+                if message["data"]["replies"] != "":
+                    for m in message["data"]["replies"]["data"]["children"]:
+                        if m["data"]["created_utc"] > current_sub["timestamp"]:
+                            need_time_update = True
+                            colour = ''.join([randchoice('0123456789ABCDEF') for x in range(6)])
+                            colour = int(colour, 16)
+                            created_at = dt.utcfromtimestamp(m["data"]["created_utc"])
+                            desc = "Created at " + created_at.strftime("%m/%d/%Y %H:%M:%S")
+                            em = discord.Embed(title=m["data"]["subject"],
+                                               colour=discord.Colour(value=colour),
+                                               url="https://reddit.com/r/"
+                                               + current_sub["subreddit"]
+                                               + "/about/message/inbox",
+                                               description="/r/"
+                                               + current_sub["subreddit"])
+                            em.add_field(name="Sent at (UTC)", value=desc)
+                            em.add_field(name="Author", value=m["data"]["author"])
+                            em.add_field(name="Message", value=m["data"]["body"])
+                            await self.bot.send_message(cur_channel, embed=em)
+
+
+            if need_time_update:
+                current_sub["timestamp"] = int(time.time())
+                self.settings["modmail"][server] = current_sub
+                dataIO.save_json("data/reddit/settings.json", self.settings)
+        await asyncio.sleep(280)
 
     async def post_menu(self, ctx, post_list: list,
                         message: discord.Message=None,
@@ -109,7 +172,7 @@ class Reddit():
     async def _reddit(self, ctx):
         """Main Reddit command"""
         if ctx.invoked_subcommand is None:
-            self.bot.send_cmd_help(ctx)
+            await self.bot.send_cmd_help(ctx)
 
     @_reddit.command(pass_context=True, name="user")
     async def _user(self, ctx, username: str):
@@ -246,17 +309,71 @@ class Reddit():
             resp_json = resp_json["data"]["children"]
             await self.post_menu(ctx, resp_json, page=0, timeout=30)
 
-    @checks.is_owner()
+    @checks.admin_or_permissions(manage_server=True)
     @commands.group(pass_context=True, name="redditset")
     async def _redditset(self, ctx):
         """Commands for setting reddit settings"""
         if ctx.invoked_subcommand is None:
-            self.bot.send_cmd_help(ctx)
+            await self.bot.send_cmd_help(ctx)
+
+    @checks.admin_or_permissions(manage_server=True)
+    @_redditset.group(pass_context=True, name="modmail")
+    async def modmail(self, ctx):
+        """Commands for dealing with modmail settings"""
+        if ctx.invoked_subcommand is None:
+            await self.bot.send_cmd_help(ctx)
+
+    @checks.admin_or_permissions(manage_server=True)
+    @modmail.command(pass_context=True, name="enable")
+    async def enable_modmail(self, ctx, subreddit: str,
+                             channel: discord.Channel):
+        """Enable posting modmail to the specified channel"""
+        server = ctx.message.server
+        await self.bot.say("WARNING: Anybody with access to "
+                            + channel.mention + " will be able to see " +
+                            "your subreddit's modmail messages." +
+                            "Therefore you should make sure that only " +
+                            "your subreddit mods have access to that channel")
+        await asyncio.sleep(5)
+        url = "https://oauth.reddit.com/r/{}/about".format(subreddit)
+        headers = {
+                    "Authorization": "bearer " + self.access_token,
+                    "User-Agent": "Red-DiscordBotRedditCog/0.1 by /u/palmtree5"
+                  }
+        async with aiohttp.get(url, headers=headers) as req:
+            resp_json = await req.json()
+        resp_json = resp_json["data"]
+        if resp_json["user_is_moderator"]:
+            obj_to_add = {
+                "subreddit": subreddit,
+                "channel": channel.id,
+                "timestamp": int(time.time())
+            }
+            if "modmail" not in self.settings:
+                self.settings["modmail"] = {}
+            self.settings["modmail"][server.id] = obj_to_add
+            dataIO.save_json("data/reddit/settings.json", self.settings)
+            await self.bot.say("Enabled modmail for " + subreddit)
+        else:
+            await self.bot.say("I'm sorry, this user does not appear to be " +
+                               "a mod of that subreddit")
+
+    @checks.admin_or_permissions(manage_server=True)
+    @modmail.command(pass_context=True, name="disable")
+    async def disable_modmail(self, ctx):
+        """Disable modmail posting to discord"""
+        if ctx.message.server.id in list(self.settings.keys()):
+            del self.settings[ctx.message.server.id]
+            await self.bot.say("Disabled modmail posting for this server")
+        else:
+            await self.bot.say("It doesn't appear that modmail posting is " +
+                               "even enabled in this server right now")
 
     @checks.is_owner()
     @_redditset.command(pass_context=True, name="clientid")
     async def set_clientid(self, ctx, client_id):
         """Sets the client id for the application"""
+        self.bot.delete_message(ctx.message)
         self.settings["client_id"] = client_id
         dataIO.save_json("data/reddit/settings.json", self.settings)
 
@@ -264,6 +381,7 @@ class Reddit():
     @_redditset.command(pass_context=True, name="clientsecret")
     async def set_secret(self, ctx, client_secret):
         """Sets the client secret for the application"""
+        self.bot.delete_message(ctx.message)
         self.settings["client_secret"] = client_secret
         dataIO.save_json("data/reddit/settings.json", self.settings)
 
@@ -278,6 +396,7 @@ class Reddit():
     @_redditset.command(pass_context=True, name="password")
     async def set_password(self, ctx, password):
         """Sets the password for the application"""
+        self.bot.delete_message(ctx.message)
         self.settings["password"] = password
         dataIO.save_json("data/reddit/settings.json", self.settings)
 
@@ -295,7 +414,8 @@ def check_file():
                     "client_id": "",
                     "client_secret": "",
                     "username": "",
-                    "password": ""
+                    "password": "",
+                    "modmail": {}
                 }
         dataIO.save_json(f, data)
 
@@ -306,4 +426,5 @@ def setup(bot):
     n = Reddit(bot)
     loop = asyncio.get_event_loop()
     loop.create_task(n.get_access_token())
+    loop.create_task(n.modmail_check())
     bot.add_cog(n)
