@@ -265,6 +265,7 @@ class Reddit():
     @_redditset.command(pass_context=True, name="clientsecret")
     async def set_secret(self, ctx, client_secret):
         """Sets the client secret for the application"""
+        self.bot.delete_message(ctx.message)
         self.settings["client_secret"] = client_secret
         dataIO.save_json("data/reddit/settings.json", self.settings)
 
@@ -279,6 +280,7 @@ class Reddit():
     @_redditset.command(pass_context=True, name="password")
     async def set_password(self, ctx, password):
         """Sets the password for the application"""
+        self.bot.delete_message(ctx.message)
         self.settings["password"] = password
         dataIO.save_json("data/reddit/settings.json", self.settings)
 
