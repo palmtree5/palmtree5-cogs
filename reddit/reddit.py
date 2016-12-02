@@ -109,7 +109,7 @@ class Reddit():
     async def _reddit(self, ctx):
         """Main Reddit command"""
         if ctx.invoked_subcommand is None:
-            self.bot.send_cmd_help(ctx)
+            await self.bot.send_cmd_help(ctx)
 
     @_reddit.command(pass_context=True, name="user")
     async def _user(self, ctx, username: str):
@@ -251,7 +251,7 @@ class Reddit():
     async def _redditset(self, ctx):
         """Commands for setting reddit settings"""
         if ctx.invoked_subcommand is None:
-            self.bot.send_cmd_help(ctx)
+            await self.bot.send_cmd_help(ctx)
 
     @checks.is_owner()
     @_redditset.command(pass_context=True, name="clientid")
