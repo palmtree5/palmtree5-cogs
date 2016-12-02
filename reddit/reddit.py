@@ -7,6 +7,7 @@ import asyncio
 import discord
 import os
 from datetime import datetime as dt
+from __main__ import send_cmd_help
 
 numbs = {
     "next": "➡",
@@ -109,7 +110,7 @@ class Reddit():
     async def _reddit(self, ctx):
         """Main Reddit command"""
         if ctx.invoked_subcommand is None:
-            await self.bot.send_cmd_help(ctx)
+            await send_cmd_help(ctx)
 
     @_reddit.command(pass_context=True, name="user")
     async def _user(self, ctx, username: str):
@@ -146,7 +147,7 @@ class Reddit():
     async def _subreddit(self, ctx):
         """Commands for getting subreddits"""
         if ctx.invoked_subcommand is None:
-            await self.bot.send_cmd_help(ctx)
+            await send_cmd_help(ctx)
 
     @_subreddit.command(pass_context=True, name="info")
     async def subreddit_info(self, ctx, subreddit: str):
@@ -251,7 +252,7 @@ class Reddit():
     async def _redditset(self, ctx):
         """Commands for setting reddit settings"""
         if ctx.invoked_subcommand is None:
-            await self.bot.send_cmd_help(ctx)
+            await send_cmd_help(ctx)
 
     @checks.is_owner()
     @_redditset.command(pass_context=True, name="clientid")
