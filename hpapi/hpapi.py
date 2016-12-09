@@ -98,7 +98,7 @@ class Hpapi():
         url = "https://api.hypixel.net/player?key=" + \
             self.hpapi_key + "&name=" + name
 
-        data = self.get_json(url)
+        data = await self.get_json(url)
         if data["success"]:
             player_data = data["player"]
             message = "Player data for " + name + "\n"
