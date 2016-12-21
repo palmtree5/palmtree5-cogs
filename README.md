@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/palmtree5/palmtree5-cogs.svg?branch=master)](https://travis-ci.org/palmtree5/palmtree5-cogs)
+
 # palmtree5-cogs
 
 Various plugins for [Red-DiscordBot](https://github.com/Twentysix26/Red-DiscordBot)
