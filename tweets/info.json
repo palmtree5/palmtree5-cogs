@@ -4,5 +4,6 @@
     "NAME" : "Tweets",
     "DISABLED" : false,
     "SHORT" : "Cog for getting info from Twitter",
+    "REQUIREMENTS" : ["tweepy"], 
     "DESCRIPTION" : "Gets public information from Twitter's api"
 }
