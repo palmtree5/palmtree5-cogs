@@ -3,7 +3,7 @@ from discord.ext import commands
 
 
 class Catfact():
-
+    """A cog for getting a random cat fact"""
     def __init__(self, bot):
         self.bot = bot
 

@@ -6,7 +6,7 @@ import os
 
 
 class TicketSystem():
-
+    """A ticket system for the bot"""
     def __init__(self, bot):
         self.bot = bot
         self.settingsfile = "data/ticketsystem/settings.json"
@@ -38,6 +38,7 @@ class TicketSystem():
 
     @_ticket.command(pass_context=True, name="open")
     async def _open(self, ctx):
+        """Creates a new ticket"""
         if ctx.message.channel.is_private:
             await self.bot.say("Try opening your ticket in a server!")
             return

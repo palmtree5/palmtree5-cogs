@@ -13,6 +13,7 @@ except:
 
 
 class Mcsvr():
+    """Cog for getting info about a Minecraft server"""
     def __init__(self, bot):
         self.settings_file = "data/mcsvr/mcsvr.json"
         self.bot = bot

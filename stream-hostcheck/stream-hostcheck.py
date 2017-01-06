@@ -8,6 +8,7 @@ import discord
 
 
 class StreamHostCheck:
+    """Mirror a Twitch user's hosted channel to Discord"""
     def __init__(self, bot):
         self.bot = bot
         self.settingsfile = "data/stream-hostcheck/settings.json"

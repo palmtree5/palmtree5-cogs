@@ -19,7 +19,7 @@ numbs = {
 
 
 class Hpapi():
-    """Class for Hypixel API module for Red-DiscordBot"""
+    """Cog for getting info from Hypixel's API"""
     def __init__(self, bot):
         self.bot = bot
         self.settings_file = 'data/hpapi/hpapi.json'

@@ -34,7 +34,7 @@ class TweetListener(tw.StreamListener):
 
 
 class Tweets():
-    """Cog for displaying tweets"""
+    """Cog for displaying info from Twitter's API"""
     def __init__(self, bot):
         self.bot = bot
         self.settings_file = 'data/tweets/settings.json'
@@ -55,8 +55,8 @@ class Tweets():
         return tw.API(auth)
 
     async def tweet_menu(self, ctx, post_list: list,
-                        message: discord.Message=None,
-                        page=0, timeout: int=30):
+                         message: discord.Message=None,
+                         page=0, timeout: int=30):
         """menu control logic for this taken from
            https://github.com/Lunar-Dust/Dusty-Cogs/blob/master/menu/menu.py"""
         s = post_list[page]
@@ -103,7 +103,7 @@ class Tweets():
             else:
                 next_page = page + 1
             return await self.tweet_menu(ctx, post_list, message=message,
-                                        page=next_page, timeout=timeout)
+                                         page=next_page, timeout=timeout)
         elif react == "back":
             next_page = 0
             if page == 0:
@@ -111,7 +111,7 @@ class Tweets():
             else:
                 next_page = page - 1
             return await self.tweet_menu(ctx, post_list, message=message,
-                                        page=next_page, timeout=timeout)
+                                         page=next_page, timeout=timeout)
         else:
             return await\
                 self.bot.delete_message(message)
@@ -239,6 +239,7 @@ class Tweets():
     @_tweetset.command(pass_context=True, name='consumerkey')
     @checks.is_owner()
     async def set_consumer_key(self, ctx, cons_key):
+        """Sets the consumer key"""
         message = ""
         if cons_key is not None:
             settings = dataIO.load_json(self.settings_file)
@@ -252,6 +253,7 @@ class Tweets():
     @_tweetset.command(pass_context=True, name='consumersecret')
     @checks.is_owner()
     async def set_consumer_secret(self, ctx, cons_secret):
+        """Sets the consumer secret"""
         message = ""
         if cons_secret is not None:
             settings = dataIO.load_json(self.settings_file)
@@ -265,6 +267,7 @@ class Tweets():
     @_tweetset.command(pass_context=True, name='accesstoken')
     @checks.is_owner()
     async def set_access_token(self, ctx, token):
+        """Sets the access token"""
         message = ""
         if token is not None:
             settings = dataIO.load_json(self.settings_file)
@@ -278,6 +281,7 @@ class Tweets():
     @_tweetset.command(pass_context=True, name='accesssecret')
     @checks.is_owner()
     async def set_access_secret(self, ctx, secret):
+        """Sets the access secret"""
         message = ""
         if secret is not None:
             settings = dataIO.load_json(self.settings_file)

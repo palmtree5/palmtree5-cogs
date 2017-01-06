@@ -17,7 +17,7 @@ numbs = {
 
 
 class Reddit():
-
+    """Cog for getting things from Reddit's API"""
     def __init__(self, bot):
         self.bot = bot
         self.settings = dataIO.load_json("data/reddit/settings.json")
@@ -259,7 +259,7 @@ class Reddit():
 
     @_subreddit.command(pass_context=True, name="new")
     async def subreddit_new(self, ctx, subreddit: str, post_count: int=3):
-        """Command for getting subreddit's hot posts"""
+        """Command for getting subreddit's new posts"""
         if post_count <= 0 or post_count > 100:
             await self.bot.say("Sorry, I can't do that")
         else:
@@ -275,7 +275,7 @@ class Reddit():
             await self.post_menu(ctx, resp_json, page=0, timeout=30)
     @_subreddit.command(pass_context=True, name="top")
     async def subreddit_top(self, ctx, subreddit: str, post_count: int=3):
-        """Command for getting subreddit's hot posts"""
+        """Command for getting subreddit's top posts"""
         if post_count <= 0 or post_count > 100:
             await self.bot.say("Sorry, I can't do that")
         else:
@@ -293,7 +293,7 @@ class Reddit():
     @_subreddit.command(pass_context=True, name="controversial")
     async def subreddit_controversial(self, ctx, subreddit: str,
                                       post_count: int=3):
-        """Command for getting subreddit's hot posts"""
+        """Command for getting subreddit's controversial posts"""
         if post_count <= 0 or post_count > 100:
             await self.bot.say("Sorry, I can't do that")
         else:

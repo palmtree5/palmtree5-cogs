@@ -6,7 +6,8 @@ from __main__ import settings
 
 
 class Coventry():
-
+    """A cog for giving users their own little space to yell where
+       nobody else can hear what they're saying"""
     def __init__(self, bot):
         self.bot = bot
 
