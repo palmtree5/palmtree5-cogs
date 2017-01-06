@@ -1,11 +1,21 @@
 """Extension for Red-DiscordBot"""
 from discord.ext import commands
+import discord
+from random import choice as randchoice
 from .utils.dataIO import dataIO
 from .utils import checks
 import aiohttp
 import os
 from copy import deepcopy
-import datetime as dt
+from datetime import datetime as dt
+import datetime
+
+
+numbs = {
+    "next": "➡",
+    "back": "⬅",
+    "exit": "❌"
+}
 
 
 class Hpapi():
@@ -25,8 +35,68 @@ class Hpapi():
         return ret
 
     def get_time(self, ms):
-        time = dt.datetime.utcfromtimestamp(ms/1000)
+        time = dt.utcfromtimestamp(ms/1000)
         return time.strftime('%m-%d-%Y %H:%M:%S') + "\n"
+
+    async def booster_menu(self, ctx, booster_list: list,
+                           message: discord.Message=None,
+                           page=0, timeout: int=30):
+        """menu control logic for this taken from
+           https://github.com/Lunar-Dust/Dusty-Cogs/blob/master/menu/menu.py"""
+        s = booster_list[page]
+        colour =\
+            ''.join([randchoice('0123456789ABCDEF')
+                     for x in range(6)])
+        colour = int(colour, 16)
+        created_at = dt.utcfromtimestamp(s["dateActivated"])
+        created_at = created_at.strftime("%Y-%m-%d %H:%M:%S")
+        post_url = "https://www.hypixel.net"
+        desc = "Activated at " + created_at
+        em = discord.Embed(title="Booster info",
+                           colour=discord.Colour(value=colour),
+                           url=post_url,
+                           description=desc)
+        em.add_field(name="Game", value=s["game"])
+        em.add_field(name="Purchaser", value=str(s["purchaser"]))
+        em.add_field(name="Remaining time", value=s["remaining"])
+        if not message:
+            message =\
+                await self.bot.send_message(ctx.message.channel, embed=em)
+            await self.bot.add_reaction(message, "⬅")
+            await self.bot.add_reaction(message, "❌")
+            await self.bot.add_reaction(message, "➡")
+        else:
+            message = await self.bot.edit_message(message, embed=em)
+        react = await self.bot.wait_for_reaction(
+            message=message, user=ctx.message.author, timeout=timeout,
+            emoji=["➡", "⬅", "❌"]
+        )
+        if react is None:
+            await self.bot.remove_reaction(message, "⬅", self.bot.user)
+            await self.bot.remove_reaction(message, "❌", self.bot.user)
+            await self.bot.remove_reaction(message, "➡", self.bot.user)
+            return None
+        reacts = {v: k for k, v in numbs.items()}
+        react = reacts[react.reaction.emoji]
+        if react == "next":
+            next_page = 0
+            if page == len(booster_list) - 1:
+                next_page = 0  # Loop around to the first item
+            else:
+                next_page = page + 1
+            return await self.booster_menu(ctx, booster_list, message=message,
+                                           page=next_page, timeout=timeout)
+        elif react == "back":
+            next_page = 0
+            if page == 0:
+                next_page = len(booster_list) - 1  # Loop around to the last item
+            else:
+                next_page = page - 1
+            return await self.booster_menu(ctx, booster_list, message=message,
+                                           page=next_page, timeout=timeout)
+        else:
+            return await\
+                self.bot.delete_message(message)
 
     @commands.group(pass_context=True, name="hp")
     async def _hpapi(self, ctx):
@@ -48,21 +118,28 @@ class Hpapi():
         if data["success"]:
             booster_list = data["boosters"]
             if not game:
-                for item in booster_list:
-                    if item["length"] < item["originalLength"]:
-                        game_name = ""
-                        remaining = \
-                            str(dt.timedelta(seconds=item["length"]))
-                        name_url = "https://api.mojang.com/user/profiles/" \
-                            + item["purchaserUuid"] + "/names"
-                        name_data = await self.get_json(name_url)
-                        name = name_data[-1]["name"]
-                        for game in self.games:
-                            if item["gameType"] == game["id"]:
-                                game_name = game["name"]
-                                break
-                        message += name + "\'s " + game_name + \
-                            " booster has " + remaining + " left\n"
+                modified_list = []
+                l = [i for i in booster_list if i["length"] < i["originalLength"]]
+                for item in l:
+                    game_name = ""
+                    remaining = \
+                        str(datetime.timedelta(seconds=item["length"]))
+                    name_url = "https://api.mojang.com/user/profiles/" \
+                        + item["purchaserUuid"] + "/names"
+                    name_data = await self.get_json(name_url)
+                    name = name_data[-1]["name"]
+                    for game in self.games:
+                        if item["gameType"] == game["id"]:
+                            game_name = game["name"]
+                            break
+                    cur_item = {
+                        "dateActivated": item["dateActivated"]/1000,
+                        "game": game_name,
+                        "purchaser": name,
+                        "remaining": item["length"]
+                    }
+                    modified_list.append(cur_item)
+                await self.booster_menu(ctx, modified_list, page=0, timeout=30)
 
             else:
                 game_n = " ".join(game)
@@ -77,18 +154,32 @@ class Hpapi():
                     if item["length"] < item["originalLength"] and \
                             item["gameType"] == gameType:
                         remaining = \
-                           str(dt.timedelta(seconds=item["length"]))
+                           str(datetime.timedelta(seconds=item["length"]))
                         name_get_url = \
                             "https://api.mojang.com/user/profiles/" + \
                             item["purchaserUuid"] + "/names"
 
-                        name_data = self.get_json(name_get_url)
+                        name_data = await self.get_json(name_get_url)
                         name = name_data[-1]["name"]
-                        message += name + "\'s " + game_name + \
-                            " booster has " + remaining + " left\n"
+                        colour =\
+                            ''.join([randchoice('0123456789ABCDEF')
+                                     for x in range(6)])
+                        colour = int(colour, 16)
+                        created_at = dt.utcfromtimestamp(item["dateActivated"]/1000)
+                        created_at = created_at.strftime("%Y-%m-%d %H:%M:%S")
+                        post_url = "https://www.hypixel.net"
+                        desc = "Activated at " + created_at
+                        em = discord.Embed(title="Booster info",
+                                           colour=discord.Colour(value=colour),
+                                           url=post_url,
+                                           description=desc)
+                        em.add_field(name="Game", value=game_name)
+                        em.add_field(name="Purchaser", value=name)
+                        em.add_field(name="Remaining time", value=item["length"])
+                        await self.bot.send_message(ctx.message.channel, embed=em)
         else:
             message = "An error occurred in getting the data"
-        await self.bot.say('```{}```'.format(message))
+            await self.bot.say('```{}```'.format(message))
 
     @_hpapi.command(pass_context=True, name='player')
     async def _player(self, ctx, name):
@@ -101,52 +192,106 @@ class Hpapi():
         data = await self.get_json(url)
         if data["success"]:
             player_data = data["player"]
-            message = "Player data for " + name + "\n"
+            title = "Player data for " + name + ""
+            colour =\
+                ''.join([randchoice('0123456789ABCDEF')
+                         for x in range(6)])
+            colour = int(colour, 16)
+            em = discord.Embed(title=title,
+                               colour=discord.Colour(value=colour),
+                               url="https://hypixel.net/player/{}".format(name),
+                               description="Retrieved at {} UTC".format(dt.utcnow().strftime("%Y-%m-%d %H:%M:%S")))
             if "buildTeam" in player_data:
                 if player_data["buildTeam"] is True:
-                    message += "Rank: Build Team\n"
+                    rank = "Build Team"
             elif "rank" in player_data:
                 if player_data["rank"] == "ADMIN":
-                    message += "Rank: Admin\n"
+                    rank = "Admin"
                 elif player_data["rank"] == "MODERATOR":
-                    message += "Rank: Moderator\n"
+                    rank = "Moderator"
                 elif player_data["rank"] == "HELPER":
-                    message += "Rank: Helper\n"
+                    rank = "Helper"
             elif "newPackageRank" in player_data:
                 if player_data["newPackageRank"] == "MVP_PLUS":
-                    message += "Rank: MVP+\n"
+                    rank = "MVP+"
                 elif player_data["newPackageRank"] == "MVP":
-                    message += "Rank: MVP\n"
+                    rank = "MVP"
                 elif player_data["newPackageRank"] == "VIP_PLUS":
-                    message += "Rank: VIP+\n"
+                    rank = "VIP+"
                 elif player_data["newPackageRank"] == "VIP":
-                    message += "Rank: VIP\n"
+                    rank = "VIP"
             elif "packageRank" in player_data:
                 if player_data["packageRank"] == "MVP_PLUS":
-                    message += "Rank: MVP+\n"
+                    rank = "MVP+"
                 elif player_data["packageRank"] == "MVP":
-                    message += "Rank: MVP\n"
+                    rank = "MVP"
                 elif player_data["packageRank"] == "VIP_PLUS":
-                    message += "Rank: VIP+\n"
+                    rank = "VIP+"
                 elif player_data["packageRank"] == "VIP":
-                    message += "Rank: VIP\n"
+                    rank = "VIP"
             elif bool(player_data):
-                message += "Rank: None\n"
+                rank += "None"
             else:
                 message = "That player has never logged into Hypixel"
-            message += "Level: " + str(player_data["networkLevel"]) + "\n"
-            message += "First login (UTC): " + \
-                self.get_time(player_data["firstLogin"]) + "\n"
-            message += "Last login (UTC): " + \
-                self.get_time(player_data["lastLogin"]) + "\n"
+                await self.bot.say('```{}```'.format(message))
+                return
+            em.add_field(name="Rank", value=rank)
+            level = str(player_data["networkLevel"])
+            em.add_field(name="Level", value=level)
             if "vanityTokens" in player_data:
-                message += "Credits: " + str(player_data["vanityTokens"]) \
-                    + "\n"
-            else:
-                message += "Credits: 0\n"
+                tokens = str(player_data["vanityTokens"])
+                em.add_field(name="Credits", value=tokens)
+            first_login = self.get_time(player_data["firstLogin"])
+            em.add_field(name="First login", value=first_login, inline=False)
+            last_login = self.get_time(player_data["lastLogin"])
+            em.add_field(name="Last login", value=last_login, inline=False)
+            await self.bot.send_message(ctx.message.channel, embed=em)
         else:
             message = "An error occurred in getting the data."
-        await self.bot.say('```{}```'.format(message))
+            await self.bot.say('```{}```'.format(message))
+
+    @_hpapi.command(pass_context=True, name='guild')
+    async def get_guild(self, ctx, player_name: str):
+        """Gets guild info based on the specified player"""
+        uuid_json = await self.get_json(
+            "https://api.mojang.com/users/profiles/minecraft/{}".format(
+                player_name
+            )
+        )
+        guild_find_url =\
+            "https://api.hypixel.net/findGuild?key={}&byUuid={}".format(
+                self.hpapi_key,
+                uuid_json["id"]
+            )
+        guild_find_json = await self.get_json(guild_find_url)
+        if not guild_find_json["guild"]:
+            await self.bot.say("The specified player does not appear to "
+                               "be in a guild")
+            return
+        guild_id = guild_find_json["guild"]
+        guild_get_url = "https://api.hypixel.net/guild?key={}&id={}".format(
+            self.hpapi_key,
+            guild_id
+        )
+        guild = await self.get_json(guild_get_url)
+        guild = guild["guild"]
+        guildmaster_uuid = [m for m in guild["members"] if m["rank"] == "GUILDMASTER"][0]["uuid"]
+        guildmaster_lookup = await self.get_json("https://api.mojang.com/user/profiles/{}/names".format(guildmaster_uuid))
+        guildmaster = guildmaster_lookup[-1]["name"]
+        colour =\
+            ''.join([randchoice('0123456789ABCDEF')
+                     for x in range(6)])
+        colour = int(colour, 16)
+        em = discord.Embed(title=guild["name"],
+                           colour=discord.Colour(value=colour),
+                           url="https://hypixel.net/player/{}".format(player_name),
+                           description="Created at {} UTC".format(dt.utcfromtimestamp(guild["created"]/1000).strftime("%Y-%m-%d %H:%M:%S")))
+        em.add_field(name="Guildmaster", value=guildmaster, inline=False)
+        em.add_field(name="Guild coins", value=guild["coins"])
+        em.add_field(name="Member count", value=str(len(guild["members"])))
+        em.add_field(name="Officer count", value=str(len([m for m in guild["members"] if m["rank"] == "OFFICER"])))
+
+        await self.bot.send_message(ctx.message.channel, embed=em)
 
     @_hpapi.command(pass_context=True, name='key')
     @checks.is_owner()
@@ -168,24 +313,25 @@ def check_folder():
 def check_file():
     f = "data/hpapi/hpapi.json"
     games = [
-            {"id": 2, "name": "Quakecraft"},
-            {"id": 3, "name": "Walls"},
-            {"id": 4, "name": "Paintball"},
-            {"id": 5, "name": "Blitz Survival Games"},
-            {"id": 6, "name": "The TNT Games"},
-            {"id": 7, "name": "VampireZ"},
-            {"id": 13, "name": "Mega Walls"},
-            {"id": 14, "name": "Arcade"},
-            {"id": 17, "name": "Arena Brawl"},
-            {"id": 21, "name": "Cops and Crims"},
-            {"id": 20, "name": "UHC Champions"},
-            {"id": 23, "name": "Warlords"},
-            {"id": 24, "name": "Smash Heroes"},
-            {"id": 25, "name": "Turbo Kart Racers"},
-            {"id": 51, "name": "SkyWars"},
-            {"id": 52, "name": "Crazy Walls"},
-            {"id": 54, "name": "Speed UHC"}
-        ]
+        {"id": 2, "name": "Quakecraft"},
+        {"id": 3, "name": "Walls"},
+        {"id": 4, "name": "Paintball"},
+        {"id": 5, "name": "Blitz Survival Games"},
+        {"id": 6, "name": "The TNT Games"},
+        {"id": 7, "name": "VampireZ"},
+        {"id": 13, "name": "Mega Walls"},
+        {"id": 14, "name": "Arcade"},
+        {"id": 17, "name": "Arena Brawl"},
+        {"id": 21, "name": "Cops and Crims"},
+        {"id": 20, "name": "UHC Champions"},
+        {"id": 23, "name": "Warlords"},
+        {"id": 24, "name": "Smash Heroes"},
+        {"id": 25, "name": "Turbo Kart Racers"},
+        {"id": 51, "name": "SkyWars"},
+        {"id": 52, "name": "Crazy Walls"},
+        {"id": 54, "name": "Speed UHC"},
+        {"id": 55, "name": "SkyClash"}
+    ]
     data = {}
     data["API_KEY"] = ''
     data["games"] = games
@@ -194,16 +340,8 @@ def check_file():
         dataIO.save_json(f, data)
     else:
         cur_settings = dataIO.load_json(f)
-        cur_games = cur_settings["games"]
-        for game in games:
-            game_exists = False
-            for g in cur_games:
-                if g["id"] == game["id"]:
-                    game_exists = True
-            if not game_exists:
-                cur_games.append(deepcopy(game))
         print("Updating hpapi.json...")
-        cur_settings["games"] = cur_games
+        cur_settings["games"] = games
         dataIO.save_json(f, cur_settings)
 
 def setup(bot):
