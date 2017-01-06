@@ -129,12 +129,29 @@ class Tweets():
         if username is not None:
             api = self.authenticate()
             user = api.get_user(username)
-            message += "Info for " + user.screen_name + ":\n"
-            message += "Followers: " + str(user.followers_count) + "\n"
-            message += "Friends: " + str(user.friends_count)
+
+            colour =\
+                ''.join([randchoice('0123456789ABCDEF')
+                     for x in range(6)])
+            colour = int(colour, 16)
+            url = "https://twitter.com/" + user.screen_name
+            emb = discord.Embed(title=user.name,
+                                colour=discord.Colour(value=colour),
+                                url=url,
+                                description=user.description)
+            emb.set_thumbnail(url=user.profile_image_url)
+            emb.add_field(name="Followers", value=user.followers_count)
+            emb.add_field(name="Friends", value=user.friends_count)
+            if user.verified:
+                emb.add_field(name="Verified", value="Yes")
+            else:
+                emb.add_field(name="Verified", value="No")
+            footer = "Created at " + user.created_at.strftime("%Y-%m-%d %H:%M:%S")
+            emb.set_footer(text=footer)
+            await self.bot.send_message(ctx.message.channel, embed=emb)
         else:
             message = "Uh oh, an error occurred somewhere!"
-        await self.bot.say("```{}```".format(message))
+            await self.bot.say(message)
 
     @_tweets.command(pass_context=True, no_pm=True, name='gettweets')
     async def get_tweets(self, ctx, username: str, count: int):
