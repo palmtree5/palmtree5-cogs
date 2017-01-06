@@ -293,6 +293,25 @@ class Hpapi():
 
         await self.bot.send_message(ctx.message.channel, embed=em)
 
+    @_hpapi.command(pass_context=True, name="session")
+    async def _session(self, ctx, player_name: str):
+        """Shows player session status"""
+        uuid_url = "https://api.mojang.com/users/profiles/minecraft/{}".format(player_name)
+        uuid = await self.get_json(uuid_url)
+        uuid = uuid["id"]
+        session_url = "https://api.hypixel.net/session?key={}&uuid={}".format(self.hpapi_key, uuid)
+        session_json = await self.get_json(session_url)
+        if session_json["session"]:
+            await\
+                self.bot.say(
+                    "{} is online in {}. There are {} players there".format(
+                        player_name,
+                        session_json["session"]["server"],
+                        str(len(session_json["session"]["players"]))
+                    )
+                )
+        else:
+            await self.bot.say("That player does not appear to be online!")
     @_hpapi.command(pass_context=True, name='key')
     @checks.is_owner()
     async def _apikey(self, context, *key: str):
