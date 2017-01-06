@@ -1,4 +1,7 @@
+from random import choice as randchoice
+from datetime import datetime as dt
 from discord.ext import commands
+import discord
 from .utils.dataIO import dataIO
 from .utils import checks
 try:
@@ -9,15 +12,29 @@ except:
 import os
 
 
+numbs = {
+    "next": "➡",
+    "back": "⬅",
+    "exit": "❌"
+}
+
+
 class TweetListener(tw.StreamListener):
 
     def on_status(self, status):
-        message = status.user.name + ": " + status.text
+        message = {
+            "name": status.user.name,
+            "status": status.text,
+            "created_at": status.created_at,
+            "screen_name": status.user.screen_name,
+            "status_id": status.id,
+            "retweets": status.retweet_count
+        }
         return message
 
 
 class Tweets():
-
+    """Cog for displaying tweets"""
     def __init__(self, bot):
         self.bot = bot
         self.settings_file = 'data/tweets/settings.json'
@@ -32,9 +49,72 @@ class Tweets():
             self.access_secret = settings['access_secret']
 
     def authenticate(self):
+        """Authenticate with Twitter's API"""
         auth = tw.OAuthHandler(self.consumer_key, self.consumer_secret)
         auth.set_access_token(self.access_token, self.access_secret)
         return tw.API(auth)
+
+    async def tweet_menu(self, ctx, post_list: list,
+                        message: discord.Message=None,
+                        page=0, timeout: int=30):
+        """menu control logic for this taken from
+           https://github.com/Lunar-Dust/Dusty-Cogs/blob/master/menu/menu.py"""
+        s = post_list[page]
+        colour =\
+            ''.join([randchoice('0123456789ABCDEF')
+                     for x in range(6)])
+        colour = int(colour, 16)
+        created_at = s.created_at
+        created_at = created_at.strftime("%Y-%m-%d %H:%M:%S")
+        post_url =\
+            "https://twitter.com/{}/status/{}".format(s.user.screen_name, s.id)
+        desc = "Created at: {}".format(created_at)
+        em = discord.Embed(title="Tweet by {}".format(s.user.name),
+                           colour=discord.Colour(value=colour),
+                           url=post_url,
+                           description=desc)
+        em.add_field(name="Text", value=s.text)
+        em.add_field(name="Retweet count", value=str(s.retweet_count))
+        if hasattr(s, "extended_entities"):
+            em.set_image(url=s.extended_entities["media"][0]["media_url"] + ":thumb")
+        if not message:
+            message =\
+                await self.bot.send_message(ctx.message.channel, embed=em)
+            await self.bot.add_reaction(message, "⬅")
+            await self.bot.add_reaction(message, "❌")
+            await self.bot.add_reaction(message, "➡")
+        else:
+            message = await self.bot.edit_message(message, embed=em)
+        react = await self.bot.wait_for_reaction(
+            message=message, user=ctx.message.author, timeout=timeout,
+            emoji=["➡", "⬅", "❌"]
+        )
+        if react is None:
+            await self.bot.remove_reaction(message, "⬅", self.bot.user)
+            await self.bot.remove_reaction(message, "❌", self.bot.user)
+            await self.bot.remove_reaction(message, "➡", self.bot.user)
+            return None
+        reacts = {v: k for k, v in numbs.items()}
+        react = reacts[react.reaction.emoji]
+        if react == "next":
+            next_page = 0
+            if page == len(post_list) - 1:
+                next_page = 0  # Loop around to the first item
+            else:
+                next_page = page + 1
+            return await self.tweet_menu(ctx, post_list, message=message,
+                                        page=next_page, timeout=timeout)
+        elif react == "back":
+            next_page = 0
+            if page == 0:
+                next_page = len(post_list) - 1  # Loop around to the last item
+            else:
+                next_page = page - 1
+            return await self.tweet_menu(ctx, post_list, message=message,
+                                        page=next_page, timeout=timeout)
+        else:
+            return await\
+                self.bot.delete_message(message)
 
     @commands.group(pass_context=True, no_pm=True, name='tweets')
     async def _tweets(self, ctx):
@@ -62,33 +142,26 @@ class Tweets():
         cnt = count
         if count > 25:
             cnt = 25
-        message = ""
 
         if username is not None:
             if cnt < 1:
                 await self.bot.say("I can't do that, silly! Please specify a \
                     number greater than or equal to 1")
                 return
-
+            msg_list = []
             api = self.authenticate()
-            if cnt == 1:
-                message += "Last tweet for " + username + ":\n\n"
-            else:
-                message += "Last " + str(cnt) + " tweets for " + \
-                    username + ":\n\n"
             try:
                 for status in\
                         tw.Cursor(api.user_timeline, id=username).items(cnt):
-                    message += status.text
-                    message += "\n\n"
+                    msg_list.append(status)
             except tw.TweepError as e:
                 await self.bot.say("Whoops! Something went wrong here. \
                     The error code is " + str(e))
                 return
+            await self.tweet_menu(ctx, msg_list, page=0, timeout=30)
         else:
             await self.bot.say("No username specified!")
             return
-        await self.bot.say('```{}```'.format(message))
 
     @commands.group(pass_context=True, name='tweetset')
     @checks.admin_or_permissions(manage_server=True)
