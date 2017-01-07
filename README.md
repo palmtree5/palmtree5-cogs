@@ -2,6 +2,8 @@
 
 # palmtree5-cogs
 
+## WARNING: dev branch may contain cogs that are not fully ready for the main branch. As such, features may change at any time and there may be bugs.
+
 Various plugins for [Red-DiscordBot](https://github.com/Twentysix26/Red-DiscordBot)
 
 Do `[p]cog repo add palmtree5-cogs https://github.com/palmtree5/palmtree5-cogs` to add this repo to Red
