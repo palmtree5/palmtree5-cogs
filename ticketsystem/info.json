@@ -1,8 +1,0 @@
-{
-    "AUTHOR" : "palmtree5",
-    "INSTALL_MSG" : "[p]tickets to see commands. The server owner needs to do !ticketset initialize before this can be used.",
-    "NAME" : "TicketSystem",
-    "DISABLED" : false,
-    "SHORT" : "A ticket system inside of discord",
-    "DESCRIPTION" : "A ticket system using PMs to create tickets. Has categories for both the mod and admin roles. Saves tickets per-server"
-}
