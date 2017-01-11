@@ -67,7 +67,8 @@ class HiddenDictator():
                 "player_count": 0,
                 "vetoactive": False,
                 "investigated": [],
-                "next_pres": None
+                "next_pres": None,
+                "player_objs": []
             }
             self.games[server] = newgame
             await self.bot.say("Game created! Others may "
@@ -115,6 +116,7 @@ class HiddenDictator():
         player_count = len(game["players"])
         if player_count >= 5:
             await self.bot.say("Starting game...")
+            game["player_objs"] = [p["player"] for p in game["players"]]
             player_list = game["players"]
             game["player_count"] = player_count
             game["players"] = []
@@ -167,10 +169,10 @@ class HiddenDictator():
             )
             def nomcheck(msg):
                 if len(game["players"]) > 5:
-                    if msg.mentions[0] != game["prev_president"] and msg.mentions[0] != game["prev_chancellor"]:
+                    if msg.mentions[0] != game["prev_president"] and msg.mentions[0] != game["prev_chancellor"] and msg.mentions[0] in game["player_objs"]:
                         return True
                 elif len(game["players"]) <= 5:
-                    if msg.mentions[0] != game["prev_chancellor"]:
+                    if msg.mentions[0] != game["prev_chancellor"] and msg.mentions[0] in game["player_objs"]:
                         return True
             chancellor_nom =\
                 await self.bot.wait_for_message(
@@ -308,10 +310,10 @@ class HiddenDictator():
     async def check_presidential_powers(self, game):
         """Check for presidential powers"""
         def validplayer(msg):
-            if msg.mentions[0] in game["players"]:
+            if msg.mentions[0] in game["player_objs"]:
                 return True
         def validinvestigate(msg):
-            if msg.mentions[0] in game["players"] and msg.mentions[0] not in game["investigated"]:
+            if msg.mentions[0] in game["player_objs"] and msg.mentions[0] not in game["investigated"]:
                 return True
         if game["fascistenacted"] == 5:  # This happens at the same point regardless of player count
             game["vetoactive"] = True
