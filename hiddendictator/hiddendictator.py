@@ -162,8 +162,8 @@ class HiddenDictator():
 
             # President nominates a chancellor
             await self.bot.send_message(
-                "President " + game["president"].mention +
-                ", please mention your nominee for chancellor"
+                game["settings"]["gamechannel"],
+                "President " + game["president"].mention + ", please mention your nominee for chancellor"
             )
             def nomcheck(msg):
                 if len(game["players"]) > 5:
