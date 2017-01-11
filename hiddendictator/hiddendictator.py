@@ -169,11 +169,13 @@ class HiddenDictator():
             )
             def nomcheck(msg):
                 if len(game["players"]) > 5:
-                    if msg.mentions[0] != game["prev_president"] and msg.mentions[0] != game["prev_chancellor"] and msg.mentions[0] in game["player_objs"]:
-                        return True
+                    if len(msg.mentions) > 0:
+                        if msg.mentions[0] != game["prev_president"] and msg.mentions[0] != game["prev_chancellor"] and msg.mentions[0] in game["player_objs"]:
+                            return True
                 elif len(game["players"]) <= 5:
-                    if msg.mentions[0] != game["prev_chancellor"] and msg.mentions[0] in game["player_objs"]:
-                        return True
+                    if len(msg.mentions) > 0:
+                        if msg.mentions[0] != game["prev_chancellor"] and msg.mentions[0] in game["player_objs"]:
+                            return True
             chancellor_nom =\
                 await self.bot.wait_for_message(
                     author=game["president"],
