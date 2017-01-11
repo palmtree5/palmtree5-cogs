@@ -397,13 +397,13 @@ class HiddenDictator():
         )
         if vote_msg.content.lower() == "ja":
             ret = {
-                "player": player,
+                "player": player["player"],
                 "vote": "Ja"
             }
             return ret
         else:
             ret = {
-                "player": player,
+                "player": player["player"],
                 "vote": "Nein"
             }
             return ret
