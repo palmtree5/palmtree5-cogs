@@ -1,7 +1,6 @@
 from random import shuffle
 from random import choice as randchoice
 from asyncio import as_completed
-import asyncio
 import math
 from functools import partial
 from concurrent.futures import ThreadPoolExecutor
@@ -198,7 +197,6 @@ class HiddenDictator():
                 tasknum -= 1
                 vote = await f
                 votes.append(vote)
-            asyncio.sleep(5)
             for v in votes:
                 if v["vote"] == "Ja":
                     yeas += 1
