@@ -54,7 +54,7 @@ class HiddenDictator():
                 ],
                 "discardpile": [],
                 "settings": {
-                    "gamechannel": None
+                    "gamechannel": ctx.message.channel
                 },
                 "chancellor": None,
                 "president": None,
@@ -74,6 +74,18 @@ class HiddenDictator():
                                "join the game by doing [p]hdjoin")
         else:
             await self.bot.say("A game already exists for this server!")
+    
+    @commands.group(pass_context=True, no_pm=True)
+    async def hdset(self, ctx):
+        """Game settings"""
+        if ctx.invoked_subcommand is None:
+            await self.bot.send_cmd_help(ctx)
+    
+    @hdset.command(pass_context=True, no_pm=True)
+    async def gamechannel(self, ctx, channel: discord.Channel):
+        """Set the game channel"""
+        self.games[ctx.message.server.id]["settings"]["gamechannel"] = channel
+        await self.bot.say("Set the game channel")
 
     @commands.command(pass_context=True, no_pm=True)
     async def hdjoin(self, ctx):
@@ -100,36 +112,40 @@ class HiddenDictator():
         server = ctx.message.server.id
         game = self.games[server]
         player_count = len(game["players"])
-        player_list = game["players"]
-        game["player_count"] = player_count
-        game["players"] = []
-        # Set the liberals for the game
-        for i in range(math.floor(player_count/2) + 1):
-            player = randchoice(player_list)
-            player_list.remove(player)
-            player["party"] = "Liberal"
-            player["role"] = "Liberal"
-            game["players"].append(player)
-        # Choose the dictator
-        dictator = randchoice(player_list)
-        player_list.remove(dictator)
-        dictator["party"] = "Fascist"
-        dictator["role"] = "Hitler"
-        game["players"].append(dictator)
-        # Make the remaining players fascists
-        while player_list:
-            player = player_list[0]
-            player_list.remove(player)
-            player["party"] = "Fascist"
-            player["role"] = "Fascist"
-            game["players"].append(player)
+        if player_count >= 5:
+            await self.bot.say("Starting game...")
+            player_list = game["players"]
+            game["player_count"] = player_count
+            game["players"] = []
+            # Set the liberals for the game
+            for i in range(math.floor(player_count/2) + 1):
+                player = randchoice(player_list)
+                player_list.remove(player)
+                player["party"] = "Liberal"
+                player["role"] = "Liberal"
+                game["players"].append(player)
+            # Choose the dictator
+            dictator = randchoice(player_list)
+            player_list.remove(dictator)
+            dictator["party"] = "Fascist"
+            dictator["role"] = "Hitler"
+            game["players"].append(dictator)
+            # Make the remaining players fascists
+            while player_list:
+                player = player_list[0]
+                player_list.remove(player)
+                player["party"] = "Fascist"
+                player["role"] = "Fascist"
+                game["players"].append(player)
 
-        shuffle(game["policydeck"])
-        shuffle(game["players"])
-        game["president"] = game["players"][0]["player"]
-        game["pres_idx"] += 1
+            shuffle(game["policydeck"])
+            shuffle(game["players"])
+            game["president"] = game["players"][0]["player"]
+            game["pres_idx"] += 1
 
-        await self.hdgameloop(ctx, game)  # Handoff to game loop
+            await self.hdgameloop(ctx, game)  # Handoff to game loop
+        else:
+            await self.bot.say("Sorry, I cannot start the game until there's a minimum of 5 players joined")
 
     async def hdgameloop(self, ctx, game):
         """Game loop for games"""
