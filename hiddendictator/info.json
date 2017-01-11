@@ -1,0 +1,8 @@
+{
+    "AUTHOR" : "palmtree5",
+    "INSTALL_MSG" : "[p]help HiddenDictator to see commands.",
+    "NAME" : "HiddenDictator",
+    "DISABLED" : false,
+    "SHORT" : "An implementation of Secret Hitler in Discord",
+    "DESCRIPTION" : "Run games of Secret Hitler right in your Discord server"
+}
