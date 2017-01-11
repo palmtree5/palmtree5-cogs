@@ -395,7 +395,7 @@ class HiddenDictator():
             channel=player["player"],
             check=check
         )
-        if vote_msg.text.lower() == "ja":
+        if vote_msg.content.lower() == "ja":
             ret = {
                 "player": player,
                 "vote": "Ja"
