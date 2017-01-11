@@ -198,6 +198,7 @@ class HiddenDictator():
                 tasknum -= 1
                 vote = await f
                 votes.append(vote)
+            asyncio.sleep(5)
             for v in votes:
                 if v["vote"] == "Ja":
                     yeas += 1
