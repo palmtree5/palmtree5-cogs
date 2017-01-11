@@ -150,159 +150,160 @@ class HiddenDictator():
 
     async def hdgameloop(self, ctx, game):
         """Game loop for games"""
-        if game["next_pres"] is not None:
-            game["president"] = game["next_pres"]
-            game["next_pres"] = None
-        else:
-            game["president"] = game["players"][0]["player"]
-            game["pres_idx"] += 1
-        game_round = discord.Embed(title="Current Round")
-        game_round.add_field(name="President", value=game["president"])
+        while True:
+            if game["next_pres"] is not None:
+                game["president"] = game["next_pres"]
+                game["next_pres"] = None
+            else:
+                game["president"] = game["players"][0]["player"]
+                game["pres_idx"] += 1
+            game_round = discord.Embed(title="Current Round")
+            game_round.add_field(name="President", value=game["president"])
 
-        # President nominates a chancellor
-        await self.bot.send_message(
-            "President " + game["president"].mention +
-            ", please mention your nominee for chancellor"
-        )
-        def nomcheck(msg):
-            if len(game["players"]) > 5:
-                if msg.mentions[0] != game["prev_president"] and msg.mentions[0] != game["prev_chancellor"]:
-                    return True
-            elif len(game["players"]) <= 5:
-                if msg.mentions[0] != game["prev_chancellor"]:
-                    return True
-        chancellor_nom =\
-            await self.bot.wait_for_message(
-                author=game["president"],
-                channel=game["settings"]["gamechannel"],
-                check=nomcheck
+            # President nominates a chancellor
+            await self.bot.send_message(
+                "President " + game["president"].mention +
+                ", please mention your nominee for chancellor"
             )
-        chancellor_nominee = chancellor_nom.mentions[0]
-        tasks = []
-        for player in game["players"]:
-            task = partial(self.conduct_vote, player)
-            task = self.bot.loop.run_in_executor(self.executor, task)
-            tasks.append(task)
-        tasknum = len(tasks)
-        msg = "Players, you are voting whether to elect President {} and Chancellor {}.".format(game["president"].mention, chancellor_nominee.mention)
-        await self.bot.send_message(game["settings"]["gamechannel"], msg)
-        yeas = 0
-        nays = 0
-        votes = []
-        for f in as_completed(tasks):
-            tasknum -= 1
-            vote = await f
-            votes.append(vote)
-        for v in votes:
-            if v["vote"] == "Ja":
-                yeas += 1
-            else:
-                nays += 1
-        if yeas > nays:  # Successful election
-            hitler = [p for p in game["players"] if p["role"] == "Hitler"][0]
-            await self.bot.say(game["settings"]["gamechannel"], "President {} and Chancellor {} have been elected".format(game["president"].mention, chancellor_nominee.mention))
-            if chancellor_nominee == hitler["player"] and game["fascistenacted"] >= 3:
-                await self.bot.send_message(game["settings"]["gamechannel"], "Sadly for you Liberals, Hitler was just elected Chancellor. Fascists, you win the game")
-                return
-            else:
-                pres_hand = []
-                for i in range(3):
-                    pres_hand.append(game["policydeck"].pop(0))
-                def check(msg):
-                    if int(msg.content) == 1 or int(msg.content) == 2 or int(msg.content) == 3:
+            def nomcheck(msg):
+                if len(game["players"]) > 5:
+                    if msg.mentions[0] != game["prev_president"] and msg.mentions[0] != game["prev_chancellor"]:
                         return True
-                await self.bot.send_message(game["president"], "Please choose the policy you wish to discard (1, 2, or 3): {} {} {}".format(pres_hand[0], pres_hand[1], pres_hand[2]))
-                discard_choice = await self.bot.wait_for_message(
+                elif len(game["players"]) <= 5:
+                    if msg.mentions[0] != game["prev_chancellor"]:
+                        return True
+            chancellor_nom =\
+                await self.bot.wait_for_message(
                     author=game["president"],
-                    channel=game["president"],
-                    check=check
+                    channel=game["settings"]["gamechannel"],
+                    check=nomcheck
                 )
-                discarded = pres_hand.pop(int(discard_choice.content) - 1)
-                game["discardpile"].append(discarded)
-                if len(game["policydeck"]) < 3:
-                    game["policydeck"].extend(game["discardpile"])
-                    game["discardpile"] = []
-                    shuffle(game["policydeck"])
-                def check2(msg):
-                    if int(msg.content) == 1 or int(msg.content) == 2:
-                        return True
-                if not game["vetoactive"]:
-                    await self.bot.send_message(chancellor_nominee, "Chancellor, please choose the policy to enact (1 or 2): {} {}").format(pres_hand[0], pres_hand[1])
-                    enact_choice = await self.bot.wait_for_message(
-                        author= chancellor_nominee,
-                        channel=chancellor_nominee,
-                        check=check2
-                    )
-                    enacted_policy = pres_hand[int(enact_choice.content) - 1]
-                    if enacted_policy == "Liberal":
-                        game["liberalenacted"] += 1
-                    else:
-                        game["fascistenacted"] += 1
+            chancellor_nominee = chancellor_nom.mentions[0]
+            tasks = []
+            for player in game["players"]:
+                task = partial(self.conduct_vote, player)
+                task = self.bot.loop.run_in_executor(self.executor, task)
+                tasks.append(task)
+            tasknum = len(tasks)
+            msg = "Players, you are voting whether to elect President {} and Chancellor {}.".format(game["president"].mention, chancellor_nominee.mention)
+            await self.bot.send_message(game["settings"]["gamechannel"], msg)
+            yeas = 0
+            nays = 0
+            votes = []
+            for f in as_completed(tasks):
+                tasknum -= 1
+                vote = await f
+                votes.append(vote)
+            for v in votes:
+                if v["vote"] == "Ja":
+                    yeas += 1
                 else:
-                    def check3(msg):
-                        if int(msg.content) == 1 or int(msg.content) == 2 or msg.content.lower().startswith("veto"):
+                    nays += 1
+            if yeas > nays:  # Successful election
+                hitler = [p for p in game["players"] if p["role"] == "Hitler"][0]
+                await self.bot.say(game["settings"]["gamechannel"], "President {} and Chancellor {} have been elected".format(game["president"].mention, chancellor_nominee.mention))
+                if chancellor_nominee == hitler["player"] and game["fascistenacted"] >= 3:
+                    await self.bot.send_message(game["settings"]["gamechannel"], "Sadly for you Liberals, Hitler was just elected Chancellor. Fascists, you win the game")
+                    return
+                else:
+                    pres_hand = []
+                    for i in range(3):
+                        pres_hand.append(game["policydeck"].pop(0))
+                    def check(msg):
+                        if int(msg.content) == 1 or int(msg.content) == 2 or int(msg.content) == 3:
                             return True
-                    await self.bot.send_message(chancellor_nominee, "Chancellor, please choose the policy to enact (1 or 2): {} {}").format(pres_hand[0], pres_hand[1])
-                    enact_choice = await self.bot.wait_for_message(
-                        author= chancellor_nominee,
-                        channel=chancellor_nominee,
-                        check=check3
+                    await self.bot.send_message(game["president"], "Please choose the policy you wish to discard (1, 2, or 3): {} {} {}".format(pres_hand[0], pres_hand[1], pres_hand[2]))
+                    discard_choice = await self.bot.wait_for_message(
+                        author=game["president"],
+                        channel=game["president"],
+                        check=check
                     )
-                    if enact_choice.lower().startswith("veto"):
-                        def check4(msg):
-                            if msg.content.lower().startswith("yes") or msg.content.lower().startswith("no"):
-                                return True
-                        await self.bot.send_message(game["settings"]["gamechannel"], "The chancellor wishes to veto the agenda. President, please enter yes to agree to the veto or no to disagree")
-                        veto_opt = await self.bot.wait_for_message(
-                            author=game["president"],
-                            channel=game["settings"]["gamechannel"],
-                            check=check4
+                    discarded = pres_hand.pop(int(discard_choice.content) - 1)
+                    game["discardpile"].append(discarded)
+                    if len(game["policydeck"]) < 3:
+                        game["policydeck"].extend(game["discardpile"])
+                        game["discardpile"] = []
+                        shuffle(game["policydeck"])
+                    def check2(msg):
+                        if int(msg.content) == 1 or int(msg.content) == 2:
+                            return True
+                    if not game["vetoactive"]:
+                        await self.bot.send_message(chancellor_nominee, "Chancellor, please choose the policy to enact (1 or 2): {} {}").format(pres_hand[0], pres_hand[1])
+                        enact_choice = await self.bot.wait_for_message(
+                            author= chancellor_nominee,
+                            channel=chancellor_nominee,
+                            check=check2
                         )
-                        if veto_opt.lower().startswith("yes"):
-                            game["electiontracker"] += 1
-                            if game["electiontracker"] == 3:
-                                game["prev_president"] = None
-                                game["prev_chancellor"] = None
-                                card = game["policydeck"].pop(0)
-                                if card == "Liberal":
-                                    game["liberalenacted"] += 1
-                                else:
-                                    game["fascistenacted"] += 1
-                                if len(game["policydeck"]) < 3:
-                                    game["policydeck"].extend(game["discardpile"])
-                                    game["discardpile"] = []
-                                    shuffle(game["policydeck"])
-                                have_win = await self.check_policycount_win_conditions(game)
-                                if have_win:
-                                    return
-                    else:
                         enacted_policy = pres_hand[int(enact_choice.content) - 1]
                         if enacted_policy == "Liberal":
                             game["liberalenacted"] += 1
                         else:
                             game["fascistenacted"] += 1
-                presidential_powers_check = await self.check_presidential_powers(game)
-                have_win = await self.check_policycount_win_conditions(game)
-                if have_win or presidential_powers_check:
-                    return
-        else:
-            await self.bot.send_message(game["settings"]["gamechannel"], "This government was not elected")
-            game["electiontracker"] += 1
-            if game["electiontracker"] == 3:
-                game["prev_president"] = None
-                game["prev_chancellor"] = None
-                card = game["policydeck"].pop(0)
-                if card == "Liberal":
-                    game["liberalenacted"] += 1
-                else:
-                    game["fascistenacted"] += 1
-                if len(game["policydeck"]) < 3:
-                    game["policydeck"].extend(game["discardpile"])
-                    game["discardpile"] = []
-                    shuffle(game["policydeck"])
-                have_win = await self.check_policycount_win_conditions(game)
-                if have_win:
-                    return
+                    else:
+                        def check3(msg):
+                            if int(msg.content) == 1 or int(msg.content) == 2 or msg.content.lower().startswith("veto"):
+                                return True
+                        await self.bot.send_message(chancellor_nominee, "Chancellor, please choose the policy to enact (1 or 2): {} {}").format(pres_hand[0], pres_hand[1])
+                        enact_choice = await self.bot.wait_for_message(
+                            author= chancellor_nominee,
+                            channel=chancellor_nominee,
+                            check=check3
+                        )
+                        if enact_choice.lower().startswith("veto"):
+                            def check4(msg):
+                                if msg.content.lower().startswith("yes") or msg.content.lower().startswith("no"):
+                                    return True
+                            await self.bot.send_message(game["settings"]["gamechannel"], "The chancellor wishes to veto the agenda. President, please enter yes to agree to the veto or no to disagree")
+                            veto_opt = await self.bot.wait_for_message(
+                                author=game["president"],
+                                channel=game["settings"]["gamechannel"],
+                                check=check4
+                            )
+                            if veto_opt.lower().startswith("yes"):
+                                game["electiontracker"] += 1
+                                if game["electiontracker"] == 3:
+                                    game["prev_president"] = None
+                                    game["prev_chancellor"] = None
+                                    card = game["policydeck"].pop(0)
+                                    if card == "Liberal":
+                                        game["liberalenacted"] += 1
+                                    else:
+                                        game["fascistenacted"] += 1
+                                    if len(game["policydeck"]) < 3:
+                                        game["policydeck"].extend(game["discardpile"])
+                                        game["discardpile"] = []
+                                        shuffle(game["policydeck"])
+                                    have_win = await self.check_policycount_win_conditions(game)
+                                    if have_win:
+                                        return
+                        else:
+                            enacted_policy = pres_hand[int(enact_choice.content) - 1]
+                            if enacted_policy == "Liberal":
+                                game["liberalenacted"] += 1
+                            else:
+                                game["fascistenacted"] += 1
+                    presidential_powers_check = await self.check_presidential_powers(game)
+                    have_win = await self.check_policycount_win_conditions(game)
+                    if have_win or presidential_powers_check:
+                        return
+            else:
+                await self.bot.send_message(game["settings"]["gamechannel"], "This government was not elected")
+                game["electiontracker"] += 1
+                if game["electiontracker"] == 3:
+                    game["prev_president"] = None
+                    game["prev_chancellor"] = None
+                    card = game["policydeck"].pop(0)
+                    if card == "Liberal":
+                        game["liberalenacted"] += 1
+                    else:
+                        game["fascistenacted"] += 1
+                    if len(game["policydeck"]) < 3:
+                        game["policydeck"].extend(game["discardpile"])
+                        game["discardpile"] = []
+                        shuffle(game["policydeck"])
+                    have_win = await self.check_policycount_win_conditions(game)
+                    if have_win:
+                        return
 
     async def check_presidential_powers(self, game):
         """Check for presidential powers"""
