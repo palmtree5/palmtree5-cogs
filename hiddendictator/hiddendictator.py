@@ -74,13 +74,13 @@ class HiddenDictator():
                                "join the game by doing [p]hdjoin")
         else:
             await self.bot.say("A game already exists for this server!")
-    
+
     @commands.group(pass_context=True, no_pm=True)
     async def hdset(self, ctx):
         """Game settings"""
         if ctx.invoked_subcommand is None:
             await self.bot.send_cmd_help(ctx)
-    
+
     @hdset.command(pass_context=True, no_pm=True)
     async def gamechannel(self, ctx, channel: discord.Channel):
         """Set the game channel"""
@@ -92,7 +92,8 @@ class HiddenDictator():
         """Join a game of Hidden Dictator"""
         author = ctx.message.author
         server = ctx.message.server.id
-        if author not in self.games[server]["players"]:
+        players = [g["player"] for g in self.games[server]["players"]]
+        if author not in players:
             if len(self.games[server]["players"]) <= 10:
                 newplayer = {
                     "player": author,
