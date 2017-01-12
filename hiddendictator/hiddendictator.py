@@ -164,7 +164,7 @@ class HiddenDictator():
                 game["president"] = game["next_pres"]
                 game["next_pres"] = None
             else:
-                game["president"] = game["players"][0]["player"]
+                game["president"] = game["players"][game["pres_idx"]]["player"]
                 game["pres_idx"] += 1
             game_round = discord.Embed(title="Current Round")
             game_round.add_field(name="President", value=game["president"])
@@ -297,8 +297,6 @@ class HiddenDictator():
                     game["prev_president"] = game["president"]
                     game["prev_chancellor"] = chancellor_nominee
                     game["president"] = game["players"][game["pres_idx"]]["player"]
-                    game["pres_idx"] += 1
-
                     if have_win or presidential_powers_check:
                         return
             else:
