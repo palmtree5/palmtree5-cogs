@@ -214,12 +214,13 @@ class HiddenDictator():
                     def check(msg):
                         if int(msg.content) == 1 or int(msg.content) == 2 or int(msg.content) == 3:
                             return True
-                    await self.bot.send_message(game["president"], "Please choose the policy you wish to discard (1, 2, or 3): {} {} {}".format(pres_hand[0], pres_hand[1], pres_hand[2]))
+                    pol_inst = await self.bot.send_message(game["president"], "Please choose the policy you wish to discard (1, 2, or 3): {} {} {}".format(pres_hand[0], pres_hand[1], pres_hand[2]))
                     discard_choice = await self.bot.wait_for_message(
                         author=game["president"],
-                        channel=game["president"],
+                        channel=pol_inst.channel,
                         check=check
                     )
+                    await self.bot.send_message(game["president"], "Policy chosen for discard")
                     discarded = pres_hand.pop(int(discard_choice.content) - 1)
                     game["discardpile"].append(discarded)
                     if len(game["policydeck"]) < 3:
@@ -245,10 +246,10 @@ class HiddenDictator():
                         def check3(msg):
                             if int(msg.content) == 1 or int(msg.content) == 2 or msg.content.lower().startswith("veto"):
                                 return True
-                        await self.bot.send_message(chancellor_nominee, "Chancellor, please choose the policy to enact (1 or 2): {} {}").format(pres_hand[0], pres_hand[1])
+                        chanc_choice = await self.bot.send_message(chancellor_nominee, "Chancellor, please choose the policy to enact (1 or 2): {} {}").format(pres_hand[0], pres_hand[1])
                         enact_choice = await self.bot.wait_for_message(
                             author= chancellor_nominee,
-                            channel=chancellor_nominee,
+                            channel=chanc_choice.channel,
                             check=check3
                         )
                         if enact_choice.lower().startswith("veto"):
@@ -292,6 +293,7 @@ class HiddenDictator():
                 await self.bot.send_message(game["settings"]["gamechannel"], "This government was not elected")
                 game["electiontracker"] += 1
                 if game["electiontracker"] == 3:
+                    await self.bot.send_message(game["settings"]["gamechannel"], "Three failed elections detected. Passing the first policy on the deck")
                     game["prev_president"] = None
                     game["prev_chancellor"] = None
                     card = game["policydeck"].pop(0)
