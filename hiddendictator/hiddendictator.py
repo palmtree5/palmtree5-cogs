@@ -198,7 +198,7 @@ class HiddenDictator():
                     nays += 1
             if yeas > nays:  # Successful election
                 hitler = [p for p in game["players"] if p["role"] == "Hitler"][0]
-                await self.bot.say(game["settings"]["gamechannel"], "President {} and Chancellor {} have been elected".format(game["president"].mention, chancellor_nominee.mention))
+                await self.bot.send_message(game["settings"]["gamechannel"], "President {} and Chancellor {} have been elected".format(game["president"].mention, chancellor_nominee.mention))
                 if chancellor_nominee == hitler["player"] and game["fascistenacted"] >= 3:
                     await self.bot.send_message(game["settings"]["gamechannel"], "Sadly for you Liberals, Hitler was just elected Chancellor. Fascists, you win the game")
                     return
