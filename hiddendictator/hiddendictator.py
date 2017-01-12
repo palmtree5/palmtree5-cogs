@@ -383,7 +383,8 @@ class HiddenDictator():
         msg = "Enter \"Ja\" to elect the current government or \"Nein\" to vote against it"
         await self.bot.send_message(player["player"], msg)
         def check(msg):
-            return "ja" in msg.content.lower() or "nein" in msg.content.lower()
+            if "ja" in msg.content.lower() or "nein" in msg.content.lower():
+                return True
         vote_msg = await self.bot.wait_for_message(
             author=player["player"],
             channel=player["player"],
