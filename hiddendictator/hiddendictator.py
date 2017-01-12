@@ -151,6 +151,8 @@ class HiddenDictator():
 
     async def hdgameloop(self, ctx, game):
         """Game loop for games"""
+        for player in game["players"]:
+            await self.bot.send_message(player["player"], "Party: {}, Role: {}".format(player["party"], player["role"]))
         while True:
             if game["next_pres"] is not None:
                 game["president"] = game["next_pres"]
