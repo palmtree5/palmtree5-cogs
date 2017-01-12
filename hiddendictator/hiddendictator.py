@@ -243,8 +243,10 @@ class HiddenDictator():
                         enacted_policy = pres_hand[int(enact_choice.content) - 1]
                         if enacted_policy == "Liberal":
                             game["liberalenacted"] += 1
+                            await self.bot.send_message(game["settings"]["gamechannel"], "A Liberal policy was enacted")
                         else:
                             game["fascistenacted"] += 1
+                            await self.bot.send_message(game["settings"]["gamechannel"], "A Fascist policy was enacted")
                     else:
                         def check3(msg):
                             if int(msg.content) == 1 or int(msg.content) == 2 or msg.content.lower().startswith("veto"):
@@ -286,8 +288,10 @@ class HiddenDictator():
                             enacted_policy = pres_hand[int(enact_choice.content) - 1]
                             if enacted_policy == "Liberal":
                                 game["liberalenacted"] += 1
+                                await self.bot.send_message(game["settings"]["gamechannel"], "A Liberal policy was enacted")
                             else:
                                 game["fascistenacted"] += 1
+                                await self.bot.send_message(game["settings"]["gamechannel"], "A Fascist policy was enacted")
                     presidential_powers_check = await self.check_presidential_powers(game)
                     have_win = await self.check_policycount_win_conditions(game)
                     if have_win or presidential_powers_check:
@@ -302,8 +306,10 @@ class HiddenDictator():
                     card = game["policydeck"].pop(0)
                     if card == "Liberal":
                         game["liberalenacted"] += 1
+                        await self.bot.send_message(game["settings"]["gamechannel"], "A Liberal policy was enacted")
                     else:
                         game["fascistenacted"] += 1
+                        await self.bot.send_message(game["settings"]["gamechannel"], "A Fascist policy was enacted")
                     if len(game["policydeck"]) < 3:
                         game["policydeck"].extend(game["discardpile"])
                         game["discardpile"] = []
