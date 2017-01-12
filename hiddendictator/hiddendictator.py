@@ -294,6 +294,11 @@ class HiddenDictator():
                                 await self.bot.send_message(game["settings"]["gamechannel"], "A Fascist policy was enacted")
                     presidential_powers_check = await self.check_presidential_powers(game)
                     have_win = await self.check_policycount_win_conditions(game)
+                    game["prev_president"] = game["president"]
+                    game["prev_chancellor"] = chancellor_nominee
+                    game["president"] = game["players"][game["pres_idx"]]["player"]
+                    game["pres_idx"] += 1
+
                     if have_win or presidential_powers_check:
                         return
             else:
