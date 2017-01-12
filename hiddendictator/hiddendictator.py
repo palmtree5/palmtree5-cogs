@@ -1,6 +1,6 @@
 from random import shuffle
 from random import choice as randchoice
-from asyncio import as_completed
+from asyncio import as_completed, gather
 import math
 from functools import partial
 from concurrent.futures import ThreadPoolExecutor
@@ -183,20 +183,14 @@ class HiddenDictator():
                 )
             chancellor_nominee = chancellor_nom.mentions[0]
             tasks = []
-            for player in game["players"]:
-                task = partial(self.conduct_vote, player)
-                task = self.bot.loop.run_in_executor(self.executor, task)
-                tasks.append(task)
-            tasknum = len(tasks)
             msg = "Players, you are voting whether to elect President {} and Chancellor {}.".format(game["president"].mention, chancellor_nominee.mention)
             await self.bot.send_message(game["settings"]["gamechannel"], msg)
+            for k, v in enumerate(game["players"]):
+                tasks.append(self.conduct_vote(v))
+
             yeas = 0
             nays = 0
-            votes = []
-            for f in as_completed(tasks):
-                tasknum -= 1
-                vote = await f
-                votes.append(vote)
+            votes = await gather(*tasks)
             for v in votes:
                 if v["vote"] == "Ja":
                     yeas += 1
