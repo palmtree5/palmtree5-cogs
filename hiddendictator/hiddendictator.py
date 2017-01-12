@@ -191,8 +191,8 @@ class HiddenDictator():
                 )
             chancellor_nominee = chancellor_nom.mentions[0]
             tasks = []
-            msg = "Players, you are voting whether to elect President {} and Chancellor {}.".format(game["president"].mention, chancellor_nominee.mention)
-            await self.bot.send_message(game["settings"]["gamechannel"], msg)
+            elect_msg = "Players, you are voting whether to elect President {} and Chancellor {}.".format(game["president"].mention, chancellor_nominee.mention)
+            await self.bot.send_message(game["settings"]["gamechannel"], elect_msg)
             for k, v in enumerate(game["players"]):
                 tasks.append(self.conduct_vote(v))
 
