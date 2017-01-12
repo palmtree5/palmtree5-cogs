@@ -234,7 +234,7 @@ class HiddenDictator():
                         if int(msg.content) == 1 or int(msg.content) == 2:
                             return True
                     if not game["vetoactive"]:
-                        await self.bot.send_message(chancellor_nominee, "Chancellor, please choose the policy to enact (1 or 2): {} {}").format(pres_hand[0], pres_hand[1])
+                        await self.bot.send_message(chancellor_nominee, "Chancellor, please choose the policy to enact (1 or 2): {} {}".format(pres_hand[0], pres_hand[1]))
                         enact_choice = await self.bot.wait_for_message(
                             author= chancellor_nominee,
                             channel=chancellor_nominee,
