@@ -394,12 +394,14 @@ class HiddenDictator():
                 "player": player["player"],
                 "vote": "Ja"
             }
+            await self.bot.send_message(player["player"], "Vote received")
             return ret
         else:
             ret = {
                 "player": player["player"],
                 "vote": "Nein"
             }
+            await self.bot.send_message(player["player"], "Vote received")
             return ret
 
 
