@@ -93,20 +93,23 @@ class HiddenDictator():
         """Join a game of Hidden Dictator"""
         author = ctx.message.author
         server = ctx.message.server.id
-        players = [g["player"] for g in self.games[server]["players"]]
-        if author not in players:
-            if len(self.games[server]["players"]) <= 10:
-                newplayer = {
-                    "player": author,
-                    "role": "",
-                    "party": ""
-                }
-                self.games[server]["players"].append(newplayer)
-                await self.bot.say("Joined the game!")
+        if self.games[server]["status"] == "pregame":
+            players = [g["player"] for g in self.games[server]["players"]]
+            if author not in players:
+                if len(self.games[server]["players"]) <= 10:
+                    newplayer = {
+                        "player": author,
+                        "role": "",
+                        "party": ""
+                    }
+                    self.games[server]["players"].append(newplayer)
+                    await self.bot.say("Joined the game!")
+                else:
+                    await self.bot.say("That game is full already :(")
             else:
-                await self.bot.say("That game is full already :(")
+                await self.bot.say("You are already in that game!")
         else:
-            await self.bot.say("You are already in that game!")
+            await self.bot.say("That game has already started!")
 
     @commands.command(pass_context=True, no_pm=True)
     async def hdstart(self, ctx):
