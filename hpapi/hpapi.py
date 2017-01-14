@@ -98,14 +98,8 @@ class Hpapi():
             return await\
                 self.bot.delete_message(message)
 
-    @commands.group(pass_context=True, name="hp")
-    async def _hpapi(self, ctx):
-        """Get data from the Hypixel API"""
-        if ctx.invoked_subcommand is None:
-            await self.bot.send_cmd_help(ctx)
-
-    @_hpapi.command(pass_context=True, no_pm=True, name='booster')
-    async def _booster(self, ctx, *game: str):
+    @commands.command(pass_context=True)
+    async def hpbooster(self, ctx, *game: str):
         """
         Get active boosters. A game can be specified, in which case only the
         active booster for that game will be shown
@@ -181,8 +175,8 @@ class Hpapi():
             message = "An error occurred in getting the data"
             await self.bot.say('```{}```'.format(message))
 
-    @_hpapi.command(pass_context=True, name='player')
-    async def _player(self, ctx, name):
+    @commands.command(pass_context=True)
+    async def hpplayer(self, ctx, name):
         """Gets data about the specified player"""
 
         message = ""
@@ -250,8 +244,8 @@ class Hpapi():
             message = "An error occurred in getting the data."
             await self.bot.say('```{}```'.format(message))
 
-    @_hpapi.command(pass_context=True, name='guild')
-    async def get_guild(self, ctx, player_name: str):
+    @commands.command(pass_context=True)
+    async def hpguild(self, ctx, player_name: str):
         """Gets guild info based on the specified player"""
         uuid_json = await self.get_json(
             "https://api.mojang.com/users/profiles/minecraft/{}".format(
@@ -293,8 +287,8 @@ class Hpapi():
 
         await self.bot.send_message(ctx.message.channel, embed=em)
 
-    @_hpapi.command(pass_context=True, name="session")
-    async def _session(self, ctx, player_name: str):
+    @commands.command(pass_context=True)
+    async def hpsession(self, ctx, player_name: str):
         """Shows player session status"""
         uuid_url = "https://api.mojang.com/users/profiles/minecraft/{}".format(player_name)
         uuid = await self.get_json(uuid_url)
@@ -312,9 +306,17 @@ class Hpapi():
                 )
         else:
             await self.bot.say("That player does not appear to be online!")
-    @_hpapi.command(pass_context=True, name='key')
+    
+    @commands.group(pass_context=True)
     @checks.is_owner()
-    async def _apikey(self, context, *key: str):
+    async def hpset(self, ctx):
+        """Settings for Hypixel cog"""
+        if ctx.invoked_subcommand is None:
+            await self.bot.send_cmd_help(ctx)
+
+    @hpset.command(pass_context=True)
+    @checks.is_owner()
+    async def apikey(self, context, *key: str):
         """Sets the Hypixel API key - owner only"""
         settings = dataIO.load_json(self.settings_file)
         if key:
