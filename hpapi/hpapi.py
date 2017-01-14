@@ -205,6 +205,8 @@ class Hpapi():
                     rank = "Moderator"
                 elif player_data["rank"] == "HELPER":
                     rank = "Helper"
+                elif player_data["rank"] == "YOUTUBER":
+                    rank = "Youtuber"
             elif "newPackageRank" in player_data:
                 if player_data["newPackageRank"] == "MVP_PLUS":
                     rank = "MVP+"
