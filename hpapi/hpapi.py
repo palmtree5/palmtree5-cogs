@@ -224,7 +224,7 @@ class Hpapi():
                 elif player_data["packageRank"] == "VIP":
                     rank = "VIP"
             elif bool(player_data):
-                rank += "None"
+                rank = "None"
             else:
                 message = "That player has never logged into Hypixel"
                 await self.bot.say('```{}```'.format(message))
