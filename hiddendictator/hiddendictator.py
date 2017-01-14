@@ -194,7 +194,7 @@ class HiddenDictator():
             elect_msg = "Players, you are voting whether to elect President {} and Chancellor {}.".format(game["president"].mention, chancellor_nominee.mention)
             await self.bot.send_message(game["settings"]["gamechannel"], elect_msg)
             for k, v in enumerate(game["players"]):
-                tasks.append(self.conduct_vote(v))
+                tasks.append(self.conduct_vote(game, v, chancellor_nominee.name))
 
             yeas = 0
             nays = 0
@@ -398,8 +398,9 @@ class HiddenDictator():
             await self.bot.send_message(game["settings"]["gamechannel"], "Fascists win!")
             return True
 
-    async def conduct_vote(self, player):
-        msg = "Enter \"Ja\" to elect the current government or \"Nein\" to vote against it"
+    async def conduct_vote(self, game, player, chancellor_nominee):
+        msg = "You are voting on the government of President {} and Chancellor {}\n\n".format(game["president"].name, chancellor_nominee)
+        msg += "Enter \"Ja\" to elect the current government or \"Nein\" to vote against it"
         sent_instructions = await self.bot.send_message(player["player"], msg)
         def check(msg):
             if "ja" in msg.content.lower() or "nein" in msg.content.lower():
