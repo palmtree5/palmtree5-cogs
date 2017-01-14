@@ -232,8 +232,12 @@ class Hpapi():
                 await self.bot.say('```{}```'.format(message))
                 return
             em.add_field(name="Rank", value=rank)
-            level = str(player_data["networkLevel"])
-            em.add_field(name="Level", value=level)
+            if "networkLevel" in player_data:
+                level = str(player_data["networkLevel"])
+                em.add_field(name="Level", value=level)
+            else:
+                level = "1"
+                em.add_field(name="Level", value=level)
             if "vanityTokens" in player_data:
                 tokens = str(player_data["vanityTokens"])
                 em.add_field(name="Credits", value=tokens)
