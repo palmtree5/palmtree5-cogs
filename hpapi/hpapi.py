@@ -312,7 +312,18 @@ class Hpapi():
                 )
         else:
             await self.bot.say("That player does not appear to be online!")
-    
+    """
+    @commands.command(pass_context=True)
+    async def hpachievements(self, ctx, player, game):
+        Display achievements for the specified player and game
+        achievements_url = "https://raw.githubusercontent.com/HypixelDev/PublicAPI/master/Documentation/misc/Achievements.json"
+        achievements_file = "data/hpapi/achievements.json"
+        if not dataIO.is_valid_json(achievements_file):
+            async with aiohttp.get(achievements_url) as achievements_get:
+                achievements = await achievements_get.json()
+                dataIO.save_json(achievements_file, achievements)
+        achievements_list = dataIO.load_json(achievements_file)
+    """
     @commands.group(pass_context=True)
     @checks.is_owner()
     async def hpset(self, ctx):
