@@ -36,21 +36,22 @@ class StreamHostCheck:
                 user_json = await user_r.json()
                 user_id = str(user_json["_id"])
             async with aiohttp.get(
-                            "http://tmi.twitch.tv/hosts?include_logins=1&host="
-                            + user_id) as host_r:
+                "http://tmi.twitch.tv/hosts?include_logins=1&host="
+                + user_id) as host_r:
                 host_json = await host_r.json()
-                try:
-                    target = host_json["hosts"][0]["target_login"]
-                    async with aiohttp.get("https://api.twitch.tv/kraken/streams/" +
-                                           target + "?client_id=" +
-                                           self.clientid) as target_r:
-                        target_json = await target_r.json()
-                        streamer = "https://www.twitch.tv/" + target
+                target = host_json["hosts"][0]["target_login"]
+                async with aiohttp.get("https://api.twitch.tv/kraken/streams/" +
+                                       target + "?client_id=" +
+                                       self.clientid) as target_r:
+                    target_json = await target_r.json()
+                    streamer = "https://www.twitch.tv/" + target
+                    if target_json["stream"] is None:
+                        await self.bot.change_presence(game=None)
+                    else:
                         title = target_json["stream"]["channel"]["status"]
                         game = discord.Game(type=1, url=streamer, name=title)
                         await self.bot.change_presence(game=game)
-                except KeyError:
-                    await self.bot.change_presence(game=None)
+
         await asyncio.sleep(600)
 
 
