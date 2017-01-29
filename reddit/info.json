@@ -4,5 +4,6 @@
     "NAME" : "Reddit",
     "DISABLED" : false,
     "SHORT" : "Cog for getting stuff from Reddit",
-    "DESCRIPTION" : "Gets posts, user info, etc from Reddit's API"
+    "DESCRIPTION" : "Gets posts, user info, etc from Reddit's API",
+    "TAGS": ["reddit", "web", "utility"]
 }

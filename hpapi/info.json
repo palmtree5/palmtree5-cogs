@@ -4,5 +4,6 @@
     "NAME" : "Hpapi",
     "DISABLED" : false,
     "SHORT" : "Cog for getting info from the Hypixel API",
-    "DESCRIPTION" : "Gets data from the Hypixel API including player stats, guild info, and active boosters"
+    "DESCRIPTION" : "Gets data from the Hypixel API including player stats, guild info, and active boosters",
+    "TAGS": ["minecraft", "utility", "gaming"]
 }
