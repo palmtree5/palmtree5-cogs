@@ -1,7 +1,6 @@
 from discord.ext import commands
 from .utils import checks
 from .utils.dataIO import dataIO
-from socket import error as socket_error
 import discord
 import os
 import asyncio

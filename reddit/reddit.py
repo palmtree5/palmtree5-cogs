@@ -221,6 +221,9 @@ class Reddit():
                   }
         async with aiohttp.get(url, headers=headers) as req:
             resp_json = await req.json()
+        if "data" not in resp_json and resp_json["error"] == 403:
+                await self.bot.say("Sorry, the currently authenticated account does not have access to that subreddit")
+                return
         resp_json = resp_json["data"]
         colour = ''.join([randchoice('0123456789ABCDEF') for x in range(6)])
         colour = int(colour, 16)
@@ -254,6 +257,9 @@ class Reddit():
                 }
             async with aiohttp.get(url, headers=headers) as req:
                 resp_json = await req.json()
+            if "data" not in resp_json and resp_json["error"] == 403:
+                await self.bot.say("Sorry, the currently authenticated account does not have access to that subreddit")
+                return
             resp_json = resp_json["data"]["children"]
             await self.post_menu(ctx, resp_json, page=0, timeout=30)
 
@@ -271,6 +277,9 @@ class Reddit():
                 }
             async with aiohttp.get(url, headers=headers) as req:
                 resp_json = await req.json()
+            if "data" not in resp_json and resp_json["error"] == 403:
+                await self.bot.say("Sorry, the currently authenticated account does not have access to that subreddit")
+                return
             resp_json = resp_json["data"]["children"]
             await self.post_menu(ctx, resp_json, page=0, timeout=30)
     @_subreddit.command(pass_context=True, name="top")
@@ -287,6 +296,9 @@ class Reddit():
                 }
             async with aiohttp.get(url, headers=headers) as req:
                 resp_json = await req.json()
+            if "data" not in resp_json and resp_json["error"] == 403:
+                await self.bot.say("Sorry, the currently authenticated account does not have access to that subreddit")
+                return
             resp_json = resp_json["data"]["children"]
             await self.post_menu(ctx, resp_json, page=0, timeout=30)
 
@@ -306,6 +318,9 @@ class Reddit():
                 }
             async with aiohttp.get(url, headers=headers) as req:
                 resp_json = await req.json()
+            if "data" not in resp_json and resp_json["error"] == 403:
+                await self.bot.say("Sorry, the currently authenticated account does not have access to that subreddit")
+                return
             resp_json = resp_json["data"]["children"]
             await self.post_menu(ctx, resp_json, page=0, timeout=30)
 

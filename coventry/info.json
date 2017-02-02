@@ -4,5 +4,6 @@
     "NAME" : "Coventry",
     "DISABLED" : false,
     "SHORT" : "Cog for making users only be able to talk to themselves",
-    "DESCRIPTION" : "Creates roles and channels as needed for the purpose of effectively silencing users"
+    "DESCRIPTION" : "Creates roles and channels as needed for the purpose of effectively silencing users",
+    "TAGS": ["mod", "utility"]
 }
