@@ -59,6 +59,7 @@ class Hpapi():
         em.add_field(name="Game", value=s["game"])
         em.add_field(name="Purchaser", value=str(s["purchaser"]))
         em.add_field(name="Remaining time", value=s["remaining"])
+        em.set_thumbnail(url="http://minotar.net/avatar/{}/128.png".format(s["purchaser"]))
         if not message:
             message =\
                 await self.bot.send_message(ctx.message.channel, embed=em)
@@ -170,6 +171,7 @@ class Hpapi():
                         em.add_field(name="Game", value=game_name)
                         em.add_field(name="Purchaser", value=name)
                         em.add_field(name="Remaining time", value=item["length"])
+                        em.set_thumbnail(url="http://minotar.net/avatar/{}/128.png".format(name))
                         await self.bot.send_message(ctx.message.channel, embed=em)
         else:
             message = "An error occurred in getting the data"
@@ -245,6 +247,7 @@ class Hpapi():
             em.add_field(name="First login", value=first_login, inline=False)
             last_login = self.get_time(player_data["lastLogin"])
             em.add_field(name="Last login", value=last_login, inline=False)
+            em.set_thumbnail(url="http://minotar.net/avatar/{}/128.png".format(name))
             await self.bot.send_message(ctx.message.channel, embed=em)
         else:
             message = "An error occurred in getting the data."
@@ -278,6 +281,7 @@ class Hpapi():
         guildmaster_uuid = [m for m in guild["members"] if m["rank"] == "GUILDMASTER"][0]["uuid"]
         guildmaster_lookup = await self.get_json("https://api.mojang.com/user/profiles/{}/names".format(guildmaster_uuid))
         guildmaster = guildmaster_lookup[-1]["name"]
+        guildmaster_face = "http://minotar.net/avatar/{}/128.png".format(guildmaster)
         colour =\
             ''.join([randchoice('0123456789ABCDEF')
                      for x in range(6)])
@@ -290,6 +294,7 @@ class Hpapi():
         em.add_field(name="Guild coins", value=guild["coins"])
         em.add_field(name="Member count", value=str(len(guild["members"])))
         em.add_field(name="Officer count", value=str(len([m for m in guild["members"] if m["rank"] == "OFFICER"])))
+        em.set_thumbnail(url=guildmaster_face)
 
         await self.bot.send_message(ctx.message.channel, embed=em)
 
@@ -312,10 +317,11 @@ class Hpapi():
                 )
         else:
             await self.bot.say("That player does not appear to be online!")
-    """
+
+    '''
     @commands.command(pass_context=True)
     async def hpachievements(self, ctx, player, game):
-        Display achievements for the specified player and game
+        """Display achievements for the specified player and game"""
         achievements_url = "https://raw.githubusercontent.com/HypixelDev/PublicAPI/master/Documentation/misc/Achievements.json"
         achievements_file = "data/hpapi/achievements.json"
         if not dataIO.is_valid_json(achievements_file):
@@ -323,7 +329,8 @@ class Hpapi():
                 achievements = await achievements_get.json()
                 dataIO.save_json(achievements_file, achievements)
         achievements_list = dataIO.load_json(achievements_file)
-    """
+    '''
+
     @commands.group(pass_context=True)
     @checks.is_owner()
     async def hpset(self, ctx):
