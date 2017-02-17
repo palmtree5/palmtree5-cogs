@@ -183,7 +183,11 @@ class Tweets():
     @commands.group(pass_context=True, name='tweetset')
     @checks.admin_or_permissions(manage_server=True)
     async def _tweetset(self, ctx):
-        """Command for setting required access information for the API"""
+        """Command for setting required access information for the API.
+        To get this info, visit https://apps.twitter.com and create a new application.
+        Once the application is created, click Keys and Access Tokens then find the
+        button that says Create my access token and click that. Once that is done,
+        use the subcommands of this command to set the access details"""
         if ctx.invoked_subcommand is None:
             await self.bot.send_cmd_help(ctx)
 
