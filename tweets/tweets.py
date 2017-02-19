@@ -183,7 +183,11 @@ class Tweets():
     @commands.group(pass_context=True, name='tweetset')
     @checks.admin_or_permissions(manage_server=True)
     async def _tweetset(self, ctx):
-        """Command for setting required access information for the API"""
+        """Command for setting required access information for the API.
+        To get this info, visit https://apps.twitter.com and create a new application.
+        Once the application is created, click Keys and Access Tokens then find the
+        button that says Create my access token and click that. Once that is done,
+        use the subcommands of this command to set the access details"""
         if ctx.invoked_subcommand is None:
             await self.bot.send_cmd_help(ctx)
 
@@ -236,61 +240,33 @@ class Tweets():
             dataIO.save_json(self.settings_file, settings)
             await self.bot.say("Removed the specified term!")
 
-    @_tweetset.command(pass_context=True, name='consumerkey')
+    @_tweetset.command(name='creds')
     @checks.is_owner()
-    async def set_consumer_key(self, ctx, cons_key):
-        """Sets the consumer key"""
-        message = ""
-        if cons_key is not None:
-            settings = dataIO.load_json(self.settings_file)
-            settings["consumer_key"] = cons_key
-            settings = dataIO.save_json(self.settings_file, settings)
-            message = "Consumer key saved!"
+    async def set_creds(self, consumer_key: str, consumer_secret: str, access_token: str, access_secret: str):
+        """Sets the access credentials. See [p]help tweetset for instructions on getting these"""
+        settings = dataIO.load_json(self.settings_file)
+        if consumer_key is not None:
+            settings["consumer_key"] = consumer_key
         else:
-            message = "No consumer key provided!"
-        await self.bot.say('```{}```'.format(message))
-
-    @_tweetset.command(pass_context=True, name='consumersecret')
-    @checks.is_owner()
-    async def set_consumer_secret(self, ctx, cons_secret):
-        """Sets the consumer secret"""
-        message = ""
-        if cons_secret is not None:
-            settings = dataIO.load_json(self.settings_file)
-            settings["consumer_secret"] = cons_secret
-            settings = dataIO.save_json(self.settings_file, settings)
-            message = "Consumer secret saved!"
+            await self.bot.say("No consumer key provided!")
+            return
+        if consumer_secret is not None:
+            settings["consumer_secret"] = consumer_secret
         else:
-            message = "No consumer secret provided!"
-        await self.bot.say('```{}```'.format(message))
-
-    @_tweetset.command(pass_context=True, name='accesstoken')
-    @checks.is_owner()
-    async def set_access_token(self, ctx, token):
-        """Sets the access token"""
-        message = ""
-        if token is not None:
-            settings = dataIO.load_json(self.settings_file)
-            settings["access_token"] = token
-            settings = dataIO.save_json(self.settings_file, settings)
-            message = "Access token saved!"
+            await self.bot.say("No consumer secret provided!")
+            return
+        if access_token is not None:
+            settings["access_token"] = access_token
         else:
-            message = "No access token provided!"
-        await self.bot.say('```{}```'.format(message))
-
-    @_tweetset.command(pass_context=True, name='accesssecret')
-    @checks.is_owner()
-    async def set_access_secret(self, ctx, secret):
-        """Sets the access secret"""
-        message = ""
-        if secret is not None:
-            settings = dataIO.load_json(self.settings_file)
-            settings["access_secret"] = secret
-            settings = dataIO.save_json(self.settings_file, settings)
-            message = "Access secret saved!"
+            await self.bot.say("No access token provided!")
+            return
+        if access_secret is not None:
+            settings["access_secret"] = access_secret
         else:
-            message = "No access secret provided!"
-        await self.bot.say('```{}```'.format(message))
+            await self.bot.say("No access secret provided!")
+            return
+        dataIO.save_json(self.settings_file, settings)
+        await self.bot.say('Set the access credentials!')
 
 
 def check_folder():
