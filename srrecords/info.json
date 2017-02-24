@@ -1,0 +1,9 @@
+{
+    "AUTHOR" : "palmtree5",
+    "INSTALL_MSG" : "[p]help SRRecords to see commands. No additional dependencies needed.",
+    "NAME" : "SRRecords",
+    "DISABLED" : false,
+    "SHORT" : "Cog for getting world records for various games",
+    "DESCRIPTION" : "Gets world records for the specified game from speedrun.com",
+    "TAGS": ["speedrun", "gaming"]
+}
