@@ -103,12 +103,12 @@ def check_files():
 
 
 def setup(bot):
-    if mcstatusInstalled:
-        check_folders()
-        check_files()
-        n = Mcsvr(bot)
-        loop = asyncio.get_event_loop()
-        loop.create_task(n.mc_servers_check())
-        bot.add_cog(n)
-    else:
-        raise RuntimeError("You need to do 'pip3 install mcstatus'")
+    check_folders()
+    check_files()
+    if not mcstatusInstalled:
+        bot.pip_install("mcstatus")
+        from mcstatus import MinecraftServer
+    n = Mcsvr(bot)
+    loop = asyncio.get_event_loop()
+    loop.create_task(n.mc_servers_check())
+    bot.add_cog(n)

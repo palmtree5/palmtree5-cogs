@@ -287,8 +287,8 @@ def check_file():
 def setup(bot):
     check_folder()
     check_file()
-    if twInstalled:
-        n = Tweets(bot)
-        bot.add_cog(n)
-    else:
-        raise RuntimeError("You need to do 'pip3 install tweepy'")
+    if not twInstalled:
+        bot.pip_install("tweepy")
+        import tweepy as tw
+    n = Tweets(bot)
+    bot.add_cog(n)
