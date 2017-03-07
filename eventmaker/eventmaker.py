@@ -86,6 +86,10 @@ class EventMaker():
                 allowed_roles.append(specified_role)
                 allowed_roles.append(self.bot.settings.get_server_mod(server))
                 allowed_roles.append(self.bot.settings.get_server_admin(server))
+        else:
+            self.settings[server.id] = {}
+            self.settings[server.id]["role"] = None
+            self.settings[server.id]["channel"] = server.id
 
         if len(allowed_roles) > 0 and author != server_owner:
             for role in author.roles:
