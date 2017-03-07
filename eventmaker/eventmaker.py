@@ -80,11 +80,12 @@ class EventMaker():
         server = ctx.message.server
         allowed_roles = []
         server_owner = server.owner
-        if self.settings[server.id]["role"] is not None:
-            specified_role = [r for r in server.roles if r.id == self.settings[server.id]["role"]][0]
-            allowed_roles.append(specified_role)
-            allowed_roles.append(self.bot.settings.get_server_mod(server))
-            allowed_roles.append(self.bot.settings.get_server_admin(server))
+        if server.id in self.settings:
+            if self.settings[server.id]["role"] is not None:
+                specified_role = [r for r in server.roles if r.id == self.settings[server.id]["role"]][0]
+                allowed_roles.append(specified_role)
+                allowed_roles.append(self.bot.settings.get_server_mod(server))
+                allowed_roles.append(self.bot.settings.get_server_admin(server))
 
         if len(allowed_roles) > 0 and author != server_owner:
             for role in author.roles:
