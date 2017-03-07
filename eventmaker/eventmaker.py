@@ -1,6 +1,7 @@
 from discord.ext import commands
 from .utils import checks
 from .utils.dataIO import dataIO
+from random import choice as randchoice
 from datetime import datetime as dt
 import asyncio
 import discord
@@ -8,8 +9,15 @@ import os
 import calendar
 
 
+numbs = {
+    "next": "➡",
+    "back": "⬅",
+    "exit": "❌"
+}
+
+
 class EventMaker():
-    """A tool for creating events inside of Discord. 
+    """A tool for creating events inside of Discord.
     Anyone can create an event by default. If a specific role has been specified, users must have that role,
     the server's mod or admin role, or be the server owner to create events. Reminders will be posted to the
     configured channel (default: the server's default channel), as well as direct messaged to everyone who has signed up"""
@@ -17,6 +25,51 @@ class EventMaker():
         self.bot = bot
         self.events = dataIO.load_json(os.path.join("data", "eventmaker", "events.json"))
         self.settings = dataIO.load_json(os.path.join("data", "eventmaker", "settings.json"))
+
+    async def event_menu(self, ctx, event_list: list,
+                         message: discord.Message=None,
+                         page=0, timeout: int=30):
+        """menu control logic for this taken from
+           https://github.com/Lunar-Dust/Dusty-Cogs/blob/master/menu/menu.py"""
+        emb = event_list[page]
+        if not message:
+            message =\
+                await self.bot.send_message(ctx.message.channel, embed=emb)
+            await self.bot.add_reaction(message, "⬅")
+            await self.bot.add_reaction(message, "❌")
+            await self.bot.add_reaction(message, "➡")
+        else:
+            message = await self.bot.edit_message(message, embed=emb)
+        react = await self.bot.wait_for_reaction(
+            message=message, user=ctx.message.author, timeout=timeout,
+            emoji=["➡", "⬅", "❌"]
+        )
+        if react is None:
+            await self.bot.remove_reaction(message, "⬅", self.bot.user)
+            await self.bot.remove_reaction(message, "❌", self.bot.user)
+            await self.bot.remove_reaction(message, "➡", self.bot.user)
+            return None
+        reacts = {v: k for k, v in numbs.items()}
+        react = reacts[react.reaction.emoji]
+        if react == "next":
+            next_page = 0
+            if page == len(event_list) - 1:
+                next_page = 0  # Loop around to the first item
+            else:
+                next_page = page + 1
+            return await self.event_menu(ctx, event_list, message=message,
+                                         page=next_page, timeout=timeout)
+        elif react == "back":
+            next_page = 0
+            if page == 0:
+                next_page = len(event_list) - 1  # Loop around to the last item
+            else:
+                next_page = page - 1
+            return await self.event_menu(ctx, event_list, message=message,
+                                         page=next_page, timeout=timeout)
+        else:
+            return await\
+                self.bot.delete_message(message)
 
     @commands.command(pass_context=True)
     async def eventcreate(self, ctx):
@@ -95,7 +148,6 @@ class EventMaker():
                           id=new_event["creator"]))
         emb.set_footer(text="Created at " + dt.utcfromtimestamp(new_event["create_time"]).strftime("%Y-%m-%d %H:%M:%S"))
         emb.add_field(name="Event ID", value=str(new_event["id"]))
-        emb.add_field(name="Participant count", value=str(len(new_event["participants"])))
         emb.add_field(name="Start time", value=dt.utcfromtimestamp(new_event["event_start_time"]))
         await self.bot.say(embed=emb)
 
@@ -112,6 +164,43 @@ class EventMaker():
                         dataIO.save_json(os.path.join("data", "eventmaker", "events.json"), self.events)
                     else:
                         await self.bot.say("You have already joined that event!")
+                else:
+                    await self.bot.say("That event has already started!")
+                break
+    
+    @commands.command(pass_context=True)
+    async def eventlist(self, ctx):
+        """List events for this server that have not started yet"""
+        server = ctx.message.server
+        events = []
+        for event in self.events[server.id]:
+            if not event["has_started"]:
+                emb = discord.Embed(title=event["event_name"],
+                                    description=event["description"])
+                emb.add_field(name="Created by",
+                              value=discord.utils.get(
+                                self.bot.get_all_members(),
+                                id=event["creator"]))
+                emb.set_footer(text="Created at " + dt.utcfromtimestamp(event["create_time"]).strftime("%Y-%m-%d %H:%M:%S"))
+                emb.add_field(name="Event ID", value=str(event["id"]))
+                emb.add_field(name="Participant count", value=str(len(event["participants"])))
+                emb.add_field(name="Start time", value=dt.utcfromtimestamp(event["event_start_time"]))
+                events.append(emb)
+        if len(events) == 0:
+            await self.bot.say("No events available to join!")
+        else:
+            await self.event_menu(ctx, events, message=None, page=0, timeout=30)
+
+    @commands.command(pass_context=True)
+    async def whojoined(self, ctx, event_id: int):
+        """List all participants of the event"""
+        server = ctx.message.server
+        for event in self.events[server.id]:
+            if event["id"] == event_id:
+                if not event["has_started"]:
+                    for user in event["participants"]:
+                        user_obj = discord.utils.get(self.bot.get_all_members(), id=user)
+                        await self.bot.say("{}#{}".format(user_obj.name, user_obj.discriminator))
                 else:
                     await self.bot.say("That event has already started!")
                 break
