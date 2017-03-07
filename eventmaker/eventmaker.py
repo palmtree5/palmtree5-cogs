@@ -173,6 +173,23 @@ class EventMaker():
                 else:
                     await self.bot.say("That event has already started!")
                 break
+
+    @commands.command(pass_context=True)
+    async def leaveevent(self, ctx, event_id: int):
+        """Leave the specified event"""
+        server = ctx.message.server
+        author = ctx.message.author
+        for event in self.events[server.id]:
+            if event["id"] == event_id:
+                if not event["has_started"]:
+                    if author.id in event["participants"]:
+                        event["participants"].remove(author.id)
+                        await self.bot.say("Removed you from that event!")
+                    else:
+                        await self.bot.say("You aren't signed up for that event!")
+                else:
+                    await self.bot.say("That event already started!")
+                break
     
     @commands.command(pass_context=True)
     async def eventlist(self, ctx):
@@ -182,15 +199,16 @@ class EventMaker():
         for event in self.events[server.id]:
             if not event["has_started"]:
                 emb = discord.Embed(title=event["event_name"],
-                                    description=event["description"])
+                                    description=event["description"],
+                                    url="https://time.is/UTC")
                 emb.add_field(name="Created by",
                               value=discord.utils.get(
                                 self.bot.get_all_members(),
                                 id=event["creator"]))
-                emb.set_footer(text="Created at " + dt.utcfromtimestamp(event["create_time"]).strftime("%Y-%m-%d %H:%M:%S"))
+                emb.set_footer(text="Created at (UTC) " + dt.utcfromtimestamp(event["create_time"]).strftime("%Y-%m-%d %H:%M:%S"))
                 emb.add_field(name="Event ID", value=str(event["id"]))
                 emb.add_field(name="Participant count", value=str(len(event["participants"])))
-                emb.add_field(name="Start time", value=dt.utcfromtimestamp(event["event_start_time"]))
+                emb.add_field(name="Start time (UTC)", value=dt.utcfromtimestamp(event["event_start_time"]))
                 events.append(emb)
         if len(events) == 0:
             await self.bot.say("No events available to join!")
@@ -315,7 +333,7 @@ class EventMaker():
                                       value=discord.utils.get(
                                           self.bot.get_all_members(),
                                           id=event["creator"]))
-                        emb.set_footer(text="Created at " + dt.utcfromtimestamp(event["create_time"]).strftime("%Y-%m-%d %H:%M:%S"))
+                        emb.set_footer(text="Created at (UTC) " + dt.utcfromtimestamp(event["create_time"]).strftime("%Y-%m-%d %H:%M:%S"))
                         emb.add_field(name="Event ID", value=str(event["id"]))
                         emb.add_field(name="Participant count", value=str(len(event["participants"])))
                         try:
