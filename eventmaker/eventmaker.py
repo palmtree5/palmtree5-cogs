@@ -146,14 +146,15 @@ class EventMaker():
         dataIO.save_json(os.path.join("data", "eventmaker", "settings.json"), self.settings)
         dataIO.save_json(os.path.join("data", "eventmaker", "events.json"), self.events)
         emb = discord.Embed(title=new_event["event_name"],
-                            description=new_event["description"])
+                            description=new_event["description"],
+                            url="https://time.is/UTC")
         emb.add_field(name="Created by",
                       value=discord.utils.get(
                           self.bot.get_all_members(),
                           id=new_event["creator"]))
-        emb.set_footer(text="Created at " + dt.utcfromtimestamp(new_event["create_time"]).strftime("%Y-%m-%d %H:%M:%S"))
+        emb.set_footer(text="Created at (UTC) " + dt.utcfromtimestamp(new_event["create_time"]).strftime("%Y-%m-%d %H:%M:%S"))
         emb.add_field(name="Event ID", value=str(new_event["id"]))
-        emb.add_field(name="Start time", value=dt.utcfromtimestamp(new_event["event_start_time"]))
+        emb.add_field(name="Start time (UTC)", value=dt.utcfromtimestamp(new_event["event_start_time"]))
         await self.bot.say(embed=emb)
 
     @commands.command(pass_context=True)
@@ -317,7 +318,10 @@ class EventMaker():
                         emb.set_footer(text="Created at " + dt.utcfromtimestamp(event["create_time"]).strftime("%Y-%m-%d %H:%M:%S"))
                         emb.add_field(name="Event ID", value=str(event["id"]))
                         emb.add_field(name="Participant count", value=str(len(event["participants"])))
-                        await self.bot.send_message(channel, embed=emb)
+                        try:
+                            await self.bot.send_message(channel, embed=emb)
+                        except discord.Forbidden:
+                            pass # No permissions to send messages in the specified channel
                         for user in event["participants"]:
                             target = discord.utils.get(self.bot.get_all_members(), id=user)
                             await self.bot.send_message(target, embed=emb)
