@@ -29,30 +29,32 @@ class StreamHostCheck:
         await self.bot.say("Channel set!")
 
     async def set_stream(self):
-        if self.username != "":
-            async with aiohttp.get("https://api.twitch.tv/kraken/users/" +
-                                   self.username + "?client_id=" +
-                                   self.clientid) as user_r:
-                user_json = await user_r.json()
-                user_id = str(user_json["_id"])
-            async with aiohttp.get(
-                "http://tmi.twitch.tv/hosts?include_logins=1&host="
-                + user_id) as host_r:
-                host_json = await host_r.json()
-                target = host_json["hosts"][0]["target_login"]
-                async with aiohttp.get("https://api.twitch.tv/kraken/streams/" +
-                                       target + "?client_id=" +
-                                       self.clientid) as target_r:
-                    target_json = await target_r.json()
-                    streamer = "https://www.twitch.tv/" + target
-                    if target_json["stream"] is None:
-                        await self.bot.change_presence(game=None)
-                    else:
-                        title = target_json["stream"]["channel"]["status"]
-                        game = discord.Game(type=1, url=streamer, name=title)
-                        await self.bot.change_presence(game=game)
+        CHECK_TIME = 600
+        while self == self.bot.get_cog("StreamHostCheck"):
+            if self.username != "":
+                async with aiohttp.get("https://api.twitch.tv/kraken/users/" +
+                                    self.username + "?client_id=" +
+                                    self.clientid) as user_r:
+                    user_json = await user_r.json()
+                    user_id = str(user_json["_id"])
+                async with aiohttp.get(
+                    "http://tmi.twitch.tv/hosts?include_logins=1&host="
+                    + user_id) as host_r:
+                    host_json = await host_r.json()
+                    target = host_json["hosts"][0]["target_login"]
+                    async with aiohttp.get("https://api.twitch.tv/kraken/streams/" +
+                                        target + "?client_id=" +
+                                        self.clientid) as target_r:
+                        target_json = await target_r.json()
+                        streamer = "https://www.twitch.tv/" + target
+                        if target_json["stream"] is None:
+                            await self.bot.change_presence(game=None)
+                        else:
+                            title = target_json["stream"]["channel"]["status"]
+                            game = discord.Game(type=1, url=streamer, name=title)
+                            await self.bot.change_presence(game=game)
 
-        await asyncio.sleep(600)
+            await asyncio.sleep(CHECK_TIME)
 
 
 def check_folders():
