@@ -1,0 +1,9 @@
+{
+    "AUTHOR" : "palmtree5",
+    "INSTALL_MSG" : "[p]help EventMaker to see commands. No additional dependencies needed.",
+    "NAME" : "EventMaker",
+    "DISABLED" : false,
+    "SHORT" : "Event manager utility",
+    "DESCRIPTION" : "Allows for creating and joining events and provides a notification at the start time",
+    "TAGS": ["events", "utilities"]
+}
