@@ -42,7 +42,7 @@ class Tweets():
         self.settings = dataIO.load_json(self.settings_file)
         if 'consumer_key' in list(self.settings.keys()):
             self.consumer_key = self.settings['consumer_key']
-        if 'consumer_secret' in list(settings.keys()):
+        if 'consumer_secret' in list(self.settings.keys()):
             self.consumer_secret = self.settings['consumer_secret']
         if 'access_token' in list(self.settings.keys()):
             self.access_token = self.settings['access_token']
@@ -327,7 +327,7 @@ def check_folder():
 
 def check_file():
     data = {'consumer_key': '', 'consumer_secret': '',
-            'access_token': '', 'access_secret': ''}
+            'access_token': '', 'access_secret': '', 'servers': {}}
     f = "data/tweets/settings.json"
     if not dataIO.is_valid_json(f):
         print("Creating default settings.json...")
