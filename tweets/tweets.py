@@ -252,12 +252,13 @@ class Tweets():
         if user_to_remove is None:
             await self.bot.say("You didn't specify a user to remove!")
         elif user_to_remove == "all":
-            self.settings["servers"][ctx.message.server]["terms"] = []
+            self.settings["servers"][ctx.message.server]["users"] = []
             dataIO.save_json(self.settings_file, self.settings)
             await self.bot.say("Cleared the tracking list!")
         else:
             cur_list = self.settings["servers"][ctx.message.server]["users"]
-            cur_list.remove(user_to_remove)
+            user_out = [m for m in cur_list if m["username"] == user_to_remove][0]
+            cur_list.remove(user_out)
             self.settings["servers"][ctx.message.server]["users"] = cur_list
             dataIO.save_json(self.settings_file, self.settings)
             await self.bot.say("Removed the specified term!")
