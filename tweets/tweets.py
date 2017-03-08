@@ -40,14 +40,14 @@ class Tweets():
         self.bot = bot
         self.settings_file = 'data/tweets/settings.json'
         self.settings = dataIO.load_json(self.settings_file)
-        if 'consumer_key' in list(settings.keys()):
-            self.consumer_key = settings['consumer_key']
+        if 'consumer_key' in list(self.settings.keys()):
+            self.consumer_key = self.settings['consumer_key']
         if 'consumer_secret' in list(settings.keys()):
-            self.consumer_secret = settings['consumer_secret']
-        if 'access_token' in list(settings.keys()):
-            self.access_token = settings['access_token']
-        if 'access_secret' in list(settings.keys()):
-            self.access_secret = settings['access_secret']
+            self.consumer_secret = self.settings['consumer_secret']
+        if 'access_token' in list(self.settings.keys()):
+            self.access_token = self.settings['access_token']
+        if 'access_secret' in list(self.settings.keys()):
+            self.access_secret = self.settings['access_secret']
 
     def authenticate(self):
         """Authenticate with Twitter's API"""
@@ -200,6 +200,7 @@ class Tweets():
         if server.id not in self.settings["servers"]:
             self.settings["servers"][server.id] = {}
         self.settings["servers"][server.id]["channel"] = channel.id
+        dataIO.save_json(self.settings_file, self.settings)
         await self.bot.say("Channel set!")
 
     @_tweetset.group(pass_context=True, hidden=True, name="stream")
