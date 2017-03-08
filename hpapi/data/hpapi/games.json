@@ -1,0 +1,74 @@
+[
+    {
+        "id": 2,
+        "type_name": "QUAKECRAFT",
+        "db_name": "Quake",
+        "clean_name": "Quake"
+    },
+    {
+        "id": 3,
+        "type_name": "WALLS",
+        "db_name": "Walls",
+        "clean_name": "Walls"
+    },
+    {
+        "id": 4,
+        "type_name": "PAINTBALL",
+        "db_name": "Paintball",
+        "clean_name": "Paintball"
+    },
+    {
+        "id": 5,
+        "type_name": "SURVIVAL_GAMES",
+        "db_name": "HungerGames",
+        "clean_name": "Blitz Survival Games"
+    },
+    {
+        "id": 7,
+        "type_name": "TNTGAMES",
+        "db_name": "TNTGames",
+        "clean_name": "TNT Games"
+    },
+    {
+        "id": 13,
+        "type_name": "VAMPIREZ",
+        "db_name": "VampireZ",
+        "clean_name": "VampireZ"
+    },
+    {
+        "id": 14,
+        "type_name": "WALLS3",
+        "db_name": "Walls3",
+        "clean_name": "Mega Walls"
+    },
+    {
+        "id": 17,
+        "type_name": "ARCADE",
+        "db_name": "Arcade",
+        "clean_name": "Arcade"
+    },
+    {
+        "id": 21,
+        "type_name": "ARENA",
+        "db_name": "Arena",
+        "clean_name": "Arena"
+    },
+    {
+        "id": 20,
+        "type_name": "UHC",
+        "db_name": "Walls",
+        "clean_name": "Walls"
+    },
+    {
+        "id": 3,
+        "type_name": "WALLS",
+        "db_name": "Walls",
+        "clean_name": "Walls"
+    },
+    {
+        "id": 3,
+        "type_name": "WALLS",
+        "db_name": "Walls",
+        "clean_name": "Walls"
+    },
+]

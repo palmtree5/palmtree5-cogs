@@ -29,7 +29,7 @@ class StreamHostCheck:
         await self.bot.say("Channel set!")
 
     async def set_stream(self):
-        CHECK_TIME = 600
+        CHECK_TIME = 180
         while self == self.bot.get_cog("StreamHostCheck"):
             if self.username != "":
                 async with aiohttp.get("https://api.twitch.tv/kraken/users/" +
@@ -41,18 +41,18 @@ class StreamHostCheck:
                     "http://tmi.twitch.tv/hosts?include_logins=1&host="
                     + user_id) as host_r:
                     host_json = await host_r.json()
-                    target = host_json["hosts"][0]["target_login"]
-                    async with aiohttp.get("https://api.twitch.tv/kraken/streams/" +
-                                        target + "?client_id=" +
-                                        self.clientid) as target_r:
-                        target_json = await target_r.json()
-                        streamer = "https://www.twitch.tv/" + target
-                        if target_json["stream"] is None:
-                            await self.bot.change_presence(game=None)
-                        else:
+                    if "target_login" in host_json["hosts"][0]:
+                        target = host_json["hosts"][0]["target_login"]
+                        async with aiohttp.get("https://api.twitch.tv/kraken/streams/" +
+                                            target + "?client_id=" +
+                                            self.clientid) as target_r:
+                            target_json = await target_r.json()
+                            streamer = "https://www.twitch.tv/" + target
                             title = target_json["stream"]["channel"]["status"]
                             game = discord.Game(type=1, url=streamer, name=title)
                             await self.bot.change_presence(game=game)
+                    else:
+                        await self.bot.change_presence(game=None)
 
             await asyncio.sleep(CHECK_TIME)
 
