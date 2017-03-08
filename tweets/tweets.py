@@ -225,14 +225,14 @@ class Tweets():
             tweet = None
             for twt in tw.Cursor(api.user_timeline, id=user_to_track).items(1):
                 tweet = twt
-            if ctx.message.server in self.settings:
-                cur_terms = self.settings["servers"][ctx.message.server]["users"]
+            if ctx.message.server.id in self.settings:
+                cur_terms = self.settings["servers"][ctx.message.server.id]["users"]
                 new_user = {
                     "username": user_to_track,
                     "last_id": tweet.id_str
                 }
                 cur_terms.append(new_user)
-                self.settings["servers"][ctx.message.server]["user"] = cur_terms
+                self.settings["servers"][ctx.message.server.id]["user"] = cur_terms
             else:
                 cur_terms = []
                 new_user = {
@@ -241,8 +241,8 @@ class Tweets():
                 }
                 cur_terms.append(new_user)
                 self.settings["servers"] = {}
-                self.settings["servers"][ctx.message.server] = {}
-                self.settings["servers"][ctx.message.server]["users"] = cur_terms
+                self.settings["servers"][ctx.message.server.id] = {}
+                self.settings["servers"][ctx.message.server.id]["users"] = cur_terms
             dataIO.save_json(self.settings_file, self.settings)
             await self.bot.say("Added the requested user!")
 
