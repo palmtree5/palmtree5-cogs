@@ -297,6 +297,7 @@ class Tweets():
             for server in self.settings["servers"]:
                 channel = discord.utils.get(self.bot.get_all_channels(), id=self.settings["servers"][server]["channel"])
                 for user in self.settings["servers"][server]["users"]:
+                    have_set_new_lastid = False
                     for tweet in tw.Cursor(api.user_timeline, id=user["username"], since_id=user["last_id"]).items():
                         colour =\
                             ''.join([randchoice('0123456789ABCDEF')
@@ -316,6 +317,10 @@ class Tweets():
                         if hasattr(tweet, "extended_entities"):
                             em.set_image(url=tweet.extended_entities["media"][0]["media_url"] + ":thumb")
                         await self.bot.send_message(channel, embed=em)
+                        if not have_set_new_lastid:
+                            user["last_id"] = tweet.id_str
+                            have_set_new_lastid = True
+                    dataIO.save_json(self.settings_file, self.settings)
             await asyncio.sleep(CHECK_TIME)
 
 
