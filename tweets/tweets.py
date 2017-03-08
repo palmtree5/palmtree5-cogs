@@ -191,7 +191,7 @@ class Tweets():
         use the subcommands of this command to set the access details"""
         if ctx.invoked_subcommand is None:
             await self.bot.send_cmd_help(ctx)
-    
+
     @_tweetset.command(pass_context=True, name="channel")
     @checks.admin_or_permissions(manage_server=True)
     async def tweetset_channel(self, ctx, channel: discord.Channel):
@@ -203,19 +203,19 @@ class Tweets():
         dataIO.save_json(self.settings_file, self.settings)
         await self.bot.say("Channel set!")
 
-    @_tweetset.group(pass_context=True, hidden=True, name="stream")
+    @_tweetset.group(pass_context=True, name="stream")
     @checks.admin_or_permissions(manage_server=True)
     async def _stream(self, ctx):
         if ctx.invoked_subcommand is None:
             await self.bot.send_cmd_help(ctx)
 
-    @_stream.group(pass_context=True, hidden=True, name="user")
+    @_stream.group(pass_context=True, name="user")
     @checks.admin_or_permissions(manage_server=True)
     async def _user(self, ctx):
         if ctx.invoked_subcommand is None:
             await self.bot.send_cmd_help(ctx)
 
-    @_user.command(pass_context=True, hidden=True, name="add")
+    @_user.command(pass_context=True, name="add")
     @checks.admin_or_permissions(manage_server=True)
     async def _add(self, ctx, user_to_track):
         if user_to_track is None:
@@ -246,20 +246,20 @@ class Tweets():
             dataIO.save_json(self.settings_file, self.settings)
             await self.bot.say("Added the requested user!")
 
-    @_user.command(pass_context=True, hidden=True, name="remove")
+    @_user.command(pass_context=True, name="remove")
     @checks.admin_or_permissions(manage_server=True)
     async def _remove(self, ctx, user_to_remove):
         if user_to_remove is None:
             await self.bot.say("You didn't specify a user to remove!")
         elif user_to_remove == "all":
-            self.settings["servers"][ctx.message.server]["users"] = []
+            self.settings["servers"][ctx.message.server.id]["users"] = []
             dataIO.save_json(self.settings_file, self.settings)
             await self.bot.say("Cleared the tracking list!")
         else:
-            cur_list = self.settings["servers"][ctx.message.server]["users"]
+            cur_list = self.settings["servers"][ctx.message.server.id]["users"]
             user_out = [m for m in cur_list if m["username"] == user_to_remove][0]
             cur_list.remove(user_out)
-            self.settings["servers"][ctx.message.server]["users"] = cur_list
+            self.settings["servers"][ctx.message.server.id]["users"] = cur_list
             dataIO.save_json(self.settings_file, self.settings)
             await self.bot.say("Removed the specified term!")
 
