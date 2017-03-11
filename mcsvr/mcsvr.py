@@ -15,6 +15,7 @@ class Mcsvr():
     """Cog for getting info about a Minecraft server"""
     def __init__(self, bot):
         self.settings_file = "data/mcsvr/mcsvr.json"
+        self.settings = dataIO.load_json(self.settings_file)
         self.bot = bot
 
     @commands.group(pass_context=True, no_pm=True, name="mcsvr")
@@ -51,7 +52,6 @@ class Mcsvr():
         if not channel and server_ip:
             await self.bot.say("Sorry, can't do that! Try specifying a channel and a server IP")
         else:
-            server_list = dataIO.load_json(self.settings_file)
             chn_name = channel.name
             svr_id = ctx.message.server.id
             server_status = "down"
@@ -63,30 +63,31 @@ class Mcsvr():
                 server_status = "down"
                 await self.bot.send_message(channel, "The server is down!")
             svr_to_add = {"chn_name": chn_name, "server_ip": server_ip, "server_status": server_status}
-            server_list[svr_id] = svr_to_add
-            dataIO.save_json(self.settings_file, server_list)
+            self.settings[svr_id] = svr_to_add
+            dataIO.save_json(self.settings_file, self.settings)
 
     async def mc_servers_check(self):
-        server_list = dataIO.load_json(self.settings_file)
-        bot_servers = list(self.bot.servers)
-        for server in bot_servers:
-            print(server.id in server_list)
-            if server.id in server_list:
-                channel_name = server_list[server.id]["chn_name"]
-                server_ip = server_list[server.id]["server_ip"]
-                server_status = server_list[server.id]["server_status"]
-                try:
-                    mc_server = MinecraftServer.lookup(server_ip).status()
-                    if server_status == "down":
-                        await self.bot.send_message(discord.utils.get(self.bot.get_all_channels(), server__id=server.id, name=channel_name), "The server is up again!")
-                    server_status = "up"
-                except ConnectionRefusedError:
-                    if server_status == "up":
-                        await self.bot.send_message(discord.utils.get(self.bot.get_all_channels(), server__id=server.id, name=channel_name), "Oh no, the server went down!")
-                    server_status = "down"
-                server_list[server.id]["server_status"] = server_status
-        dataIO.save_json(self.settings_file, server_list)
-        asyncio.sleep(60)
+        CHECK_TIME = 60
+        while self == self.bot.get_cog("Mcsvr"):
+            bot_servers = list(self.bot.servers)
+            for server in bot_servers:
+                print(server.id in self.settings)
+                if server.id in self.settings:
+                    channel_name = self.settings[server.id]["chn_name"]
+                    server_ip = self.settings[server.id]["server_ip"]
+                    server_status = self.settings[server.id]["server_status"]
+                    try:
+                        mc_server = MinecraftServer.lookup(server_ip).status()
+                        if server_status == "down":
+                            await self.bot.send_message(discord.utils.get(self.bot.get_all_channels(), server__id=server.id, name=channel_name), "The server is up again!")
+                        server_status = "up"
+                    except ConnectionRefusedError:
+                        if server_status == "up":
+                            await self.bot.send_message(discord.utils.get(self.bot.get_all_channels(), server__id=server.id, name=channel_name), "Oh no, the server went down!")
+                        server_status = "down"
+                    self.settings[server.id]["server_status"] = server_status
+            dataIO.save_json(self.settings_file, self.settings)
+            await asyncio.sleep(CHECK_TIME)
 
 
 def check_folders():
