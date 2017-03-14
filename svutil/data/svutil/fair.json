@@ -1,0 +1,177 @@
+{
+    "animal": [
+        {
+            "name": "Duck Egg",
+            "values": {
+                "base": 3,
+                "silver": 4,
+                "gold": 5,
+                "iridium": 7
+            }
+        },
+        {
+            "name": "Duck Feather",
+            "values": {
+                "base": 3,
+                "silver": 4,
+                "gold": 5,
+                "iridium": 8
+            }
+        },
+        {
+            "name": "Egg",
+            "values": {
+                "base": 2,
+                "silver": 3,
+                "gold": 4,
+                "iridium": 7
+            }
+        },
+        {
+            "name": "Brown Egg",
+            "values": {
+                "base": 2,
+                "silver": 3,
+                "gold": 4,
+                "iridium": 7
+            }
+        },
+        {
+            "name": "Goat Milk",
+            "values": {
+                "base": 4,
+                "silver": 5,
+                "gold": 6,
+                "iridium": 8
+            }
+        },
+        {
+            "name": "Large Egg",
+            "values": {
+                "base": 3,
+                "silver": 4,
+                "gold": 5,
+                "iridium": 7
+            }
+        },
+        {
+            "name": "Large Brown Egg",
+            "values": {
+                "base": 3,
+                "silver": 4,
+                "gold": 5,
+                "iridium": 7
+            }
+        },
+        {
+            "name": "Large Goat Milk",
+            "values": {
+                "base": 5,
+                "silver": 6,
+                "gold": 6,
+                "iridium": 8
+            }
+        },
+        {
+            "name": "Large Milk",
+            "values": {
+                "base": 3,
+                "silver": 5,
+                "gold": 6,
+                "iridium": 8
+            }
+        },
+        {
+            "name": "Milk",
+            "values": {
+                "base": 3,
+                "silver": 4,
+                "gold": 5,
+                "iridium": 8
+            }
+        },
+        {
+            "name": "Rabbit's Foot",
+            "values": {
+                "base": 6,
+                "silver": 6,
+                "gold": 6,
+                "iridium": 8
+            }
+        },
+        {
+            "name": "Void Egg",
+            "values": {
+                "base": 2,
+                "silver": 3,
+                "gold": 5,
+                "iridium": 7
+            }
+        },
+        {
+            "name": "Wool",
+            "values": {
+                "base": 5,
+                "silver": 6,
+                "gold": 6,
+                "iridium": 8
+            }
+        }
+    ],
+    "artisan": [
+        {
+            "name": "Beer",
+            "values": {
+                "base": 4,
+                "silver": 5,
+                "gold": 6,
+                "iridium": 8
+            }
+        },
+        {
+            "name": "Cheese",
+            "values": {
+                "base": 4,
+                "silver": 5,
+                "gold": 6,
+                "iridium": 8
+            }
+        },
+        {
+            "name": "Cloth",
+            "values": {
+                "base": 6,
+                "silver": null,
+                "gold": null,
+                "iridium": null
+            }
+        },
+        {
+            "name": "Duck Mayonnaise",
+            "values": {
+                "base": 5,
+                "silver": null,
+                "gold": null,
+                "iridium": null
+            }
+        },
+        {
+            "name": "Goat Cheese",
+            "values": {
+                "base": 5,
+                "silver": 6,
+                "gold": 6,
+                "iridium": 8
+            }
+        },
+        {
+            "name": "Cheese",
+            "values": {
+                "base": 4,
+                "silver": 5,
+                "gold": 6,
+                "iridium": 8
+            }
+        }
+    ]
+}
