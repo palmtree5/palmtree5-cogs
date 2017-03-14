@@ -1,10 +1,9 @@
 {
     "AUTHOR" : "palmtree5",
-    "INSTALL_MSG" : "[p]mcsvr to see commands. Make sure to do pip3 install mcstatus before using this plugin.",
-    "NAME" : "Mcsvr",
+    "INSTALL_MSG" : "[p]help SVUtil to see commands.",
+    "NAME" : "SVUtil",
     "DISABLED" : false,
-    "SHORT" : "Cog for getting Minecraft server status",
-    "REQUIREMENTS" : ["mcstatus"],
-    "DESCRIPTION" : "Gets the status of a Minecraft Server (specifically version and player count)",
-    "TAGS": ["minecraft", "utility", "gaming"]
+    "SHORT" : "Helper cog for certain aspects of Stardew Valley",
+    "DESCRIPTION" : "Helps with Stardew Valley in game events like the luau and the fair",
+    "TAGS": ["utility", "gaming"]
 }
