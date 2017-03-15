@@ -1,7 +1,6 @@
 from discord.ext import commands
 from .utils import checks
 from .utils.dataIO import dataIO
-from random import choice as randchoice
 from datetime import datetime as dt
 import asyncio
 import discord
@@ -17,14 +16,19 @@ numbs = {
 
 
 class EventMaker():
-    """A tool for creating events inside of Discord.
-    Anyone can create an event by default. If a specific role has been specified, users must have that role,
-    the server's mod or admin role, or be the server owner to create events. Reminders will be posted to the
-    configured channel (default: the server's default channel), as well as direct messaged to everyone who has signed up"""
+    """A tool for creating events inside of Discord. Anyone can
+    create an event by default. If a specific role has been
+    specified, users must have that role, the server's mod or
+    admin role, or be the server owner to create events. Reminders
+    will be posted to the configured channel (default: the server's
+    default channel), as well as direct messaged to
+    everyone who has signed up"""
     def __init__(self, bot):
         self.bot = bot
-        self.events = dataIO.load_json(os.path.join("data", "eventmaker", "events.json"))
-        self.settings = dataIO.load_json(os.path.join("data", "eventmaker", "settings.json"))
+        self.events = dataIO.load_json(
+            os.path.join("data", "eventmaker", "events.json"))
+        self.settings = dataIO.load_json(
+            os.path.join("data", "eventmaker", "settings.json"))
 
     async def event_menu(self, ctx, event_list: list,
                          message: discord.Message=None,
@@ -82,7 +86,8 @@ class EventMaker():
         server_owner = server.owner
         if server.id in self.settings:
             if self.settings[server.id]["role"] is not None:
-                specified_role = [r for r in server.roles if r.id == self.settings[server.id]["role"]][0]
+                specified_role =\
+                    [r for r in server.roles if r.id == self.settings[server.id]["role"]][0]
                 allowed_roles.append(specified_role)
                 allowed_roles.append(self.bot.settings.get_server_mod(server))
                 allowed_roles.append(self.bot.settings.get_server_admin(server))
@@ -107,7 +112,8 @@ class EventMaker():
             return
         name = msg.content
         msg = None
-        await self.bot.say("Enter the amount of time from now the event will take place (ex. 1w, 3d 12h, 1y 2w 4d 12h 30m): ")
+        await self.bot.say(
+            "Enter the amount of time from now the event will take place (ex. 1w, 3d 12h, 1y 2w): ")
         msg = await self.bot.wait_for_message(author=author, timeout=30)
         if msg is None:
             await self.bot.say("No start time provided!")
@@ -143,8 +149,10 @@ class EventMaker():
         }
         self.settings[server.id]["next_id"] += 1
         self.events[server.id].append(new_event)
-        dataIO.save_json(os.path.join("data", "eventmaker", "settings.json"), self.settings)
-        dataIO.save_json(os.path.join("data", "eventmaker", "events.json"), self.events)
+        dataIO.save_json(os.path.join(
+            "data", "eventmaker", "settings.json"), self.settings)
+        dataIO.save_json(
+            os.path.join("data", "eventmaker", "events.json"), self.events)
         emb = discord.Embed(title=new_event["event_name"],
                             description=new_event["description"],
                             url="https://time.is/UTC")
@@ -152,9 +160,13 @@ class EventMaker():
                       value=discord.utils.get(
                           self.bot.get_all_members(),
                           id=new_event["creator"]))
-        emb.set_footer(text="Created at (UTC) " + dt.utcfromtimestamp(new_event["create_time"]).strftime("%Y-%m-%d %H:%M:%S"))
+        emb.set_footer(
+            text="Created at (UTC) " + dt.utcfromtimestamp(
+                new_event["create_time"]).strftime("%Y-%m-%d %H:%M:%S"))
         emb.add_field(name="Event ID", value=str(new_event["id"]))
-        emb.add_field(name="Start time (UTC)", value=dt.utcfromtimestamp(new_event["event_start_time"]))
+        emb.add_field(
+            name="Start time (UTC)", value=dt.utcfromtimestamp(
+                new_event["event_start_time"]))
         await self.bot.say(embed=emb)
 
     @commands.command(pass_context=True)
@@ -163,11 +175,13 @@ class EventMaker():
         server = ctx.message.server
         for event in self.events[server.id]:
             if event["id"] == event_id:
-                if event["has_started"] == False:
+                if not event["has_started"]:
                     if ctx.message.author.id not in event["participants"]:
                         event["participants"].append(ctx.message.author.id)
                         await self.bot.say("Joined the event!")
-                        dataIO.save_json(os.path.join("data", "eventmaker", "events.json"), self.events)
+                        dataIO.save_json(
+                            os.path.join("data", "eventmaker", "events.json"),
+                            self.events)
                     else:
                         await self.bot.say("You have already joined that event!")
                 else:
@@ -186,7 +200,8 @@ class EventMaker():
                         event["participants"].remove(author.id)
                         await self.bot.say("Removed you from that event!")
                     else:
-                        await self.bot.say("You aren't signed up for that event!")
+                        await self.bot.say(
+                            "You aren't signed up for that event!")
                 else:
                     await self.bot.say("That event already started!")
                 break
@@ -203,12 +218,18 @@ class EventMaker():
                                     url="https://time.is/UTC")
                 emb.add_field(name="Created by",
                               value=discord.utils.get(
-                                self.bot.get_all_members(),
-                                id=event["creator"]))
-                emb.set_footer(text="Created at (UTC) " + dt.utcfromtimestamp(event["create_time"]).strftime("%Y-%m-%d %H:%M:%S"))
+                                  self.bot.get_all_members(),
+                                  id=event["creator"]))
+                emb.set_footer(
+                    text="Created at (UTC) " + dt.utcfromtimestamp(
+                        event["create_time"]).strftime("%Y-%m-%d %H:%M:%S"))
                 emb.add_field(name="Event ID", value=str(event["id"]))
-                emb.add_field(name="Participant count", value=str(len(event["participants"])))
-                emb.add_field(name="Start time (UTC)", value=dt.utcfromtimestamp(event["event_start_time"]))
+                emb.add_field(
+                    name="Participant count", value=str(
+                        len(event["participants"])))
+                emb.add_field(
+                    name="Start time (UTC)", value=dt.utcfromtimestamp(
+                        event["event_start_time"]))
                 events.append(emb)
         if len(events) == 0:
             await self.bot.say("No events available to join!")
@@ -223,12 +244,14 @@ class EventMaker():
             if event["id"] == event_id:
                 if not event["has_started"]:
                     for user in event["participants"]:
-                        user_obj = discord.utils.get(self.bot.get_all_members(), id=user)
-                        await self.bot.say("{}#{}".format(user_obj.name, user_obj.discriminator))
+                        user_obj = discord.utils.get(
+                            self.bot.get_all_members(), id=user)
+                        await self.bot.say("{}#{}".format(
+                            user_obj.name, user_obj.discriminator))
                 else:
                     await self.bot.say("That event has already started!")
                 break
-    
+
     def parse_time(self, cur_time, msg: discord.Message):
         """Parse the time"""
         start_time = calendar.timegm(cur_time.utctimetuple())
@@ -237,36 +260,36 @@ class EventMaker():
         for piece in pieces:
             if piece.endswith("y"):
                 try:
-                    start_time += int(piece[:-1]) * 31536000 # number of seconds in a year
+                    start_time += int(piece[:-1]) * 31536000  # seconds per year
                 except ValueError:
-                    return None # issue with the user's input
+                    return None  # issue with the user's input
             elif piece.endswith("w"):
                 try:
-                    start_time += int(piece[:-1]) * 604800 # number of seconds in a week
+                    start_time += int(piece[:-1]) * 604800  # seconds per week
                 except ValueError:
-                    return None # issue with the user's input
+                    return None  # issue with the user's input
             elif piece.endswith("d"):
                 try:
-                    start_time += int(piece[:-1]) * 86400 # number of seconds in a day
+                    start_time += int(piece[:-1]) * 86400  # seconds per day
                 except ValueError:
-                    return None # issue with the user's input
+                    return None  # issue with the user's input
             elif piece.endswith("h"):
                 try:
-                    start_time += int(piece[:-1]) * 3600 # number of seconds in an hour
+                    start_time += int(piece[:-1]) * 3600  # seconds per hour
                 except ValueError:
-                    return None # issue with the user's input
+                    return None  # issue with the user's input
             elif piece.endswith("m"):
                 try:
-                    start_time += int(piece[:-1]) * 60 # number of seconds in a minute
+                    start_time += int(piece[:-1]) * 60  # seconds per minute
                 except ValueError:
-                    return None # issue with the user's input
+                    return None  # issue with the user's input
             elif piece.endswith("s"):
                 try:
-                    start_time += int(piece[:-1]) * 1 # number of seconds in a second
+                    start_time += int(piece[:-1]) * 1  # seconds per second
                 except ValueError:
-                    return None # issue with the user's input
+                    return None  # issue with the user's input
             else:
-                return None # something went wrong as a result of the user's input
+                return None  # something went wrong in user's input
             return start_time
 
     @commands.group(pass_context=True)
@@ -288,13 +311,15 @@ class EventMaker():
             self.settings[server.id]["role"] = None
             self.settings[server.id]["next_id"] = 1
         self.settings[server.id]["channel"] = channel.id
-        dataIO.save_json(os.path.join("data", "eventmaker", "settings.json"), self.settings)
+        dataIO.save_json(os.path.join("data", "eventmaker", "settings.json"),
+            self.settings)
         await self.bot.say("Channel set to {}".format(channel.mention))
 
     @eventset.command(pass_context=True, name="role")
     @checks.admin_or_permissions(manage_server=True)
     async def eventset_role(self, ctx, *, role: str=None):
-        """Set the role allowed to create events. Default is for everyone to be able to create events"""
+        """Set the role allowed to create events. Default
+        is for everyone to be able to create events"""
         server = ctx.message.server
         if role is not None:
             role_obj = [r for r in server.roles if r.name == role][0]
@@ -303,7 +328,9 @@ class EventMaker():
                 self.settings[server.id]["next_id"] = 1
                 self.settings[server.id]["channel"] = server.id
             self.settings[server.id]["role"] = role_obj.id
-            dataIO.save_json(os.path.join("data", "eventmaker", "settings.json"), self.settings)
+            dataIO.save_json(
+                os.path.join("data", "eventmaker", "settings.json"),
+                self.settings)
             await self.bot.say("Channel set to {}".format(role))
         else:
             if server.id not in self.settings:
@@ -311,7 +338,9 @@ class EventMaker():
                 self.settings[server.id]["next_id"] = 1
                 self.settings[server.id]["channel"] = server.id
             self.settings[server.id]["role"] = None
-            dataIO.save_json(os.path.join("data", "eventmaker", "settings.json"), self.settings)
+            dataIO.save_json(
+                os.path.join("data", "eventmaker", "settings.json"),
+                self.settings)
             await self.bot.say("Role unset!")
 
     async def check_events(self):
@@ -333,20 +362,29 @@ class EventMaker():
                                       value=discord.utils.get(
                                           self.bot.get_all_members(),
                                           id=event["creator"]))
-                        emb.set_footer(text="Created at (UTC) " + dt.utcfromtimestamp(event["create_time"]).strftime("%Y-%m-%d %H:%M:%S"))
+                        emb.set_footer(
+                            text="Created at (UTC) " +
+                            dt.utcfromtimestamp(
+                                event["create_time"]).strftime(
+                                    "%Y-%m-%d %H:%M:%S"))
                         emb.add_field(name="Event ID", value=str(event["id"]))
-                        emb.add_field(name="Participant count", value=str(len(event["participants"])))
+                        emb.add_field(
+                            name="Participant count", value=str(
+                                len(event["participants"])))
                         try:
                             await self.bot.send_message(channel, embed=emb)
                         except discord.Forbidden:
-                            pass # No permissions to send messages in the specified channel
+                            pass  # No permissions to send messages
                         for user in event["participants"]:
-                            target = discord.utils.get(self.bot.get_all_members(), id=user)
+                            target = discord.utils.get(
+                                self.bot.get_all_members(), id=user)
                             await self.bot.send_message(target, embed=emb)
                         event["has_started"] = True
                         save = True
             if save:
-                dataIO.save_json(os.path.join("data", "eventmaker", "events.json"), self.events)
+                dataIO.save_json(
+                    os.path.join("data", "eventmaker", "events.json"),
+                    self.events)
             await asyncio.sleep(CHECK_DELAY)
 
 
