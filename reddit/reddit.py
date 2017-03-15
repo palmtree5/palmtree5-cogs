@@ -24,85 +24,87 @@ class Reddit():
         self.access_token = ""
 
     async def get_access_token(self):
-        auth =\
-            aiohttp.helpers.BasicAuth(self.settings["client_id"],
-                                      password=self.settings["client_secret"])
-        post_data = {
-                        "grant_type": "password",
-                        "username": self.settings["username"],
-                        "password": self.settings["password"]
-                    }
-        headers = {"User-Agent": "Red-DiscordBotRedditCog/0.1 by /u/palmtree5"}
-        async with\
-                aiohttp.ClientSession(headers=headers, auth=auth) as session:
+        while self == self.bot.get_cog("Reddit"):
+            auth =\
+                aiohttp.helpers.BasicAuth(self.settings["client_id"],
+                                          password=self.settings["client_secret"])
+            post_data = {
+                            "grant_type": "password",
+                            "username": self.settings["username"],
+                            "password": self.settings["password"]
+                        }
+            headers = {"User-Agent": "Red-DiscordBotRedditCog/0.1 by /u/palmtree5"}
             async with\
-                    session.post("https://www.reddit.com/api/v1/access_token",
-                                 data=post_data) as req:
-                req_json = await req.json()
-                self.access_token = req_json["access_token"]
-        await asyncio.sleep(3590)
+                    aiohttp.ClientSession(headers=headers, auth=auth) as session:
+                async with\
+                        session.post("https://www.reddit.com/api/v1/access_token",
+                                      data=post_data) as req:
+                    req_json = await req.json()
+                    self.access_token = req_json["access_token"]
+            await asyncio.sleep(3590)
 
     async def modmail_check(self):
-        await asyncio.sleep(15)
-        for server in list(self.settings["modmail"].keys()):
-            current_sub = self.settings["modmail"][server]
-            cur_channel =\
-                discord.utils.get(self.bot.get_all_channels(), id=current_sub["channel"])
-            url =\
-                "https://oauth.reddit.com/r/" +\
-                "{}/about/message/inbox".format(current_sub["subreddit"])
-            headers = {
-                    "Authorization": "bearer " + self.access_token,
-                    "User-Agent": "Red-DiscordBotRedditCog/0.1 by /u/palmtree5"
-                }
-            async with aiohttp.get(url, headers=headers) as req:
-                resp_json = await req.json()
-            resp_json = resp_json["data"]["children"]
-            need_time_update = False
-            for message in resp_json:
-                if message["data"]["created_utc"] > current_sub["timestamp"]:
-                    need_time_update = True
-                    colour = ''.join([randchoice('0123456789ABCDEF') for x in range(6)])
-                    colour = int(colour, 16)
-                    created_at = dt.utcfromtimestamp(message["data"]["created_utc"])
-                    desc = "Created at " + created_at.strftime("%m/%d/%Y %H:%M:%S")
-                    em = discord.Embed(title=message["data"]["subject"],
-                                       colour=discord.Colour(value=colour),
-                                       url="https://reddit.com/r/"
-                                       + current_sub["subreddit"]
-                                       + "/about/message/inbox",
-                                       description="/r/"
-                                       + current_sub["subreddit"])
-                    em.add_field(name="Sent at (UTC)", value=desc)
-                    em.add_field(name="Author", value=message["data"]["author"])
-                    em.add_field(name="Message", value=message["data"]["body"])
-                    await self.bot.send_message(cur_channel, embed=em)
-                if message["data"]["replies"] != "":
-                    for m in message["data"]["replies"]["data"]["children"]:
-                        if m["data"]["created_utc"] > current_sub["timestamp"]:
-                            need_time_update = True
-                            colour = ''.join([randchoice('0123456789ABCDEF') for x in range(6)])
-                            colour = int(colour, 16)
-                            created_at = dt.utcfromtimestamp(m["data"]["created_utc"])
-                            desc = "Created at " + created_at.strftime("%m/%d/%Y %H:%M:%S")
-                            em = discord.Embed(title=m["data"]["subject"],
-                                               colour=discord.Colour(value=colour),
-                                               url="https://reddit.com/r/"
-                                               + current_sub["subreddit"]
-                                               + "/about/message/inbox",
-                                               description="/r/"
-                                               + current_sub["subreddit"])
-                            em.add_field(name="Sent at (UTC)", value=desc)
-                            em.add_field(name="Author", value=m["data"]["author"])
-                            em.add_field(name="Message", value=m["data"]["body"])
-                            await self.bot.send_message(cur_channel, embed=em)
+        while self == self.bot.get_cog("Reddit"):
+            await asyncio.sleep(15)
+            for server in list(self.settings["modmail"].keys()):
+                current_sub = self.settings["modmail"][server]
+                cur_channel =\
+                    discord.utils.get(self.bot.get_all_channels(), id=current_sub["channel"])
+                url =\
+                    "https://oauth.reddit.com/r/" +\
+                    "{}/about/message/inbox".format(current_sub["subreddit"])
+                headers = {
+                        "Authorization": "bearer " + self.access_token,
+                        "User-Agent": "Red-DiscordBotRedditCog/0.1 by /u/palmtree5"
+                    }
+                async with aiohttp.get(url, headers=headers) as req:
+                    resp_json = await req.json()
+                resp_json = resp_json["data"]["children"]
+                need_time_update = False
+                for message in resp_json:
+                    if message["data"]["created_utc"] > current_sub["timestamp"]:
+                        need_time_update = True
+                        colour = ''.join([randchoice('0123456789ABCDEF') for x in range(6)])
+                        colour = int(colour, 16)
+                        created_at = dt.utcfromtimestamp(message["data"]["created_utc"])
+                        desc = "Created at " + created_at.strftime("%m/%d/%Y %H:%M:%S")
+                        em = discord.Embed(title=message["data"]["subject"],
+                                        colour=discord.Colour(value=colour),
+                                        url="https://reddit.com/r/"
+                                        + current_sub["subreddit"]
+                                        + "/about/message/inbox",
+                                        description="/r/"
+                                        + current_sub["subreddit"])
+                        em.add_field(name="Sent at (UTC)", value=desc)
+                        em.add_field(name="Author", value=message["data"]["author"])
+                        em.add_field(name="Message", value=message["data"]["body"])
+                        await self.bot.send_message(cur_channel, embed=em)
+                    if message["data"]["replies"] != "":
+                        for m in message["data"]["replies"]["data"]["children"]:
+                            if m["data"]["created_utc"] > current_sub["timestamp"]:
+                                need_time_update = True
+                                colour = ''.join([randchoice('0123456789ABCDEF') for x in range(6)])
+                                colour = int(colour, 16)
+                                created_at = dt.utcfromtimestamp(m["data"]["created_utc"])
+                                desc = "Created at " + created_at.strftime("%m/%d/%Y %H:%M:%S")
+                                em = discord.Embed(title=m["data"]["subject"],
+                                                colour=discord.Colour(value=colour),
+                                                url="https://reddit.com/r/"
+                                                + current_sub["subreddit"]
+                                                + "/about/message/inbox",
+                                                description="/r/"
+                                                + current_sub["subreddit"])
+                                em.add_field(name="Sent at (UTC)", value=desc)
+                                em.add_field(name="Author", value=m["data"]["author"])
+                                em.add_field(name="Message", value=m["data"]["body"])
+                                await self.bot.send_message(cur_channel, embed=em)
 
 
-            if need_time_update:
-                current_sub["timestamp"] = int(time.time())
-                self.settings["modmail"][server] = current_sub
-                dataIO.save_json("data/reddit/settings.json", self.settings)
-        await asyncio.sleep(280)
+                if need_time_update:
+                    current_sub["timestamp"] = int(time.time())
+                    self.settings["modmail"][server] = current_sub
+                    dataIO.save_json("data/reddit/settings.json", self.settings)
+            await asyncio.sleep(280)
 
     async def post_menu(self, ctx, post_list: list,
                         message: discord.Message=None,
