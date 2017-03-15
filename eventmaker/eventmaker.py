@@ -187,6 +187,9 @@ class EventMaker():
                 else:
                     await self.bot.say("That event has already started!")
                 break
+        else:
+            await self.bot.say("It appears as if that event does not exist!" +
+                               "Perhaps it was cancelled or never created?")
 
     @commands.command(pass_context=True)
     async def leaveevent(self, ctx, event_id: int):
@@ -205,7 +208,7 @@ class EventMaker():
                 else:
                     await self.bot.say("That event already started!")
                 break
-    
+
     @commands.command(pass_context=True)
     async def eventlist(self, ctx):
         """List events for this server that have not started yet"""
@@ -251,6 +254,25 @@ class EventMaker():
                 else:
                     await self.bot.say("That event has already started!")
                 break
+
+    @commands.command(pass_context=True)
+    async def cancelevent(self, ctx, event_id: int):
+        """Cancels the specified event"""
+        server = ctx.message.server
+        if event_id < self.settings[server.id]["next_id"]:
+            to_remove =\
+                [event for event in self.events[server.id] if event["id"] == event_id]
+            if len(to_remove) == 0:
+                await self.bot.say("No event to remove!")
+            else:
+                self.events[server.id].remove(to_remove[0])
+                dataIO.save_json(
+                    os.path.join("data", "eventmaker", "events.json"),
+                    self.events)
+                await self.bot.say("Removed the specified event!")
+        else:
+            await self.bot.say("I can't remove an event that " +
+                               "hasn't been created yet!")
 
     def parse_time(self, cur_time, msg: discord.Message):
         """Parse the time"""
