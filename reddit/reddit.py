@@ -25,23 +25,27 @@ class Reddit():
 
     async def get_access_token(self):
         while self == self.bot.get_cog("Reddit"):
-            auth =\
-                aiohttp.helpers.BasicAuth(self.settings["client_id"],
-                                          password=self.settings["client_secret"])
-            post_data = {
-                            "grant_type": "password",
-                            "username": self.settings["username"],
-                            "password": self.settings["password"]
-                        }
-            headers = {"User-Agent": "Red-DiscordBotRedditCog/0.1 by /u/palmtree5"}
-            async with\
-                    aiohttp.ClientSession(headers=headers, auth=auth) as session:
+            if self.settings["client_id"] and self.settings["client_secret"] and\
+                    self.settings["username"] and self.settings["password"]:
+                auth =\
+                    aiohttp.helpers.BasicAuth(self.settings["client_id"],
+                                              password=self.settings["client_secret"])
+                post_data = {
+                                "grant_type": "password",
+                                "username": self.settings["username"],
+                                "password": self.settings["password"]
+                            }
+                headers = {"User-Agent": "Red-DiscordBotRedditCog/0.1 by /u/palmtree5"}
                 async with\
-                        session.post("https://www.reddit.com/api/v1/access_token",
-                                      data=post_data) as req:
-                    req_json = await req.json()
-                    self.access_token = req_json["access_token"]
-            await asyncio.sleep(3590)
+                        aiohttp.ClientSession(headers=headers, auth=auth) as session:
+                    async with\
+                            session.post("https://www.reddit.com/api/v1/access_token",
+                                         data=post_data) as req:
+                        req_json = await req.json()
+                        self.access_token = req_json["access_token"]
+                await asyncio.sleep(3590)
+            else:
+                await asyncio.sleep(60)
 
     async def modmail_check(self):
         while self == self.bot.get_cog("Reddit"):
@@ -329,7 +333,10 @@ class Reddit():
     @checks.admin_or_permissions(manage_server=True)
     @commands.group(pass_context=True, name="redditset")
     async def _redditset(self, ctx):
-        """Commands for setting reddit settings"""
+        """Commands for setting reddit settings.
+        You can obtain your client id and secret by
+        creating an app at https://www.reddit.com/prefs/apps
+        Set the application url to http://127.0.0.1"""
         if ctx.invoked_subcommand is None:
             await self.bot.send_cmd_help(ctx)
 
@@ -393,6 +400,7 @@ class Reddit():
         self.bot.delete_message(ctx.message)
         self.settings["client_id"] = client_id
         dataIO.save_json("data/reddit/settings.json", self.settings)
+        await self.bot.say("Client ID set successfully!")
 
     @checks.is_owner()
     @_redditset.command(pass_context=True, name="clientsecret")
@@ -401,6 +409,7 @@ class Reddit():
         self.bot.delete_message(ctx.message)
         self.settings["client_secret"] = client_secret
         dataIO.save_json("data/reddit/settings.json", self.settings)
+        await self.bot.say("Client secret set successfully!")
 
     @checks.is_owner()
     @_redditset.command(pass_context=True, name="username")
@@ -408,6 +417,7 @@ class Reddit():
         """Sets the username for the application"""
         self.settings["username"] = username
         dataIO.save_json("data/reddit/settings.json", self.settings)
+        await self.bot.say("Username set successfully!")
 
     @checks.is_owner()
     @_redditset.command(pass_context=True, name="password")
@@ -416,6 +426,7 @@ class Reddit():
         self.bot.delete_message(ctx.message)
         self.settings["password"] = password
         dataIO.save_json("data/reddit/settings.json", self.settings)
+        await self.bot.say("Password set successfully!")
 
 
 def check_folder():
