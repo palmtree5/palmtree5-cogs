@@ -5,6 +5,7 @@ from random import choice as randchoice
 from .utils.dataIO import dataIO
 from .utils import checks
 import aiohttp
+import asyncio
 import os
 from copy import deepcopy
 from datetime import datetime as dt
@@ -28,10 +29,7 @@ class Hpapi():
         self.games = dataIO.load_json(os.path.join('data', 'hpapi', 'games.json'))
         self.payload = {}
         self.payload["key"] = self.hpapi_key
-        if not dataIO.is_valid_json("data/hpapi/achievements.json"):
-            async with aiohttp.get("https://raw.githubusercontent.com/HypixelDev/PublicAPI/master/Documentation/misc/Achievements.json") as achivements_get:
-                achievements = await achievements_get.json()
-                dataIO.save_json("data/hpapi/achievements.json", achievements)
+        
         self.achievements = dataIO.load_json("data/hpapi/achievements.json")
 
     async def get_json(self, url):
@@ -352,6 +350,12 @@ class Hpapi():
             settings['API_KEY'] = key[0]
             dataIO.save_json(self.settings_file, settings)
             await self.bot.say('```API key set```')
+    
+    async def achievements_getter(self):
+        if not dataIO.is_valid_json("data/hpapi/achievements.json"):
+            async with aiohttp.get("https://raw.githubusercontent.com/HypixelDev/PublicAPI/master/Documentation/misc/Achievements.json") as achievements_get:
+                achievements = await achievements_get.json()
+                dataIO.save_json("data/hpapi/achievements.json", achievements)
 
 
 def check_folder():
@@ -372,4 +376,6 @@ def setup(bot):
     check_folder()
     check_file()
     n = Hpapi(bot)
+    loop = asyncio.get_event_loop()
+    loop.create_task(n.achievements_getter())
     bot.add_cog(n)
