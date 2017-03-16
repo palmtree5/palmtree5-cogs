@@ -1,0 +1,116 @@
+[
+    {
+        "id": 2,
+        "type_name": "QUAKECRAFT",
+        "db_name": "Quake",
+        "clean_name": "Quake"
+    },
+    {
+        "id": 3,
+        "type_name": "WALLS",
+        "db_name": "Walls",
+        "clean_name": "Walls"
+    },
+    {
+        "id": 4,
+        "type_name": "PAINTBALL",
+        "db_name": "Paintball",
+        "clean_name": "Paintball"
+    },
+    {
+        "id": 5,
+        "type_name": "SURVIVAL_GAMES",
+        "db_name": "HungerGames",
+        "clean_name": "Blitz Survival Games"
+    },
+    {
+        "id": 6,
+        "type_name": "TNTGAMES",
+        "db_name": "TNTGames",
+        "clean_name": "TNT Games"
+    },
+    {
+        "id": 7,
+        "type_name": "VAMPIREZ",
+        "db_name": "VampireZ",
+        "clean_name": "VampireZ"
+    },
+    {
+        "id": 13,
+        "type_name": "WALLS3",
+        "db_name": "Walls3",
+        "clean_name": "Mega Walls"
+    },
+    {
+        "id": 14,
+        "type_name": "ARCADE",
+        "db_name": "Arcade",
+        "clean_name": "Arcade"
+    },
+    {
+        "id": 17,
+        "type_name": "ARENA",
+        "db_name": "Arena",
+        "clean_name": "Arena"
+    },
+    {
+        "id": 20,
+        "type_name": "UHC",
+        "db_name": "UHC",
+        "clean_name": "UHC Champions"
+    },
+    {
+        "id": 21,
+        "type_name": "MCGO",
+        "db_name": "MCGO",
+        "clean_name": "Cops and Crims"
+    },
+    {
+        "id": 23,
+        "type_name": "BATTLEGROUND",
+        "db_name": "Battleground",
+        "clean_name": "Warlords"
+    },
+    {
+        "id": 24,
+        "type_name": "SUPER_SMASH",
+        "db_name": "SuperSmash",
+        "clean_name": "Smash Heroes"
+    },
+    {
+        "id": 25,
+        "type_name": "GINGERBREAD",
+        "db_name": "GingerBread",
+        "clean_name": "Turbo Kart Racers"
+    },
+    {
+        "id": 26,
+        "type_name": "HOUSING",
+        "db_name": "Housing",
+        "clean_name": "Housing"
+    },
+    {
+        "id": 51,
+        "type_name": "SKYWARS",
+        "db_name": "SkyWars",
+        "clean_name": "SkyWars"
+    },
+    {
+        "id": 52,
+        "type_name": "TRUE_COMBAT",
+        "db_name": "TrueCombat",
+        "clean_name": "Crazy Walls"
+    },
+    {
+        "id": 54,
+        "type_name": "SPEED_UHC",
+        "db_name": "SpeedUHC",
+        "clean_name": "Speed UHC"
+    },
+    {
+        "id": 55,
+        "type_name": "SKYCLASH",
+        "db_name": "SkyClash",
+        "clean_name": "SkyClash"
+    }
+]

@@ -25,7 +25,7 @@ class Hpapi():
         self.settings_file = 'data/hpapi/hpapi.json'
         settings = dataIO.load_json(self.settings_file)
         self.hpapi_key = settings['API_KEY']
-        self.games = settings['games']
+        self.games = dataIO.load_json(os.path.join('data', 'hpapi', 'games.json'))
         self.payload = {}
         self.payload["key"] = self.hpapi_key
 
@@ -357,37 +357,11 @@ def check_folder():
 
 def check_file():
     f = "data/hpapi/hpapi.json"
-    games = [
-        {"id": 2, "name": "Quakecraft"},
-        {"id": 3, "name": "Walls"},
-        {"id": 4, "name": "Paintball"},
-        {"id": 5, "name": "Blitz Survival Games"},
-        {"id": 6, "name": "The TNT Games"},
-        {"id": 7, "name": "VampireZ"},
-        {"id": 13, "name": "Mega Walls"},
-        {"id": 14, "name": "Arcade"},
-        {"id": 17, "name": "Arena Brawl"},
-        {"id": 21, "name": "Cops and Crims"},
-        {"id": 20, "name": "UHC Champions"},
-        {"id": 23, "name": "Warlords"},
-        {"id": 24, "name": "Smash Heroes"},
-        {"id": 25, "name": "Turbo Kart Racers"},
-        {"id": 51, "name": "SkyWars"},
-        {"id": 52, "name": "Crazy Walls"},
-        {"id": 54, "name": "Speed UHC"},
-        {"id": 55, "name": "SkyClash"}
-    ]
     data = {}
     data["API_KEY"] = ''
-    data["games"] = games
     if not dataIO.is_valid_json(f):
         print("Creating default hpapi.json...")
         dataIO.save_json(f, data)
-    else:
-        cur_settings = dataIO.load_json(f)
-        print("Updating hpapi.json...")
-        cur_settings["games"] = games
-        dataIO.save_json(f, cur_settings)
 
 def setup(bot):
     check_folder()
