@@ -29,8 +29,8 @@ class Hpapi():
         self.games = dataIO.load_json(os.path.join('data', 'hpapi', 'games.json'))
         self.payload = {}
         self.payload["key"] = self.hpapi_key
-        
-        self.achievements = dataIO.load_json("data/hpapi/achievements.json")
+        if os.path.isfile("data/hpapi/achievements.json"):
+            self.achievements = dataIO.load_json("data/hpapi/achievements.json")
 
     async def get_json(self, url):
         async with aiohttp.get(url) as r:
