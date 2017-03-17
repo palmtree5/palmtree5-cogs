@@ -329,22 +329,23 @@ class Hpapi():
             )
         )
         friends_list = []
-        for item in friends_json:
-            if item["uuidSender"] == uuid_json["id"]:
-                name_url = "https://api.mojang.com/user/profiles/" \
-                    + item["uuidReceiver"] + "/names"
-                name_data = await self.get_json(name_url)
-            else:
-                name_url = "https://api.mojang.com/user/profiles/" \
-                    + item["uuidSender"] + "/names"
-                name_data = await self.get_json(name_url)
-            friend_name = name_data[-1]["name"]
-            cur_friend = {
-                "name": player_name,
-                "fname": friend_name,
-                "time": item["started"]/1000
-            }
-            friends_list.append(cur_friend)
+        if friends_json["success"]:
+            for item in friends_json["records"]:
+                if item["uuidSender"] == uuid_json["id"]:
+                    name_url = "https://api.mojang.com/user/profiles/" \
+                        + item["uuidReceiver"] + "/names"
+                    name_data = await self.get_json(name_url)
+                else:
+                    name_url = "https://api.mojang.com/user/profiles/" \
+                        + item["uuidSender"] + "/names"
+                    name_data = await self.get_json(name_url)
+                friend_name = name_data[-1]["name"]
+                cur_friend = {
+                    "name": player_name,
+                    "fname": friend_name,
+                    "time": item["started"]/1000
+                }
+                friends_list.append(cur_friend)
         
             
     @commands.command(pass_context=True)
