@@ -337,12 +337,12 @@ class Hpapi():
                 return
             for item in onetime:
                 achvmt_name = item[item.find("_")+1:]
-                achvmt = self.achievements["achievement"][game.lower()]["one_time"][achvmt_name.upper()]
+                achvmt = self.achievements["achievements"][game.lower()]["one_time"][achvmt_name.upper()]
                 points += achvmt["points"]
                 achievement_count += 1
             for k, v in enumerate(data["player"]["achievements"]):
                 achvmt_name = k[k.find("_")+1:]
-                achvmt = self.achievements["achievement"][game.lower()]["tiered"][achvmt_name.upper()]
+                achvmt = self.achievements["achievements"][game.lower()]["tiered"][achvmt_name.upper()]
                 have_ach = False
                 for tier in achvmt:
                     if v > tier["amount"]:
