@@ -314,7 +314,7 @@ class Hpapi():
         else:
             message = "An error occurred in getting the data."
             await self.bot.say('```{}```'.format(message))
-    
+
     @commands.command(pass_context=True)
     async def hpfriends(self, ctx, player_name: str):
         """Gets friends for the specified player"""
@@ -324,10 +324,9 @@ class Hpapi():
             )
         )
         friends_json = await self.get_json("https://api.hypixel.net/friends?key={}&uuid={}".format(
-                self.hpapi_key,
-                uuid_json["id"]
-            )
-        )
+            self.hpapi_key,
+            uuid_json["id"]
+        ))
         friends_list = []
         if friends_json["success"]:
             for item in friends_json["records"]:
@@ -346,8 +345,8 @@ class Hpapi():
                     "time": item["started"]/1000
                 }
                 friends_list.append(cur_friend)
-        
-            
+            await self.friends_menu(ctx, friends_list, message=None, page=0)
+
     @commands.command(pass_context=True)
     async def hpguild(self, ctx, player_name: str):
         """Gets guild info based on the specified player"""
