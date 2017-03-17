@@ -112,7 +112,7 @@ class Hpapi():
             ''.join([randchoice('0123456789ABCDEF')
                      for x in range(6)])
         colour = int(colour, 16)
-        created_at = dt.utcfromtimestamp(s["started"])
+        created_at = dt.utcfromtimestamp(s["time"])
         created_at = created_at.strftime("%Y-%m-%d %H:%M:%S")
         post_url = "https://www.hypixel.net"
         em = discord.Embed(title="Friends",
