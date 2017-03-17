@@ -102,6 +102,65 @@ class Hpapi():
             return await\
                 self.bot.delete_message(message)
 
+    async def friends_menu(self, ctx, friends_list: list,
+                           message: discord.Message=None,
+                           page=0, timeout: int=30):
+        """menu control logic for this taken from
+           https://github.com/Lunar-Dust/Dusty-Cogs/blob/master/menu/menu.py"""
+        s = friends_list[page]
+        colour =\
+            ''.join([randchoice('0123456789ABCDEF')
+                     for x in range(6)])
+        colour = int(colour, 16)
+        created_at = dt.utcfromtimestamp(s["started"])
+        created_at = created_at.strftime("%Y-%m-%d %H:%M:%S")
+        post_url = "https://www.hypixel.net"
+        em = discord.Embed(title="Friends",
+                           colour=discord.Colour(value=colour),
+                           url=post_url)
+        em.add_field(name="Name", value=s["name"])
+        em.add_field(name="Friend", value=str(s["fname"]))
+        em.add_field(name="Since", value=created_at, inline=False)
+        em.set_thumbnail(url="http://minotar.net/avatar/{}/128.png".format(s["fname"]))
+        if not message:
+            message =\
+                await self.bot.send_message(ctx.message.channel, embed=em)
+            await self.bot.add_reaction(message, "⬅")
+            await self.bot.add_reaction(message, "❌")
+            await self.bot.add_reaction(message, "➡")
+        else:
+            message = await self.bot.edit_message(message, embed=em)
+        react = await self.bot.wait_for_reaction(
+            message=message, user=ctx.message.author, timeout=timeout,
+            emoji=["➡", "⬅", "❌"]
+        )
+        if react is None:
+            await self.bot.remove_reaction(message, "⬅", self.bot.user)
+            await self.bot.remove_reaction(message, "❌", self.bot.user)
+            await self.bot.remove_reaction(message, "➡", self.bot.user)
+            return None
+        reacts = {v: k for k, v in numbs.items()}
+        react = reacts[react.reaction.emoji]
+        if react == "next":
+            next_page = 0
+            if page == len(friends_list) - 1:
+                next_page = 0  # Loop around to the first item
+            else:
+                next_page = page + 1
+            return await self.friends_menu(ctx, friends_list, message=message,
+                                           page=next_page, timeout=timeout)
+        elif react == "back":
+            next_page = 0
+            if page == 0:
+                next_page = len(friends_list) - 1  # Loop around to the last item
+            else:
+                next_page = page - 1
+            return await self.friends_menu(ctx, friends_list, message=message,
+                                           page=next_page, timeout=timeout)
+        else:
+            return await\
+                self.bot.delete_message(message)
+
     @commands.command(pass_context=True)
     async def hpbooster(self, ctx, *game: str):
         """
@@ -255,7 +314,39 @@ class Hpapi():
         else:
             message = "An error occurred in getting the data."
             await self.bot.say('```{}```'.format(message))
-
+    
+    @commands.command(pass_context=True)
+    async def hpfriends(self, ctx, player_name: str):
+        """Gets friends for the specified player"""
+        uuid_json = await self.get_json(
+            "https://api.mojang.com/users/profiles/minecraft/{}".format(
+                player_name
+            )
+        )
+        friends_json = await self.get_json("https://api.hypixel.net/friends?key={}&uuid={}".format(
+                self.hpapi_key,
+                uuid_json["id"]
+            )
+        )
+        friends_list = []
+        for item in friends_json:
+            if item["uuidSender"] == uuid_json["id"]:
+                name_url = "https://api.mojang.com/user/profiles/" \
+                    + item["uuidReceiver"] + "/names"
+                name_data = await self.get_json(name_url)
+            else:
+                name_url = "https://api.mojang.com/user/profiles/" \
+                    + item["uuidSender"] + "/names"
+                name_data = await self.get_json(name_url)
+            friend_name = name_data[-1]["name"]
+            cur_friend = {
+                "name": player_name,
+                "fname": friend_name,
+                "time": item["started"]/1000
+            }
+            friends_list.append(cur_friend)
+        
+            
     @commands.command(pass_context=True)
     async def hpguild(self, ctx, player_name: str):
         """Gets guild info based on the specified player"""
