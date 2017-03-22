@@ -288,6 +288,7 @@ class Reddit():
                 return
             resp_json = resp_json["data"]["children"]
             await self.post_menu(ctx, resp_json, page=0, timeout=30)
+
     @_subreddit.command(pass_context=True, name="top")
     async def subreddit_top(self, ctx, subreddit: str, post_count: int=3):
         """Command for getting subreddit's top posts"""
@@ -336,7 +337,8 @@ class Reddit():
         """Commands for setting reddit settings.
         You can obtain your client id and secret by
         creating an app at https://www.reddit.com/prefs/apps
-        Set the application url to http://127.0.0.1"""
+        Set the application url to http://127.0.0.1 and set
+        the app type to script"""
         if ctx.invoked_subcommand is None:
             await self.bot.send_cmd_help(ctx)
 
