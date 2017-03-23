@@ -353,7 +353,7 @@ class EventMaker():
             dataIO.save_json(
                 os.path.join("data", "eventmaker", "settings.json"),
                 self.settings)
-            await self.bot.say("Channel set to {}".format(role))
+            await self.bot.say("Role set to {}".format(role))
         else:
             if server.id not in self.settings:
                 self.settings[server.id] = {}
