@@ -100,7 +100,7 @@ class NewsAnnouncer():
             await self.bot.say("Something went wrong while doing that.")
             return
         await self.bot.say("Removed that role successfully")
-        self.settings[server.id][channel.id]["joined"].remoe(author.id)
+        self.settings[server.id][channel.id]["joined"].remove(author.id)
         dataIO.save_json("data/newsannouncer/settings.json", self.settings)
 
 
