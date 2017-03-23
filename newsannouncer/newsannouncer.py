@@ -72,6 +72,36 @@ class NewsAnnouncer():
             return
         await self.bot.say("Added that role successfully")
         self.settings[server.id][channel.id]["joined"].append(author.id)
+        dataIO.save_json("data/newsannouncer/settings.json", self.settings)
+
+    @commands.command(pass_context=True)
+    async def leavenews(self, ctx):
+        """Leaves the news role for the current channel"""
+        server = ctx.message.server
+        channel = ctx.message.channel
+        author = ctx.message.author
+
+        if server.id not in self.settings or\
+                channel.id not in self.settings[server.id]:
+            await self.bot.say("No news role available here!")
+            return
+        if author.id not in self.settings[server.id][channel.id]["joined"]:
+            await self.bot.say("You don't have that role!")
+            return
+        
+        role_id = self.settings[server.id][channel.id]["role_id"]
+        role_to_remove = [r for r in server.roles if r.id == role_id][0]
+        try:
+            await self.bot.remove_roles(author, role_to_remove)
+        except discord.Forbidden:
+            await self.bot.say("I don't have permissions to remove roles here!")
+            return
+        except discord.HTTPException:
+            await self.bot.say("Something went wrong while doing that.")
+            return
+        await self.bot.say("Removed that role successfully")
+        self.settings[server.id][channel.id]["joined"].remoe(author.id)
+        dataIO.save_json("data/newsannouncer/settings.json", self.settings)
 
 
 def check_folder():
