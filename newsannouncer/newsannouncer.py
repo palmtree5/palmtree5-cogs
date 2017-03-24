@@ -3,6 +3,7 @@ from .utils import checks
 from .utils.dataIO import dataIO
 import os
 import discord
+import asyncio
 
 
 class NewsAnnouncer():
@@ -35,7 +36,7 @@ class NewsAnnouncer():
             new_role_name = channel.name
         try:
             new_role = await self.bot.create_role(server, name=new_role_name,
-                                                  mentionable=True)
+                                                  permissions=None)
         except discord.Forbidden:
             await self.bot.say("I cannot create roles!")
             return
@@ -88,7 +89,7 @@ class NewsAnnouncer():
         if author.id not in self.settings[server.id][channel.id]["joined"]:
             await self.bot.say("You don't have that role!")
             return
-        
+
         role_id = self.settings[server.id][channel.id]["role_id"]
         role_to_remove = [r for r in server.roles if r.id == role_id][0]
         try:
@@ -102,6 +103,20 @@ class NewsAnnouncer():
         await self.bot.say("Removed that role successfully")
         self.settings[server.id][channel.id]["joined"].remove(author.id)
         dataIO.save_json("data/newsannouncer/settings.json", self.settings)
+
+    @checks.mod_or_permissions(manage_channel=True)
+    @commands.command(pass_context=True)
+    async def makeannouncement(self, ctx, *, message: str):
+        """Makes an announcement in the current channel"""
+        server = ctx.message.server
+        channel = ctx.message.channel
+        role_id = self.settings[server.id][channel.id]["role_id"]
+        role_to_edit = [r for r in server.roles if r.id == role_id][0]
+        await self.bot.edit_role(server, role_to_edit, mentionable=True)
+        asyncio.sleep(2.5)
+        await self.bot.say(role_to_edit.mention + " " + message)
+        asyncio.sleep(2)
+        await self.bot.edit_role(server, role_to_edit, mentionable=False)
 
 
 def check_folder():
