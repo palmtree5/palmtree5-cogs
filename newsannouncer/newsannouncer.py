@@ -36,7 +36,7 @@ class NewsAnnouncer():
             new_role_name = channel.name
         try:
             new_role = await self.bot.create_role(server, name=new_role_name,
-                                                  permissions=0)
+                                                  permissions=discord.Permissions(permissions=0))
         except discord.Forbidden:
             await self.bot.say("I cannot create roles!")
             return
