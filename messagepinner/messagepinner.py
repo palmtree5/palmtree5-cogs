@@ -23,17 +23,18 @@ class MessagePinner():
 
     async def on_message(self, message):
         """Message listener"""
-        if message.server.id in self.settings:
-            this_trigger = self.settings[message.server.id]
-            if this_trigger in message.content and "pintrigger" not in message.content:
-                try:
-                    await self.bot.pin_message(message)
-                except discord.Forbidden:
-                    print("No permissions to do that!")
-                except discord.NotFound:
-                    print("That channel or message doesn't exist!")
-                except discord.HTTPException:
-                    print("Something went wrong. Maybe check the number of pinned messages?")
+        if not message.channel.is_private:
+            if message.server.id in self.settings:
+                this_trigger = self.settings[message.server.id]
+                if this_trigger in message.content and "pintrigger" not in message.content:
+                    try:
+                        await self.bot.pin_message(message)
+                    except discord.Forbidden:
+                        print("No permissions to do that!")
+                    except discord.NotFound:
+                        print("That channel or message doesn't exist!")
+                    except discord.HTTPException:
+                        print("Something went wrong. Maybe check the number of pinned messages?")
 
 
 def check_folder():
