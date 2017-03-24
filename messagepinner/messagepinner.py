@@ -25,7 +25,7 @@ class MessagePinner():
         """Message listener"""
         if message.server.id in self.settings:
             this_trigger = self.settings[message.server.id]
-            if this_trigger in message.content:
+            if this_trigger in message.content and "pintrigger" not in message.content:
                 try:
                     await self.bot.pin_message(message)
                 except discord.Forbidden:
