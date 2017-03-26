@@ -14,17 +14,21 @@ class MessagePinner():
 
     @checks.mod_or_permissions(manage_messages=True)
     @commands.command(pass_context=True)
-    async def pintrigger(self, ctx, *, text: str):
+    async def pintrigger(self, ctx, *, text: str=None):
         """Sets the pin trigger for the current server"""
         server = ctx.message.server
-        self.settings[server.id] = text
-        await self.bot.say("Pin trigger text set!")
+        if text is None:
+            self.settings[server.id] = None
+            await self.bot.say("Cleared pin trigger!")
+        else:
+            self.settings[server.id] = text
+            await self.bot.say("Pin trigger text set!")
         dataIO.save_json("data/messagepinner/settings.json", self.settings)
 
     async def on_message(self, message):
         """Message listener"""
         if not message.channel.is_private:
-            if message.server.id in self.settings:
+            if message.server.id in self.settings and self.settings[message.server.id]:
                 this_trigger = self.settings[message.server.id]
                 if this_trigger in message.content and "pintrigger" not in message.content:
                     try:
