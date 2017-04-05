@@ -1,9 +1,9 @@
 {
     "AUTHOR" : "palmtree5",
-    "INSTALL_MSG" : "[p]help EventMaker to see commands. No additional dependencies needed.",
-    "NAME" : "EventMaker",
+    "INSTALL_MSG" : "[p]help FEDraft to see commands. No additional dependencies needed.",
+    "NAME" : "FEDraft",
     "DISABLED" : false,
-    "SHORT" : "Event manager utility",
-    "DESCRIPTION" : "Allows for creating and joining events and provides a notification at the start time",
-    "TAGS": ["events", "utilities"]
+    "SHORT" : "character draft creator",
+    "DESCRIPTION" : "Creates a character draft based on user input",
+    "TAGS": ["games", "utilities"]
 }
