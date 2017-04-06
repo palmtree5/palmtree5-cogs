@@ -169,7 +169,6 @@ class FEDraft():
             char_count = data["max_bring"]
         elif draft_settings["difficulty"].lower() == "hard":
             char_count = math.floor(data["max_bring"] * 0.9)
-        print(type(char_count))
         # Handle any prepromotes in the required character list
         for pick in picks:
             char_count -= 1
@@ -177,6 +176,7 @@ class FEDraft():
                 prepromotes_left -= 1
         char_list = list(data["characters"].keys())
         shuffle(char_list)
+        print(char_list)
         while char_count > 0:
             next_char = choice(char_list)
             if next_char not in picks:
