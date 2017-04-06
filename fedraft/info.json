@@ -1,0 +1,9 @@
+{
+    "AUTHOR" : "palmtree5",
+    "INSTALL_MSG" : "[p]help FEDraft to see commands. No additional dependencies needed.",
+    "NAME" : "FEDraft",
+    "DISABLED" : false,
+    "SHORT" : "character draft creator",
+    "DESCRIPTION" : "Creates a character draft based on user input",
+    "TAGS": ["games", "utilities"]
+}
