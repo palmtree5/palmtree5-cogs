@@ -155,13 +155,12 @@ class FEDraft():
     def generate_draft(self, draft_settings):
         """Actually does the picking"""
         data = getattr(self, draft_settings["game"])
+        picks = data["chapters"][draft_settings["route"]]["required_characters"]
         if "prepro_count" in draft_settings:
             prepromotes_left = int(draft_settings["prepro_count"])
         else:
             prepromotes_left = data["prepro_count"]
         char_count = 0
-        # Get the required characters for the game
-        picks = data["chapters"][draft_settings["route"]]["required_characters"]
 
         if draft_settings["difficulty"].lower() == "easy":
             char_count = math.ceil(data["max_bring"] * 1.1)
@@ -174,25 +173,19 @@ class FEDraft():
             char_count -= 1
             if data["characters"][pick]["prepro"]:
                 prepromotes_left -= 1
-        char_list = list(data["characters"].keys())
-        shuffle(char_list)
-        print(char_list)
         while char_count > 0:
-            next_char = choice(char_list)
+            next_char = choice(list(data["characters"].keys()))
+            chapter = choice(data["chapters"][draft_settings["route"]]["ch_list"])
             if next_char not in picks:
-                for chapter in data["chapters"][draft_settings["route"]]["ch_list"]:
-                    if chapter in data["chapters"][draft_settings["route"]]["recruitments"]\
-                            and next_char in data["chapters"][draft_settings["route"]]["recruitments"][chapter]:
-                        if data["characters"][next_char]["prepro"]:
-                            if prepromotes_left > 0:
-                                picks.append(next_char)
-                                char_count -= 1
-                                prepromotes_left -= 1
-                                break
-                        else:
-                            picks.append(next_char)
-                            char_count -= 1
-                            break
+                if chapter in data["chapters"][draft_settings["route"]]["recruitments"]\
+                        and next_char in data["chapters"][draft_settings["route"]]["recruitments"][chapter]:
+                    if data["characters"][next_char]["prepro"] and prepromotes_left > 0:
+                        picks.append(next_char)
+                        char_count -= 1
+                        prepromotes_left -= 1
+                    elif not data["characters"][next_char]["prepro"]:
+                        picks.append(next_char)
+                        char_count -= 1
         return picks
 
 

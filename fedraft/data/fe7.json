@@ -120,10 +120,7 @@
                 ]
             },
             "required_characters": [
-                "Eliwood",
-                "Nils",
-                "Ninian",
-                "Athos"
+                "Eliwood"
             ]
         },
         "hector": {
@@ -254,10 +251,7 @@
                 ]
             },
             "required_characters": [
-                "Hector",
-                "Nils",
-                "Ninian",
-                "Athos"
+                "Hector"
             ]
         }
     },

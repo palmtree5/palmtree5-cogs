@@ -95,7 +95,6 @@
                 ]
             },
             "required_characters": [
-                "Ephraim",
                 "Eirika"
             ]
         },
@@ -192,8 +191,7 @@
                 ]
             },
             "required_characters": [
-                "Ephraim",
-                "Eirika"
+                "Ephraim"
             ]
         }
     },
