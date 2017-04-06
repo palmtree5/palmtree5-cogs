@@ -10,8 +10,7 @@ class FEDraft():
 
     def __init__(self, bot):
         self.bot = bot
-        self.bs = dataIO.load_json("data/fedraft/fe7.json")
-        self.ss = dataIO.load_json("data/fedraft/fe8.json")
+        self.settings = dataIO.load_json("data/fedraft/settings.json")
 
     @commands.command(pass_context=True)
     async def fedraft(self, ctx, game: str):
@@ -47,7 +46,7 @@ class FEDraft():
         # Define wait_for_message checks
 
         def valid_route_check(msg):
-            for route in list(getattr(self, game)["chapters"].keys()):
+            for route in list(game_data["chapters"].keys()):
                 if route in msg.content.lower():
                     return True
             else:
@@ -71,7 +70,7 @@ class FEDraft():
                 prepro_num = int(msg.content)
             except ValueError:
                 return False
-            return prepro_num <= getattr(self, game)["prepro_count"]
+            return prepro_num <= game_data["prepro_count"]
 
         def diff_chk(msg):
             return "easy" in msg.content.lower() or "normal" in msg.content.lower() or "hard" in msg.content.lower()
@@ -80,12 +79,12 @@ class FEDraft():
         draft_settings = {
             "game": game
         }
-
+        game_data = dataIO.load_json("data/fedraft/" + self.settings[game])
         if use_pms:
             await self.bot.send_message(
                 author,
                 "Enter the route you will play ({}):".format(
-                    " or ".join(list(getattr(self, game)["chapters"].keys()))
+                    " or ".join(list(game_data["chapters"].keys()))
                 ))
             msg = await self.bot.wait_for_message(timeout=30, author=author, check=valid_route_check)
             if msg is None:
@@ -120,7 +119,7 @@ class FEDraft():
                 await self.bot.send_message(
                     author,
                     "Enter the number of characters allowed to be prepromotes (max {}): ".format(
-                        getattr(self, game)["prepro_count"]
+                        game_data["prepro_count"]
                     )
                 )
                 msg = await self.bot.wait_for_message(
@@ -154,7 +153,7 @@ class FEDraft():
 
     def generate_draft(self, draft_settings):
         """Actually does the picking"""
-        data = getattr(self, draft_settings["game"])
+        data = dataIO.load_json("data/fedraft/" + self.settings[draft_settings["game"]])
         picks = data["chapters"][draft_settings["route"]]["required_characters"]
         if "prepro_count" in draft_settings:
             prepromotes_left = int(draft_settings["prepro_count"])
@@ -174,8 +173,12 @@ class FEDraft():
             if data["characters"][pick]["prepro"]:
                 prepromotes_left -= 1
         while char_count > 0:
-            next_char = choice(list(data["characters"].keys()))
-            chapter = choice(data["chapters"][draft_settings["route"]]["ch_list"])
+            char_list = list(data["characters"].keys())
+            shuffle(char_list)
+            next_char = choice(char_list)
+            chap_list = data["chapters"][draft_settings["route"]]["ch_list"]
+            shuffle(chap_list)
+            chapter = choice(chap_list)
             if next_char not in picks:
                 if chapter in data["chapters"][draft_settings["route"]]["recruitments"]\
                         and next_char in data["chapters"][draft_settings["route"]]["recruitments"][chapter]:
