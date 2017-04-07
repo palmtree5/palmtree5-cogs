@@ -35,7 +35,7 @@ class FEUnitPicker():
             # Failed to DM the user for some reason, fall back to the channel the message is in
             use_pms = False
             self.bot.say("We will now walk through the process of setting options for the draft")
-        if game == "bs" or game == "bb" or game == "ss":
+        if game in self.settings:
             await self.fe_draft_generator(ctx, game, use_pms)
         else:
             await self.bot.say("That is not a valid game!")
@@ -55,10 +55,7 @@ class FEUnitPicker():
         def gba_stats_check(msg):
             stats = msg.content.split(" ")
             for stat in stats:
-                if stat != "Lv" and stat != "HP" and stat != "Str/Mag"\
-                        and stat != "Skl" and stat != "Spd" and stat != "Lck"\
-                        and stat != "Def" and stat != "Res" and stat != "Con"\
-                        and stat != "Mov" and stat != "none":
+                if stat not in game_data["stat_types"] and stat != "none":
                     return False
             return True
 
@@ -96,21 +93,22 @@ class FEUnitPicker():
                 author,
                 "You may now choose to specify any average stats for characters. To do this,\n" +
                 "enter the stats you would like to specify. These are the valid options:\n" +
-                "```Lv HP Str/Mag Skl Spd Lck Def Res Con Mov```\nEnter them now, separated " +
+                "```{}```\nEnter them now, separated ".format(" ".join(game_data["stat_types"])) +
                 "by a space as they appear here (or type 'none' to skip this step):"
             )
             msg = await self.bot.wait_for_message(timeout=30, author=author, check=gba_stats_check)
             stats = msg.content.split(" ")
             for stat in stats:
                 cur_stat = 0
-                await self.bot.send_message(author, "Enter the average {}:".format(stat))
-                msg = await self.bot.wait_for_message(timeout=30, author=author)
-                try:
-                    cur_stat = int(msg.content)
-                except ValueError:
-                    await self.bot.send_message(author, "Invalid input received!")
-                    return
-                draft_settings[stat] = cur_stat
+                if stat != "none":
+                    await self.bot.send_message(author, "Enter the average {}:".format(stat))
+                    msg = await self.bot.wait_for_message(timeout=30, author=author)
+                    try:
+                        cur_stat = int(msg.content)
+                    except ValueError:
+                        await self.bot.send_message(author, "Invalid input received!")
+                        return
+                    draft_settings[stat] = cur_stat
             await self.bot.send_message(author, "Any preference on prepromotes (yes/no)?")
             msg = await self.bot.wait_for_message(timeout=30, author=author, check=yn_check)
             if msg is None:

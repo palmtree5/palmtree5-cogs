@@ -1,6 +1,18 @@
 {
     "prepro_count": 14,
     "max_bring": 18,
+    "stat_types": [
+        "Lv",
+        "HP",
+        "Str/Mag",
+        "Skl",
+        "Spd",
+        "Lck",
+        "Def",
+        "Res",
+        "Con",
+        "Mov"
+    ],
     "chapters": {
         "eliwood": {
             "ch_list": [
