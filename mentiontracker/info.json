@@ -1,0 +1,9 @@
+{
+    "AUTHOR" : "palmtree5",
+    "INSTALL_MSG" : "[p]help MentionTracker to see commands. No additional dependencies needed.",
+    "NAME" : "MentionTracker",
+    "DISABLED" : false,
+    "SHORT" : "Mention tracker/notifier",
+    "DESCRIPTION" : "Notifies users if they're mentioned in a channel they have turned this on for",
+    "TAGS": ["mention", "utilities"]
+}
