@@ -1,0 +1,9 @@
+{
+    "AUTHOR" : "palmtree5",
+    "INSTALL_MSG" : "[p]lockdown to see commands. No additional requirements needed. Please ensure you have set the bot's mod and admin roles via [p]set modrole and [p]set adminrole",
+    "NAME" : "Lockdown",
+    "DISABLED" : false,
+    "SHORT" : "Cog for locking down channels in the event of a raid", 
+    "DESCRIPTION" : "Locks down all channels in a server to allow for easier cleanup",
+    "TAGS": ["antiraid", "utility"]
+}
