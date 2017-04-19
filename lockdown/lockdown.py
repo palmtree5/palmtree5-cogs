@@ -78,7 +78,8 @@ class Lockdown():
     @lockdownset.command(pass_context=True, no_pm=True)
     async def channel(self, ctx, channel: discord.Channel, status: str):
         """Sets whether or not the channel will be
-           locked down if a lockdown is turned on"""
+           locked down if a lockdown is turned on
+           Options for status are on or off"""
         server = ctx.message.server
         new_status = None
         if status.lower() != "on" and status.lower() != "off":
