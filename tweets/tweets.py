@@ -171,12 +171,16 @@ class Tweets():
             try:
                 for status in\
                         tw.Cursor(api.user_timeline, id=username).items(cnt):
-                    msg_list.append(status)
+                    if not self.settings["servers"][ctx.message.server.id]["ignorementions"] or not status.text.startswith("@"):
+                        msg_list.append(status)
             except tw.TweepError as e:
                 await self.bot.say("Whoops! Something went wrong here. \
                     The error code is " + str(e))
                 return
-            await self.tweet_menu(ctx, msg_list, page=0, timeout=30)
+            if len(msg_list) > 0:
+                await self.tweet_menu(ctx, msg_list, page=0, timeout=30)
+            else:
+                await self.bot.say("No tweets available to display!")
         else:
             await self.bot.say("No username specified!")
             return
@@ -191,6 +195,24 @@ class Tweets():
         use the subcommands of this command to set the access details"""
         if ctx.invoked_subcommand is None:
             await self.bot.send_cmd_help(ctx)
+
+    @_tweetset.command(pass_context=True, name="ignorementions")
+    @checks.admin_or_permissions(manage_server=True)
+    async def tweetset_ignorementions(self, ctx, toggle: str):
+        """Toggle ignoring tweets starting with an @ mention
+           toggle should be one of on or off"""
+        server = ctx.message.server
+        if server.id not in self.settings["servers"]:
+            self.settings["servers"][server.id] = {}
+        if toggle.lower() == "on":
+            self.settings["servers"][server.id]["ignorementions"] = True
+            await self.bot.say("@ mentions at the start of tweets will be ignored!")
+        elif toggle.lower() == "off":
+            self.settings["servers"][server.id]["ignorementions"] = False
+            await self.bot.say("@ mentions at the start of tweets will not be ignored!")
+        else:
+            await self.bot.say("That isn't a valid input!")
+        dataIO.save_json(self.settings_file, self.settings)
 
     @_tweetset.command(pass_context=True, name="channel")
     @checks.admin_or_permissions(manage_server=True)
@@ -231,7 +253,7 @@ class Tweets():
                     "username": user_to_track,
                     "last_id": tweet.id_str
                 }
-                cur_terms.append(new_user)
+                cur_terms.append(new_user.copy())
                 self.settings["servers"][ctx.message.server.id]["user"] = cur_terms
             else:
                 cur_terms = []
@@ -239,7 +261,7 @@ class Tweets():
                     "username": user_to_track,
                     "last_id": tweet.id_str
                 }
-                cur_terms.append(new_user)
+                cur_terms.append(new_user.copy())
                 self.settings["servers"] = {}
                 self.settings["servers"][ctx.message.server.id] = {}
                 self.settings["servers"][ctx.message.server.id]["users"] = cur_terms
