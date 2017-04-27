@@ -91,10 +91,6 @@ class EventMaker():
                 allowed_roles.append(specified_role)
                 allowed_roles.append(self.bot.settings.get_server_mod(server))
                 allowed_roles.append(self.bot.settings.get_server_admin(server))
-        else:
-            self.settings[server.id] = {}
-            self.settings[server.id]["role"] = None
-            self.settings[server.id]["channel"] = server.id
 
         if len(allowed_roles) > 0 and author != server_owner:
             for role in author.roles:
@@ -134,9 +130,6 @@ class EventMaker():
         else:
             desc = msg.content
 
-        if server.id not in self.events:
-            self.events[server.id] = []
-            self.settings[server.id]["next_id"] = 1
         new_event = {
             "id": self.settings[server.id]["next_id"],
             "creator": author.id,
@@ -328,13 +321,9 @@ class EventMaker():
         Make sure users who should be able to create events can send messages
         in this channel"""
         server = ctx.message.server
-        if server.id not in self.settings:
-            self.settings[server.id] = {}
-            self.settings[server.id]["role"] = None
-            self.settings[server.id]["next_id"] = 1
         self.settings[server.id]["channel"] = channel.id
         dataIO.save_json(os.path.join("data", "eventmaker", "settings.json"),
-            self.settings)
+                         self.settings)
         await self.bot.say("Channel set to {}".format(channel.mention))
 
     @eventset.command(pass_context=True, name="role")
@@ -345,25 +334,34 @@ class EventMaker():
         server = ctx.message.server
         if role is not None:
             role_obj = [r for r in server.roles if r.name == role][0]
-            if server.id not in self.settings:
-                self.settings[server.id] = {}
-                self.settings[server.id]["next_id"] = 1
-                self.settings[server.id]["channel"] = server.id
             self.settings[server.id]["role"] = role_obj.id
             dataIO.save_json(
                 os.path.join("data", "eventmaker", "settings.json"),
                 self.settings)
             await self.bot.say("Role set to {}".format(role))
         else:
-            if server.id not in self.settings:
-                self.settings[server.id] = {}
-                self.settings[server.id]["next_id"] = 1
-                self.settings[server.id]["channel"] = server.id
             self.settings[server.id]["role"] = None
             dataIO.save_json(
                 os.path.join("data", "eventmaker", "settings.json"),
                 self.settings)
             await self.bot.say("Role unset!")
+
+    @eventset.command(pass_context=True, name="defaultsettings", hidden=True)
+    @checks.admin_or_permissions(manage_server=True)
+    async def eventset_defaultsettings(self, ctx):
+        """Intended for situations where the cog gets installed
+           but the bot is already in a number of servers.
+           Emulates the functionality of the server join listener"""
+        if ctx.message.server.id not in self.settings:
+            self.settings[ctx.message.server.id] = {
+                "role": None,
+                "next_id": 1,
+                "channel": ctx.message.server.id
+            }
+        if ctx.message.server.id not in self.events:
+            self.events[ctx.message.server.id] = []
+        dataIO.save_json(os.path.join("data", "eventmaker", "events.json"))
+        dataIO.save_json(os.path.join("data", "eventmaker", "settings.json"))
 
     async def check_events(self):
         """Event loop"""
@@ -409,6 +407,27 @@ class EventMaker():
                     self.events)
             await asyncio.sleep(CHECK_DELAY)
 
+    async def server_join(self, server):
+        if server.id not in self.settings:
+            self.settings[server.id] = {
+                "role": None,
+                "next_id": 1,
+                "channel": server.id
+            }
+        if server.id not in self.events:
+            self.events[server.id] = []
+        dataIO.save_json(os.path.join("data", "eventmaker", "events.json"))
+        dataIO.save_json(os.path.join("data", "eventmaker", "settings.json"))
+
+    async def server_leave(self, server):
+        """Cleanup after leaving server"""
+        if server.id in self.events:
+            self.events.pop(server.id)
+        if server.id in self.settings:
+            self.settings.pop(server.id)
+        dataIO.save_json(os.path.join("data", "eventmaker", "events.json"))
+        dataIO.save_json(os.path.join("data", "eventmaker", "settings.json"))
+
 
 def check_folder():
     if not os.path.isdir(os.path.join("data", "eventmaker")):
@@ -429,4 +448,6 @@ def setup(bot):
     n = EventMaker(bot)
     loop = asyncio.get_event_loop()
     loop.create_task(n.check_events())
+    bot.add_listener(n.server_join, "on_server_join")
+    bot.add_listener(n.server_leave, "on_server_remove")
     bot.add_cog(n)
