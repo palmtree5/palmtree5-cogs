@@ -360,8 +360,8 @@ class EventMaker():
             }
         if ctx.message.server.id not in self.events:
             self.events[ctx.message.server.id] = []
-        dataIO.save_json(os.path.join("data", "eventmaker", "events.json"))
-        dataIO.save_json(os.path.join("data", "eventmaker", "settings.json"))
+        dataIO.save_json(os.path.join("data", "eventmaker", "events.json"), self.events)
+        dataIO.save_json(os.path.join("data", "eventmaker", "settings.json"), self.settings)
 
     async def check_events(self):
         """Event loop"""
