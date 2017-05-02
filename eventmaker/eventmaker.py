@@ -27,13 +27,11 @@ class EventMaker():
         self.bot = bot
         self.events = JsonGuildDB(
             os.path.join("data", "eventmaker", "events.json"),
-            createdirs=True,
-            autosave=True
+            createdirs=True
         )
         self.settings = JsonGuildDB(
             os.path.join("data", "eventmaker", "settings.json"),
-            createdirs=True,
-            autosave=True
+            createdirs=True
         )
 
     async def event_menu(self, ctx, event_list: list,
