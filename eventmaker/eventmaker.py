@@ -1,6 +1,6 @@
 from discord.ext import commands
-from .utils import checks
-from .utils.dataIO import dataIO
+from core import checks
+from core.utils.helpers import JsonGuildDB
 from datetime import datetime as dt
 import asyncio
 import discord
@@ -25,10 +25,16 @@ class EventMaker():
     everyone who has signed up"""
     def __init__(self, bot):
         self.bot = bot
-        self.events = dataIO.load_json(
-            os.path.join("data", "eventmaker", "events.json"))
-        self.settings = dataIO.load_json(
-            os.path.join("data", "eventmaker", "settings.json"))
+        self.events = JsonGuildDB(
+            os.path.join("data", "eventmaker", "events.json"),
+            createdirs=True,
+            autosave=True
+        )
+        self.settings = JsonGuildDB(
+            os.path.join("data", "eventmaker", "settings.json"),
+            createdirs=True,
+            autosave=True
+        )
 
     async def event_menu(self, ctx, event_list: list,
                          message: discord.Message=None,
@@ -97,35 +103,35 @@ class EventMaker():
                 if role in allowed_roles:
                     break
             else:
-                await self.bot.say("You don't have permission to create events!")
+                await ctx.send("You don't have permission to create events!")
                 return
 
         creation_time = dt.utcnow()
-        await self.bot.say("Enter a name for the event: ")
+        await ctx.send("Enter a name for the event: ")
         msg = await self.bot.wait_for_message(author=author, timeout=30)
         if msg is None:
-            await self.bot.say("No name provided!")
+            await ctx.send("No name provided!")
             return
         name = msg.content
         msg = None
-        await self.bot.say(
+        await ctx.send(
             "Enter the amount of time from now the event will take place (ex. 1w, 3d 12h, 1y 2w): ")
         msg = await self.bot.wait_for_message(author=author, timeout=30)
         if msg is None:
-            await self.bot.say("No start time provided!")
+            await ctx.send("No start time provided!")
             return
         start_time = self.parse_time(creation_time, msg)
         if start_time is None:
-            await self.bot.say("Something went wrong with parsing the time you entered!")
+            await ctx.send("Something went wrong with parsing the time you entered!")
             return
         msg = None
-        await self.bot.say("Enter a description for the event: ")
+        await ctx.send("Enter a description for the event: ")
         msg = await self.bot.wait_for_message(author=author, timeout=30)
         if msg is None:
-            await self.bot.say("No description provided!")
+            await ctx.send("No description provided!")
             return
         if len(msg.content) > 750:
-            await self.bot.say("Your description is too long!")
+            await ctx.send("Your description is too long!")
             return
         else:
             desc = msg.content
@@ -160,7 +166,7 @@ class EventMaker():
         emb.add_field(
             name="Start time (UTC)", value=dt.utcfromtimestamp(
                 new_event["event_start_time"]))
-        await self.bot.say(embed=emb)
+        await ctx.send(embed=emb)
 
     @commands.command(pass_context=True)
     async def joinevent(self, ctx, event_id: int):
@@ -171,17 +177,17 @@ class EventMaker():
                 if not event["has_started"]:
                     if ctx.message.author.id not in event["participants"]:
                         event["participants"].append(ctx.message.author.id)
-                        await self.bot.say("Joined the event!")
+                        await ctx.send("Joined the event!")
                         dataIO.save_json(
                             os.path.join("data", "eventmaker", "events.json"),
                             self.events)
                     else:
-                        await self.bot.say("You have already joined that event!")
+                        await ctx.send("You have already joined that event!")
                 else:
-                    await self.bot.say("That event has already started!")
+                    await ctx.send("That event has already started!")
                 break
         else:
-            await self.bot.say("It appears as if that event does not exist!" +
+            await ctx.send("It appears as if that event does not exist!" +
                                "Perhaps it was cancelled or never created?")
 
     @commands.command(pass_context=True)
@@ -194,12 +200,12 @@ class EventMaker():
                 if not event["has_started"]:
                     if author.id in event["participants"]:
                         event["participants"].remove(author.id)
-                        await self.bot.say("Removed you from that event!")
+                        await ctx.send("Removed you from that event!")
                     else:
-                        await self.bot.say(
+                        await ctx.send(
                             "You aren't signed up for that event!")
                 else:
-                    await self.bot.say("That event already started!")
+                    await ctx.send("That event already started!")
                 break
 
     @commands.command(pass_context=True)
@@ -228,7 +234,7 @@ class EventMaker():
                         event["event_start_time"]))
                 events.append(emb)
         if len(events) == 0:
-            await self.bot.say("No events available to join!")
+            await ctx.send("No events available to join!")
         else:
             await self.event_menu(ctx, events, message=None, page=0, timeout=30)
 
@@ -242,10 +248,10 @@ class EventMaker():
                     for user in event["participants"]:
                         user_obj = discord.utils.get(
                             self.bot.get_all_members(), id=user)
-                        await self.bot.say("{}#{}".format(
+                        await ctx.send("{}#{}".format(
                             user_obj.name, user_obj.discriminator))
                 else:
-                    await self.bot.say("That event has already started!")
+                    await ctx.send("That event has already started!")
                 break
 
     @commands.command(pass_context=True)
@@ -256,15 +262,15 @@ class EventMaker():
             to_remove =\
                 [event for event in self.events[server.id] if event["id"] == event_id]
             if len(to_remove) == 0:
-                await self.bot.say("No event to remove!")
+                await ctx.send("No event to remove!")
             else:
                 self.events[server.id].remove(to_remove[0])
                 dataIO.save_json(
                     os.path.join("data", "eventmaker", "events.json"),
                     self.events)
-                await self.bot.say("Removed the specified event!")
+                await ctx.send("Removed the specified event!")
         else:
-            await self.bot.say("I can't remove an event that " +
+            await ctx.send("I can't remove an event that " +
                                "hasn't been created yet!")
 
     def parse_time(self, cur_time, msg: discord.Message):
@@ -324,7 +330,7 @@ class EventMaker():
         self.settings[server.id]["channel"] = channel.id
         dataIO.save_json(os.path.join("data", "eventmaker", "settings.json"),
                          self.settings)
-        await self.bot.say("Channel set to {}".format(channel.mention))
+        await ctx.send("Channel set to {}".format(channel.mention))
 
     @eventset.command(pass_context=True, name="role")
     @checks.admin_or_permissions(manage_server=True)
@@ -338,13 +344,13 @@ class EventMaker():
             dataIO.save_json(
                 os.path.join("data", "eventmaker", "settings.json"),
                 self.settings)
-            await self.bot.say("Role set to {}".format(role))
+            await ctx.send("Role set to {}".format(role))
         else:
             self.settings[server.id]["role"] = None
             dataIO.save_json(
                 os.path.join("data", "eventmaker", "settings.json"),
                 self.settings)
-            await self.bot.say("Role unset!")
+            await ctx.send("Role unset!")
 
     @eventset.command(pass_context=True, name="defaultsettings", hidden=True)
     @checks.admin_or_permissions(manage_server=True)
