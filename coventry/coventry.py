@@ -1,7 +1,7 @@
 import discord
 import asyncio
 from discord.ext import commands
-from .utils import checks
+from core import checks
 from __main__ import settings
 
 
@@ -12,7 +12,7 @@ class Coventry():
         self.bot = bot
 
     @commands.group(no_pm=True, pass_context=True, name="coventry")
-    @checks.admin_or_permissions(manage_server=True)
+    @checks.admin_or_permissions(manage_guild=True)
     async def _coventry(self, ctx):
         """Commands for giving users their own private yelling space where
            nobody but mods or admins can see their messages"""
@@ -20,49 +20,95 @@ class Coventry():
             await self.bot.send_cmd_help(ctx)
 
     @_coventry.command(no_pm=True, pass_context=True, name="send")
-    @checks.admin_or_permissions(manage_server=True)
+    @checks.admin_or_permissions(manage_guild=True)
     async def _send(self, ctx, user: discord.Member):
         """Send a user to Coventry"""
-        if user is None:
-            await self.bot.say("Hey, you didn't specify a user!")
-        else:
-            server = ctx.message.server
-            for usr in ctx.message.mentions:
-                if usr != ctx.message.author:
-                    is_mod_or_admin = False
-                    for r in usr.roles:
-                        if r.name == settings.get_server_mod(ctx.message.server):
-                            is_mod_or_admin = True
-                        elif r.name == settings.get_server_admin(ctx.message.server):
-                            is_mod_or_admin = True
-                    if not is_mod_or_admin:
-                        chrolename = usr.name + usr.discriminator
-                        covrole = await self.bot.create_role(server, name=chrolename)
-                        await self.bot.add_roles(usr, covrole)
-                        admin_role = discord.utils.get(server.roles, name=settings.get_server_admin(server))
-                        mod_role = discord.utils.get(server.roles, name=settings.get_server_mod(server))
-                        everyone_perms = discord.PermissionOverwrite(read_messages=False)
-                        insilenced_perms = discord.PermissionOverwrite(read_messages=True, send_messages=True)
-                        mod_admin_perms = discord.PermissionOverwrite(read_messages=True, send_messages=True, manage_channel=True)
-                        chn = await self.bot.create_channel(server, chrolename,\
-                            (server.default_role, everyone_perms),\
-                            (covrole, insilenced_perms),\
-                            (mod_role, mod_admin_perms),\
-                            (admin_role, mod_admin_perms))
-                        await asyncio.sleep(1)
-                        for c in server.channels:
-                            if c.name != chn.name:
-                                try:
-                                    await self.bot.edit_channel_permissions(c, covrole, everyone_perms)
-                                except discord.errors.Forbidden:
-                                    pass
-                await self.bot.say("Done")
+        guild = ctx.message.guild
+        for usr in ctx.message.mentions:
+            if usr != ctx.message.author:
+                is_mod_or_admin = False
+                for r in usr.roles:
+                    if r.name == settings.get_server_mod(guild):
+                        is_mod_or_admin = True
+                    elif r.name == settings.get_server_admin(guild):
+                        is_mod_or_admin = True
+                if not is_mod_or_admin:
+                    chrolename = usr.name + usr.discriminator
+                    covrole = await self.bot.create_role(
+                        guild,
+                        name=chrolename
+                    )
+                    await self.bot.add_roles(usr, covrole)
+                    admin_role = discord.utils.get(
+                        guild.roles,
+                        name=settings.get_server_admin(guild)
+                    )
+                    mod_role = discord.utils.get(
+                        guild.roles,
+                        name=settings.get_server_mod(guild)
+                    )
+                    everyone_perms = discord.PermissionOverwrite(
+                        read_messages=False
+                    )
+                    insilenced_perms = discord.PermissionOverwrite(
+                        read_messages=True,
+                        send_messages=True
+                    )
+                    mod_admin_perms = discord.PermissionOverwrite(
+                        read_messages=True,
+                        send_messages=True,
+                        manage_channel=True
+                    )
+                    if not mod_role and not admin_role:
+                        chn = await self.bot.create_channel(
+                            guild,
+                            chrolename,
+                            (guild.default_role, everyone_perms),
+                            (covrole, insilenced_perms)
+                        )
+                    elif not mod_role:
+                        chn = await self.bot.create_channel(
+                            guild,
+                            chrolename,
+                            (guild.default_role, everyone_perms),
+                            (covrole, insilenced_perms),
+                            (admin_role, mod_admin_perms)
+                        )
+                    elif not admin_role:
+                        chn = await self.bot.create_channel(
+                            guild,
+                            chrolename,
+                            (guild.default_role, everyone_perms),
+                            (covrole, insilenced_perms),
+                            (mod_role, mod_admin_perms)
+                        )
+                    else:
+                        chn = await self.bot.create_channel(
+                            guild,
+                            chrolename,
+                            (guild.default_role, everyone_perms),
+                            (covrole, insilenced_perms),
+                            (mod_role, mod_admin_perms),
+                            (admin_role, mod_admin_perms)
+                        )
+                    await asyncio.sleep(1)
+                    for c in guild.channels:
+                        if c.name != chn.name:
+                            try:
+                                await self.bot.edit_channel_permissions(
+                                    c,
+                                    covrole,
+                                    everyone_perms
+                                )
+                            except discord.errors.Forbidden:
+                                pass
+            await ctx.send("Done")
 
     @_coventry.command(no_pm=True, pass_context=True, name="retrieve")
-    @checks.admin_or_permissions(manage_server=True)
+    @checks.admin_or_permissions(manage_guild=True)
     async def _retrieve(self, ctx, user: discord.Member):
         """Retrieve a user from Coventry"""
-        server = ctx.message.server
+        guild = ctx.message.guild
         if user is None:
             await self.bot.say("Hey, you didn't specify a user!")
         else:
@@ -75,14 +121,11 @@ class Coventry():
                         has_cov_role = True
                         cov_role = r
                 if has_cov_role:
-                    await self.bot.delete_role(server, cov_role)
+                    await self.bot.delete_role(guild, cov_role)
                     chn = None
-                    for c in list(server.channels):
+                    for c in list(guild.channels):
                         if c.name == cur_cov_role:
                             chn = c
                     await self.bot.delete_channel(chn)
             await self.bot.say("Done")
 
-def setup(bot):
-    n = Coventry(bot)
-    bot.add_cog(n)
