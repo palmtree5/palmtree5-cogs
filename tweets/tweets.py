@@ -240,33 +240,30 @@ class Tweets():
     @_user.command(pass_context=True, name="add")
     @checks.admin_or_permissions(manage_server=True)
     async def _add(self, ctx, user_to_track):
-        if user_to_track is None:
-            await self.bot.say("I can't do that, silly!")
+        api = self.authenticate()
+        tweet = None
+        for twt in tw.Cursor(api.user_timeline, id=user_to_track).items(1):
+            tweet = twt
+        if ctx.message.server.id in self.settings:
+            cur_terms = self.settings["servers"][ctx.message.server.id]["users"]
+            new_user = {
+                "username": user_to_track,
+                "last_id": tweet.id_str
+            }
+            cur_terms.append(new_user)
+            self.settings["servers"][ctx.message.server.id]["users"] = cur_terms
         else:
-            api = self.authenticate()
-            tweet = None
-            for twt in tw.Cursor(api.user_timeline, id=user_to_track).items(1):
-                tweet = twt
-            if ctx.message.server.id in self.settings:
-                cur_terms = self.settings["servers"][ctx.message.server.id]["users"]
-                new_user = {
-                    "username": user_to_track,
-                    "last_id": tweet.id_str
-                }
-                cur_terms.append(new_user.copy())
-                self.settings["servers"][ctx.message.server.id]["user"] = cur_terms
-            else:
-                cur_terms = []
-                new_user = {
-                    "username": user_to_track,
-                    "last_id": tweet.id_str
-                }
-                cur_terms.append(new_user.copy())
-                self.settings["servers"] = {}
-                self.settings["servers"][ctx.message.server.id] = {}
-                self.settings["servers"][ctx.message.server.id]["users"] = cur_terms
-            dataIO.save_json(self.settings_file, self.settings)
-            await self.bot.say("Added the requested user!")
+            cur_terms = []
+            new_user = {
+                "username": user_to_track,
+                "last_id": tweet.id_str
+            }
+            cur_terms.append(new_user)
+            self.settings["servers"] = {}
+            self.settings["servers"][ctx.message.server.id] = {}
+            self.settings["servers"][ctx.message.server.id]["users"] = cur_terms
+        dataIO.save_json(self.settings_file, self.settings)
+        await self.bot.say("Added the requested user!")
 
     @_user.command(pass_context=True, name="remove")
     @checks.admin_or_permissions(manage_server=True)
