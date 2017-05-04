@@ -90,23 +90,22 @@ class Coventry():
     async def _retrieve(self, ctx, user: discord.Member):
         """Retrieve a user from Coventry"""
         server = ctx.message.server
-        else:
-            for usr in ctx.message.mentions:
-                has_cov_role = False
-                cur_cov_role = usr.name + usr.discriminator
-                cov_role = None
-                for r in usr.roles:
-                    if r.name == cur_cov_role:
-                        has_cov_role = True
-                        cov_role = r
-                if has_cov_role:
-                    await self.bot.delete_role(server, cov_role)
-                    chn = None
-                    for c in list(server.channels):
-                        if c.name == cur_cov_role:
-                            chn = c
-                    await self.bot.delete_channel(chn)
-            await self.bot.say("Done")
+        for usr in ctx.message.mentions:
+            has_cov_role = False
+            cur_cov_role = usr.name + usr.discriminator
+            cov_role = None
+            for r in usr.roles:
+                if r.name == cur_cov_role:
+                    has_cov_role = True
+                    cov_role = r
+            if has_cov_role:
+                await self.bot.delete_role(server, cov_role)
+                chn = None
+                for c in list(server.channels):
+                    if c.name == cur_cov_role:
+                        chn = c
+                await self.bot.delete_channel(chn)
+        await self.bot.say("Done")
 
 def setup(bot):
     n = Coventry(bot)
