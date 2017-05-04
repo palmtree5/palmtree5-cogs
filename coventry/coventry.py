@@ -44,11 +44,38 @@ class Coventry():
                         everyone_perms = discord.PermissionOverwrite(read_messages=False)
                         insilenced_perms = discord.PermissionOverwrite(read_messages=True, send_messages=True)
                         mod_admin_perms = discord.PermissionOverwrite(read_messages=True, send_messages=True, manage_channel=True)
-                        chn = await self.bot.create_channel(server, chrolename,\
-                            (server.default_role, everyone_perms),\
-                            (covrole, insilenced_perms),\
-                            (mod_role, mod_admin_perms),\
-                            (admin_role, mod_admin_perms))
+                        if not mod_role and not admin_role:
+                            chn = await self.bot.create_channel(
+                                server,
+                                chrolename,
+                                (server.default_role, everyone_perms),
+                                (covrole, insilenced_perms)
+                            )
+                        elif not mod_role:
+                            chn = await self.bot.create_channel(
+                                server,
+                                chrolename,
+                                (server.default_role, everyone_perms),
+                                (covrole, insilenced_perms),
+                                (admin_role, mod_admin_perms)
+                            )
+                        elif not admin_role:
+                            chn = await self.bot.create_channel(
+                                server,
+                                chrolename,
+                                (server.default_role, everyone_perms),
+                                (covrole, insilenced_perms),
+                                (mod_role, mod_admin_perms)
+                            )
+                        else:
+                            chn = await self.bot.create_channel(
+                                server,
+                                chrolename,
+                                (server.default_role, everyone_perms),
+                                (covrole, insilenced_perms),
+                                (mod_role, mod_admin_perms),
+                                (admin_role, mod_admin_perms)
+                            )
                         await asyncio.sleep(1)
                         for c in server.channels:
                             if c.name != chn.name:
@@ -63,8 +90,6 @@ class Coventry():
     async def _retrieve(self, ctx, user: discord.Member):
         """Retrieve a user from Coventry"""
         server = ctx.message.server
-        if user is None:
-            await self.bot.say("Hey, you didn't specify a user!")
         else:
             for usr in ctx.message.mentions:
                 has_cov_role = False
