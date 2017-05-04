@@ -5,8 +5,8 @@ import os
 import aiohttp
 import discord
 from discord.ext import commands
-from .utils import checks
-from .utils.dataIO import dataIO
+from core import checks
+from core.utils.helpers import JsonGuildDB
 
 
 numbs = {
@@ -20,12 +20,13 @@ class SRRecords():
     """An interface for viewing speedrun records from speedrun.com"""
     def __init__(self, bot):
         self.bot = bot
-        self.settings = dataIO.load_json("data/srrecords/settings.json")
+        self.settings = JsonGuildDB(os.path.join("data", "srrecords", "settings.json"))
     
     @commands.command(pass_context=True, no_pm=True)
     async def getrecords(self, ctx, game: str=None):
         """Gets records for the specified game"""
         server = ctx.message.server
+        session = aiohttp.ClientSession()
         record_list = []
         if game is None:
             if server.id in self.settings["servers"]:
@@ -33,7 +34,7 @@ class SRRecords():
             else:
                 await self.bot.say("No game specified and no default for the server!")
         categories_url = "http://www.speedrun.com/api/v1/games/{}/categories".format(game)
-        async with aiohttp.get(categories_url) as cat_req:
+        async with session.get(categories_url) as cat_req:
             cat_list = await cat_req.json()
         if "status" in cat_list and cat_list["status"] == 404:
             await self.bot.say(cat_list["message"])
@@ -41,19 +42,18 @@ class SRRecords():
             for cat in cat_list["data"]:
                 cat_record = {}
                 record_url = "http://speedrun.com/api/v1/leaderboards/{}/category/{}".format(game, cat["id"])
-                async with aiohttp.get(record_url) as record_req:
+                async with session.get(record_url) as record_req:
                     lead_list = await record_req.json()
-                async with aiohttp.get("http://speedrun.com/api/v1/games/{}".format(game)) as game_get:
+                async with session.get("http://speedrun.com/api/v1/games/{}".format(game)) as game_get:
                     game_info = await game_get.json()
                 cat_record["game_name"] = game_info["data"]["names"]["international"]
                 cat_record["cat_info"] = cat
-                print(cat["id"])
                 if "data" in lead_list:
                     if len(lead_list["data"]["runs"]) > 0:
                         cat_record["record"] = lead_list["data"]["runs"][0]
                         record_list.append(cat_record)
             await self.wr_menu(ctx, record_list, message=None, page=0, timeout=30)
-        
+
     @checks.admin_or_permissions(manage_sever=True)
     @commands.group(pass_context=True)
     async def srset(self, ctx):
@@ -67,16 +67,14 @@ class SRRecords():
         """Sets the default game to get records for in this server.
         Use the name used for starting a race on SRL (i.e. oot = Ocarina of Time)"""
         url = "http://www.speedrun.com/api/v1/games/" + game
-        async with aiohttp.get(url) as do_req:
-            data = await do_req.json()
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as do_req:
+                data = await do_req.json()
         if "status" in data and data["status"] == 404:
-            await self.bot.say(data["message"])
+            await ctx.send(data["message"])
         else:
             server = ctx.message.server
-            if "servers" not in self.settings:
-                self.settings["servers"] = {}
-            self.settings["servers"][server.id] = game
-            dataIO.save_json("data/srrecords/settings.json", self.settings)
+            self.settings.set(server, "game", game)
 
     async def wr_menu(self, ctx, wr_list: list,
                       message: discord.Message=None,
@@ -93,9 +91,9 @@ class SRRecords():
         submit_time = "Submitted at " + created_at
 
         runner_url = cur_page["record"]["run"]["players"][0]["uri"]
-
-        async with aiohttp.get(runner_url) as runner_get:
-            runner_data = await runner_get.json()
+        async with aiohttp.ClientSession() as session:
+            async with session.get(runner_url) as runner_get:
+                runner_data = await runner_get.json()
         if "names" in runner_data["data"]:
             runner = runner_data["data"]["names"]["international"]
         else:
@@ -151,22 +149,3 @@ class SRRecords():
         else:
             return await\
                 self.bot.delete_message(message)
-
-
-def check_folder():
-    if not os.path.isdir("data/srrecords"):
-        os.mkdir("data/srrecords")
-
-
-def check_file():
-    data = {
-        "servers": {}
-    }
-    if not dataIO.is_valid_json("data/srrecords/settings.json"):
-        dataIO.save_json("data/srrecords/settings.json", {})
-
-def setup(bot):
-    check_folder()
-    check_file()
-    n = SRRecords(bot)
-    bot.add_cog(n)
