@@ -346,23 +346,6 @@ class EventMaker():
                 self.settings)
             await self.bot.say("Role unset!")
 
-    @eventset.command(pass_context=True, name="defaultsettings", hidden=True)
-    @checks.admin_or_permissions(manage_server=True)
-    async def eventset_defaultsettings(self, ctx):
-        """Intended for situations where the cog gets installed
-           but the bot is already in a number of servers.
-           Emulates the functionality of the server join listener"""
-        if ctx.message.server.id not in self.settings:
-            self.settings[ctx.message.server.id] = {
-                "role": None,
-                "next_id": 1,
-                "channel": ctx.message.server.id
-            }
-        if ctx.message.server.id not in self.events:
-            self.events[ctx.message.server.id] = []
-        dataIO.save_json(os.path.join("data", "eventmaker", "events.json"))
-        dataIO.save_json(os.path.join("data", "eventmaker", "settings.json"))
-
     async def check_events(self):
         """Event loop"""
         CHECK_DELAY = 60
@@ -427,6 +410,19 @@ class EventMaker():
             self.settings.pop(server.id)
         dataIO.save_json(os.path.join("data", "eventmaker", "events.json"))
         dataIO.save_json(os.path.join("data", "eventmaker", "settings.json"))
+ 
+    async def confirm_server_setup(self):
+        for server in self.bot.servers:
+            if server.id not in self.settings:
+                self.settings[server.id] = {
+                    "role": None,
+                    "next_id": 1,
+                    "channel": server.id
+                }
+                if server.id not in self.events:
+                    self.events[server.id] = []
+                dataIO.save_json(os.path.join("data", "eventmaker", "events.json"))
+                dataIO.save_json(os.path.join("data", "eventmaker", "settings.json"))
 
 
 def check_folder():
@@ -448,6 +444,7 @@ def setup(bot):
     n = EventMaker(bot)
     loop = asyncio.get_event_loop()
     loop.create_task(n.check_events())
+    loop.create_task(n.confirm_server_setup())
     bot.add_listener(n.server_join, "on_server_join")
     bot.add_listener(n.server_leave, "on_server_remove")
     bot.add_cog(n)
