@@ -399,8 +399,8 @@ class EventMaker():
             }
         if server.id not in self.events:
             self.events[server.id] = []
-        dataIO.save_json(os.path.join("data", "eventmaker", "events.json"))
-        dataIO.save_json(os.path.join("data", "eventmaker", "settings.json"))
+        dataIO.save_json(os.path.join("data", "eventmaker", "events.json"), self.events)
+        dataIO.save_json(os.path.join("data", "eventmaker", "settings.json"), self.settings)
 
     async def server_leave(self, server):
         """Cleanup after leaving server"""
@@ -408,9 +408,9 @@ class EventMaker():
             self.events.pop(server.id)
         if server.id in self.settings:
             self.settings.pop(server.id)
-        dataIO.save_json(os.path.join("data", "eventmaker", "events.json"))
-        dataIO.save_json(os.path.join("data", "eventmaker", "settings.json"))
- 
+        dataIO.save_json(os.path.join("data", "eventmaker", "events.json"), self.events)
+        dataIO.save_json(os.path.join("data", "eventmaker", "settings.json"), self.settings)
+
     async def confirm_server_setup(self):
         for server in list(self.bot.servers):
             if server.id not in self.settings:
@@ -421,8 +421,8 @@ class EventMaker():
                 }
                 if server.id not in self.events:
                     self.events[server.id] = []
-                dataIO.save_json(os.path.join("data", "eventmaker", "events.json"))
-                dataIO.save_json(os.path.join("data", "eventmaker", "settings.json"))
+        dataIO.save_json(os.path.join("data", "eventmaker", "events.json"), self.events)
+        dataIO.save_json(os.path.join("data", "eventmaker", "settings.json"), self.settings)
 
 
 def check_folder():
