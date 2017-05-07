@@ -412,7 +412,7 @@ class EventMaker():
         dataIO.save_json(os.path.join("data", "eventmaker", "settings.json"))
  
     async def confirm_server_setup(self):
-        for server in self.bot.servers:
+        for server in list(self.bot.servers):
             if server.id not in self.settings:
                 self.settings[server.id] = {
                     "role": None,
