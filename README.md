@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/palmtree5/palmtree5-cogs.svg?branch=master)](https://travis-ci.org/palmtree5/palmtree5-cogs)
+[![Patreon](https://img.shields.io/badge/My-Patreon-orange.svg)](https://www.patreon.com/palmtree5) [![Donate](https://img.shields.io/badge/Paypal-donate-blue.svg)](https://paypal.me/palmtree5) [![Build Status](https://travis-ci.org/palmtree5/palmtree5-cogs.svg?branch=master)](https://travis-ci.org/palmtree5/palmtree5-cogs)
 
 # palmtree5-cogs
 
