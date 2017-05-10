@@ -5,5 +5,6 @@
     "DISABLED" : false,
     "SHORT" : "Event manager utility",
     "DESCRIPTION" : "Allows for creating and joining events and provides a notification at the start time",
+    "REQUIREMENTS": ["pytz"],
     "TAGS": ["events", "utilities"]
 }
