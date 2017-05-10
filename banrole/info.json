@@ -1,0 +1,9 @@
+{
+    "AUTHOR" : "palmtree5",
+    "INSTALL_MSG" : "[p]help BanRole to see commands. No additional dependencies needed.",
+    "NAME" : "BanRole",
+    "DISABLED" : false,
+    "SHORT" : "Allows banning and unbanning members by role",
+    "DESCRIPTION" : "Ban and unban members all at once by adding them to a role, then using a command to ban them!",
+    "TAGS": ["mod", "moderation", "utilities"]
+}
