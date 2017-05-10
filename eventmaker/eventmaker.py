@@ -3,9 +3,11 @@ from .utils import checks
 from .utils.dataIO import dataIO
 from datetime import datetime as dt
 import asyncio
+import aiohttp
 import discord
 import os
 import calendar
+import pytz
 
 
 numbs = {
@@ -203,8 +205,10 @@ class EventMaker():
                 break
 
     @commands.command(pass_context=True)
-    async def eventlist(self, ctx):
-        """List events for this server that have not started yet"""
+    async def eventlist(self, ctx, *, timezone: str="UTC"):
+        """List events for this server that have not started yet
+        Timezone needs to be something from the third column of
+        the large table at https://en.wikipedia.org/wiki/List_of_tz_database_time_zones"""
         server = ctx.message.server
         events = []
         for event in self.events[server.id]:
@@ -317,9 +321,9 @@ class EventMaker():
     @eventset.command(pass_context=True, name="channel")
     @checks.admin_or_permissions(manage_server=True)
     async def eventset_channel(self, ctx, channel: discord.Channel):
-        """Set the channel used for creating announcements and displaying reminders
-        Make sure users who should be able to create events can send messages
-        in this channel"""
+        """Set the channel used for displaying reminders. If 'channel'
+        is selected for reminders on event creation, this channel
+        will be used. Default: the server's default channel"""
         server = ctx.message.server
         self.settings[server.id]["channel"] = channel.id
         dataIO.save_json(os.path.join("data", "eventmaker", "settings.json"),
@@ -412,6 +416,9 @@ class EventMaker():
         dataIO.save_json(os.path.join("data", "eventmaker", "settings.json"), self.settings)
 
     async def confirm_server_setup(self):
+        """Ensures that all servers the bot is in
+        have default settings for them. Runs only
+        on cog load"""
         for server in list(self.bot.servers):
             if server.id not in self.settings:
                 self.settings[server.id] = {
