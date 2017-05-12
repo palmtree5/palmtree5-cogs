@@ -1,8 +1,7 @@
 {
     "AUTHOR" : "palmtree5",
-    "INSTALL_MSG" : "[p]help Reddit to see commands. No additional dependencies needed.",
+    "INSTALL_MSG" : "Thanks for installing Reddit, a cog for getting things from Reddit's API.\n[p]help Reddit to see commands. No additional dependencies needed.\nFor support: <http://support.palmtree5.com>\n\nIf you like my work and want to support me, please consider becoming a Patron over at <https://patreon.com/palmtree5>",
     "NAME" : "Reddit",
-    "DISABLED" : false,
     "SHORT" : "Cog for getting stuff from Reddit",
     "DESCRIPTION" : "Gets posts, user info, etc from Reddit's API",
     "TAGS": ["reddit", "web", "utility"]

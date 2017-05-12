@@ -1,8 +1,7 @@
 {
     "AUTHOR" : "palmtree5",
-    "INSTALL_MSG" : "[p]lockdown to see commands. No additional requirements needed. Please ensure you have set the bot's mod and admin roles via [p]set modrole and [p]set adminrole",
+    "INSTALL_MSG" : "Thanks for installing Lockdown which allows for an instant lockdown of a server in the event of a raid.\n[p]lockdown to see commands. No additional requirements needed.\nPlease ensure you have set the bot's mod and admin roles via [p]set modrole and [p]set adminrole. For support: <http://support.palmtree5.com>\n\nIf you like my work and want to support me, please consider becoming a Patron over at <https://patreon.com/palmtree5>",
     "NAME" : "Lockdown",
-    "DISABLED" : false,
     "SHORT" : "Cog for locking down channels in the event of a raid", 
     "DESCRIPTION" : "Locks down all channels in a server to allow for easier cleanup",
     "TAGS": ["antiraid", "utility"]

@@ -1,8 +1,7 @@
 {
     "AUTHOR" : "palmtree5",
-    "INSTALL_MSG" : "[p]help EventMaker to see commands. No additional dependencies needed.",
+    "INSTALL_MSG" : "Thanks for installing EventMaker, which allows you to create and manage events for servers.\n[p]help EventMaker to see commands. Requires pytz for eventual time zone support.\nFor support: <http://support.palmtree5.com>\n\nIf you like my work and want to support me, please consider becoming a Patron over at <https://patreon.com/palmtree5>",
     "NAME" : "EventMaker",
-    "DISABLED" : false,
     "SHORT" : "Event manager utility",
     "DESCRIPTION" : "Allows for creating and joining events and provides a notification at the start time",
     "REQUIREMENTS": ["pytz"],

@@ -1,8 +1,7 @@
 {
     "AUTHOR" : "palmtree5",
-    "INSTALL_MSG" : "[p]help SVUtil to see commands.",
+    "INSTALL_MSG" : "Thanks for installing SVUtil, which is a tool for helping with certain things in Stardew Valley.\n[p]help SVUtil to see commands. No additional requirements.\nFor support: <http://support.palmtree5.com>\n\nIf you like my work and want to support me, please consider becoming a Patron over at <https://patreon.com/palmtree5>",
     "NAME" : "SVUtil",
-    "DISABLED" : false,
     "SHORT" : "Helper cog for certain aspects of Stardew Valley",
     "DESCRIPTION" : "Helps with Stardew Valley in game events like the luau and the fair",
     "TAGS": ["utility", "gaming"]

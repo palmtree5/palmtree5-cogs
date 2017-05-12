@@ -1,8 +1,7 @@
 {
     "AUTHOR" : "palmtree5",
-    "INSTALL_MSG" : "[p]coventry to see commands. No additional dependencies needed.",
+    "INSTALL_MSG" : "Thanks for installing Coventry, which allows you to make users talk to themselves (though mods and admins will be able to see their messages too)\n[p]coventry to see commands. No additional dependencies needed.\nFor support: <http://support.palmtree5.com>\n\nIf you like my work and want to support me, please consider becoming a Patron over at <https://patreon.com/palmtree5>",
     "NAME" : "Coventry",
-    "DISABLED" : false,
     "SHORT" : "Cog for making users only be able to talk to themselves",
     "DESCRIPTION" : "Creates roles and channels as needed for the purpose of effectively silencing users",
     "TAGS": ["mod", "utility"]

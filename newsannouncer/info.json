@@ -1,8 +1,7 @@
 {
     "AUTHOR" : "palmtree5",
-    "INSTALL_MSG" : "[p]help NewsAnnouncer to see commands. No additional dependencies needed.",
+    "INSTALL_MSG" : "Thanks for installing NewsAnnouncer, a cog that enables getting notified for a news post in a channel.\n[p]help NewsAnnouncer to see commands. No additional dependencies needed.\nFor support: <http://support.palmtree5.com>\n\nIf you like my work and want to support me, please consider becoming a Patron over at <https://patreon.com/palmtree5>",
     "NAME" : "NewsAnnouncer",
-    "DISABLED" : false,
     "SHORT" : "Cog for subscribing to news notifications for a channel",
     "DESCRIPTION" : "Gives users a role to be mentioned for updates, etc.",
     "TAGS": ["news", "alerts", "utility"]

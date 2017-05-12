@@ -1,8 +1,7 @@
 {
     "AUTHOR" : "palmtree5",
-    "INSTALL_MSG" : "[p]help Hpapi to see commands. Don't forget to set your key with [p]hpset apikey <your_key>. If you need a key, log onto mc.hypixel.net and do /api",
+    "INSTALL_MSG" : "Thanks for installing Hpapi, which interfaces with Hypixel's API to get various data\n[p]help Hpapi to see commands. Don't forget to set your key with [p]hpset apikey <your_key>.\nIf you need a key, log onto mc.hypixel.net and do /api.\nFor support: <http://support.palmtree5.com>\n\nIf you like my work and want to support me, please consider becoming a Patron over at <https://patreon.com/palmtree5>",
     "NAME" : "Hpapi",
-    "DISABLED" : false,
     "SHORT" : "Cog for getting info from the Hypixel API",
     "DESCRIPTION" : "Gets data from the Hypixel API including player stats, guild info, and active boosters",
     "TAGS": ["minecraft", "utility", "gaming"]

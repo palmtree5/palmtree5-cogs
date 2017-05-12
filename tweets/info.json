@@ -1,6 +1,6 @@
 {
     "AUTHOR" : "palmtree5",
-    "INSTALL_MSG" : "[p]tweets to see commands. Make sure to do pip3 install tweepy before using this plugin. Do [p]tweetset to find commands for setting consumer key and secret and access token and secret. If you need these, visit https://apps.twitter.com/ and create an application. This plugin only needs read only permissions as it will only read public information",
+    "INSTALL_MSG" : "Thanks for installing Tweets, which gets tweets and other info from Twitter.\n[p]tweets to see commands. Requires `tweepy`.\nDo [p]tweetset to find commands for setting consumer key and secret and access token and secret. If you need these, visit https://apps.twitter.com/ and create an application.\nThis plugin only needs read only permissions as it will only read public information.\nFor support: <http://support.palmtree5.com>\n\nIf you like my work and want to support me, please consider becoming a Patron over at <https://patreon.com/palmtree5>",
     "NAME" : "Tweets",
     "DISABLED" : false,
     "SHORT" : "Cog for getting info from Twitter",
