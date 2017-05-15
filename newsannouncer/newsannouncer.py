@@ -59,7 +59,7 @@ class NewsAnnouncer():
         if channel.id not in self.settings[server.id]:
             await self.bot.say("News functionality isn't set up for that channel!")
             return
-        role = [r for r in ctx.message.server.roles if r.id == self.settings][0]
+        role = [r for r in ctx.message.server.roles if r.id == self.settings[server.id][channel.id]["role_id"]][0]
         try:
             await self.bot.delete_role(server, role)
         except discord.Forbidden:
