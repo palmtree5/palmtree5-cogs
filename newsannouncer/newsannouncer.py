@@ -48,6 +48,31 @@ class NewsAnnouncer():
         self.settings[server.id][channel.id]["joined"] = []
         dataIO.save_json("data/newsannouncer/settings.json", self.settings)
 
+    @checks.mod_or_permissions(manage_channel=True)
+    @commands.command(pass_context=True)
+    async def deletenewschannel(self, ctx, channel: discord.Channel):
+        """Removes news functionality for a channel"""
+        server = ctx.message.server
+        if server.id not in self.settings:
+            await self.bot.say("Nothing available for this server!")
+            return
+        if channel.id not in self.settings[server.id]:
+            await self.bot.say("News functionality isn't set up for that channel!")
+            return
+        role = [r for r in ctx.message.server.roles if r.id == self.settings][0]
+        try:
+            await self.bot.delete_role(server, role)
+        except discord.Forbidden:
+            await self.bot.say("I cannot delete roles!")
+            return
+        except discord.HTTPException:
+            await self.bot.say("Something went wrong!")
+            return
+        else:
+            await self.bot.say("Role removed!")
+            self.settings[server.id].pop(channel.id, None)
+            dataIO.save_json("data/newsannouncer/settings.json", self.settings)
+
     @commands.command(pass_context=True)
     async def joinnews(self, ctx):
         """Joins the news role for the current channel"""
