@@ -214,10 +214,11 @@ class Tweets():
             await self.bot.say("That isn't a valid input!")
         dataIO.save_json(self.settings_file, self.settings)
 
+    """
     @_tweetset.command(pass_context=True, name="channel")
     @checks.admin_or_permissions(manage_server=True)
     async def tweetset_channel(self, ctx, channel: discord.Channel):
-        """Set the channel for the tweets stream to post to"""
+        Set the channel for the tweets stream to post to
         server = ctx.message.server
         if server.id not in self.settings["servers"]:
             self.settings["servers"][server.id] = {}
@@ -281,6 +282,7 @@ class Tweets():
             self.settings["servers"][ctx.message.server.id]["users"] = cur_list
             dataIO.save_json(self.settings_file, self.settings)
             await self.bot.say("Removed the specified term!")
+    """
 
     @_tweetset.command(name='creds')
     @checks.is_owner()
@@ -309,6 +311,7 @@ class Tweets():
         dataIO.save_json(self.settings_file, self.settings)
         await self.bot.say('Set the access credentials!')
 
+    """
     async def user_loop(self):
         CHECK_TIME=120
 
@@ -342,6 +345,7 @@ class Tweets():
                             have_set_new_lastid = True
                     dataIO.save_json(self.settings_file, self.settings)
             await asyncio.sleep(CHECK_TIME)
+    """
 
 
 def check_folder():
@@ -366,6 +370,6 @@ def setup(bot):
         bot.pip_install("tweepy")
         import tweepy as tw
     n = Tweets(bot)
-    loop = asyncio.get_event_loop()
-    loop.create_task(n.user_loop())
+    # loop = asyncio.get_event_loop()
+    # loop.create_task(n.user_loop())
     bot.add_cog(n)
