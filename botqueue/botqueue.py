@@ -206,7 +206,7 @@ class BotQueue:
             )
             for req in self.enabled[server.id]["QUEUE"]:
                 if req == request:
-                    self.enabled[server.id]["QUEUE"].pop(req)
+                    self.enabled[server.id]["QUEUE"].remove(req)
                     self.save_enabled()
                     break
             await self.bot.delete_message(message)
@@ -219,7 +219,7 @@ class BotQueue:
             )
             for req in self.enabled[server.id]["QUEUE"]:
                 if req == request:
-                    self.enabled[server.id]["QUEUE"].pop(req)
+                    self.enabled[server.id]["QUEUE"].remove(req)
                     self.save_enabled()
                     break
             await self.bot.say("That request has been denied")
