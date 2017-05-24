@@ -137,6 +137,7 @@ class BotQueue:
         }
         queue.append(new_request)
         self.enabled[server.id]['QUEUE'] = queue
+        self.save_enabled()
         await self.bot.say(
             "Your request has been added to the queue!\nYou will "
             "be notified when your request is approved or denied"
