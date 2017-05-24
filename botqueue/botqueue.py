@@ -1,3 +1,4 @@
+"""Modification of the Autoapprove cog by https://github.com/tekulvw"""
 from discord.ext import commands
 from .utils.dataIO import dataIO
 from .utils import checks
