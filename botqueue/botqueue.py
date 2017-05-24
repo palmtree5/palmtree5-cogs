@@ -133,7 +133,7 @@ class BotQueue:
         new_request = {
             "author": author.id,
             "url": oauth_url,
-            "time": ctx.message.timestamp
+            "time": str(ctx.message.timestamp)
         }
         queue.append(new_request)
         self.enabled[server.id]['QUEUE'] = queue
