@@ -1,0 +1,8 @@
+{
+    "AUTHOR" : "palmtree5",
+    "SHORT" : "Queue BOT account join requests.",
+    "DESCRIPTION" : "Queue BOT account join requests.",
+    "DISABLED" : false,
+    "NAME" : "BotQueue",
+    "INSTALL_MSG" : "Thanks for installing BotQueue, which gives a queue for bot join requests.\n`[p]help BotQueue` to see commands. No additional dependencies needed.\nFor support: <http://support.palmtree5.com>\n\nIf you like my work and want to support me, please consider becoming a Patron over at <https://patreon.com/palmtree5>"
+}
