@@ -309,7 +309,7 @@ class EventMaker():
                     return None  # issue with the user's input
             else:
                 return None  # something went wrong in user's input
-            return start_time
+        return start_time
 
     @commands.group(pass_context=True)
     @checks.admin_or_permissions(manage_server=True)
