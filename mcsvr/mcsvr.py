@@ -83,7 +83,6 @@ class Mcsvr():
         while self == self.bot.get_cog("Mcsvr"):
             bot_servers = list(self.bot.servers)
             for server in bot_servers:
-                print(server.id in self.settings)
                 if server.id in self.settings:
                     for mc_svr in self.settings[server.id]:
                         channel_name = self.settings[server.id]["chn_name"]
