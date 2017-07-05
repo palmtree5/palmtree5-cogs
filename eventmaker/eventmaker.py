@@ -353,6 +353,7 @@ class EventMaker():
     async def check_events(self):
         """Event loop"""
         CHECK_DELAY = 60
+        await self.bot.wait_until_ready()
         while self == self.bot.get_cog("EventMaker"):
             cur_time = dt.utcnow()
             cur_time = calendar.timegm(cur_time.utctimetuple())
