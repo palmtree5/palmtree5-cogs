@@ -4,5 +4,6 @@
     "NAME" : "Catfact",
     "SHORT" : "Cog for getting a random cat fact",
     "DESCRIPTION" : "Gets a random cat fact via an api",
-    "TAGS": ["facts", "random", "cats"]
+    "TAGS": ["facts", "random", "cats"],
+    "HIDDEN": true
 }
