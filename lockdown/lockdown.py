@@ -61,7 +61,7 @@ class Lockdown():
                         self.settings[server.id]["channels"][channel.id]:
                     for role in role_list:
                         cur_role_perms = channel.overwrites_for(role)
-                        cur_role_perms.send_messages = True
+                        cur_role_perms.send_messages = None
                         print("Editing channel permissions for {}".format(role.name))
                         await self.bot.edit_channel_permissions(channel, role, cur_role_perms)
             await self.bot.say("Server has been unlocked!")
