@@ -85,6 +85,8 @@ class BotQueue:
         post_list = []
         for request in queue:
             author = server.get_member(request["author"])
+            if author is None:
+                continue
             bot_url = request["url"]
             author_tenure = author.joined_at
             requested_at = request["time"]
