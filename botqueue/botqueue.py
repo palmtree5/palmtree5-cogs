@@ -98,7 +98,10 @@ class BotQueue:
             embed.add_field(name="Requester in server for", value=delta)
             embed.set_footer(text="Requested at {}".format(requested_at))
             post_list.append((embed, request))
-        await self.queue_menu(ctx, post_list, message=None, page=0, timeout=30)
+        if post_list:
+            await self.queue_menu(ctx, post_list, message=None, page=0, timeout=30)
+        else:
+            await self.bot.say("No requests to show!")
 
     @botqueue.command(no_pm=True, pass_context=True, name="setup")
     @checks.serverowner_or_permissions(manage_server=True)
