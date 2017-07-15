@@ -83,9 +83,11 @@ class BotQueue:
             return
         queue = self.enabled[server.id]["QUEUE"]
         post_list = []
+        remove_list = []
         for request in queue:
             author = server.get_member(request["author"])
             if author is None:
+                remove_list.append(request)
                 continue
             bot_url = request["url"]
             author_tenure = author.joined_at
@@ -98,6 +100,11 @@ class BotQueue:
             embed.add_field(name="Requester in server for", value=delta)
             embed.set_footer(text="Requested at {}".format(requested_at))
             post_list.append((embed, request))
+        if remove_list:
+            for req in remove_list:
+                queue.remove(req)
+            self.enabled[server.id]["QUEUE"] = queue
+            self.save_enabled()
         if post_list:
             await self.queue_menu(ctx, post_list, message=None, page=0, timeout=30)
         else:
