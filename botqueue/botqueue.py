@@ -143,6 +143,10 @@ class BotQueue:
 
         queue = self.enabled[server.id]['QUEUE']
         author = ctx.message.author
+        for entry in queue:
+            if entry["author"] == author.id:
+                await self.bot.say("You already have a request in the queue!")
+                return
         new_request = {
             "author": author.id,
             "url": oauth_url,
