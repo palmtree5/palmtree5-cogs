@@ -41,7 +41,7 @@ class Coventry():
                         await self.bot.add_roles(usr, covrole)
                         admin_role = discord.utils.get(server.roles, name=settings.get_server_admin(server))
                         mod_role = discord.utils.get(server.roles, name=settings.get_server_mod(server))
-                        everyone_perms = discord.PermissionOverwrite(read_messages=False)
+                        everyone_perms = discord.PermissionOverwrite(read_messages=False, send_messages=False)
                         insilenced_perms = discord.PermissionOverwrite(read_messages=True, send_messages=True)
                         mod_admin_perms = discord.PermissionOverwrite(read_messages=True, send_messages=True, manage_channel=True)
                         if not mod_role and not admin_role:
