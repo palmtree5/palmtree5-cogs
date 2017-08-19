@@ -162,7 +162,7 @@ class Coventry:
                     guild.roles,
                     id=await self.config.member(usr).covrole()
                 )
-                
+
                 await covrole.delete()
                 chn = guild.get_channel(await self.config.member(usr).covchannel())
                 await chn.delete()
