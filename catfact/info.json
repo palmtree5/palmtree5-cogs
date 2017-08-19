@@ -1,9 +1,0 @@
-{
-    "AUTHOR" : "palmtree5",
-    "INSTALL_MSG" : "[p]catfact to see commands. No additional dependencies needed.",
-    "NAME" : "Catfact",
-    "DISABLED" : false,
-    "SHORT" : "Cog for getting a random cat fact",
-    "DESCRIPTION" : "Gets a random cat fact via an api",
-    "TAGS": ["facts", "random", "cats"]
-}
