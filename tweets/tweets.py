@@ -3,15 +3,11 @@ from datetime import datetime as dt
 from discord.ext import commands
 import discord
 import asyncio
-from .utils.dataIO import dataIO
-from .utils import checks
-try:
-    import tweepy as tw
-    twInstalled = True
-except:
-    twInstalled = False
+from peony import events, PeonyClient
 import os
 
+from core import Config, checks
+from core.bot import Red
 
 numbs = {
     "next": "➡",
@@ -20,40 +16,56 @@ numbs = {
 }
 
 
-class TweetListener(tw.StreamListener):
-
-    def on_status(self, status):
-        message = {
-            "name": status.user.name,
-            "status": status.text,
-            "created_at": status.created_at,
-            "screen_name": status.user.screen_name,
-            "status_id": status.id,
-            "retweets": status.retweet_count
-        }
-        return message
-
-
-class Tweets():
+class Tweets:
     """Cog for displaying info from Twitter's API"""
-    def __init__(self, bot):
-        self.bot = bot
-        self.settings_file = 'data/tweets/settings.json'
-        self.settings = dataIO.load_json(self.settings_file)
-        if 'consumer_key' in list(self.settings.keys()):
-            self.consumer_key = self.settings['consumer_key']
-        if 'consumer_secret' in list(self.settings.keys()):
-            self.consumer_secret = self.settings['consumer_secret']
-        if 'access_token' in list(self.settings.keys()):
-            self.access_token = self.settings['access_token']
-        if 'access_secret' in list(self.settings.keys()):
-            self.access_secret = self.settings['access_secret']
+    default_global = {
+        "consumer_key": None,
+        "consumer_secret": None,
+        "access_token": None,
+        "access_secret": None
+    }
 
-    def authenticate(self):
-        """Authenticate with Twitter's API"""
-        auth = tw.OAuthHandler(self.consumer_key, self.consumer_secret)
-        auth.set_access_token(self.access_token, self.access_secret)
-        return tw.API(auth)
+    default_guild = {
+        "streams": [],
+        "ignorementions": False,
+        "channel": None
+    }
+
+    def __init__(self, bot: Red):
+        self.bot = bot
+        self.config = Config.get_conf(self, 55755755)
+        self.creds = None
+        self.client = None
+        self.bot.loop.create_task(self.get_creds_and_client())
+        self.bot.loop.create_task(self.user_loop())
+
+    async def get_creds_and_client(self):
+        self.creds = await self.get_creds()
+        if self.creds is not None:
+            self.client = await self.get_client()
+
+    async def get_client(self):
+        if self.creds["consumer_key"] is None or self.creds["consumer_secret"] is None or\
+                self.creds["access_token"] is None or self.creds["access_token_secret"] is None:
+            return None
+        else:
+            return PeonyClient(**self.creds)
+
+    async def get_creds(self):
+        consumer_key = await self.config.consumer_key()
+        consumer_secret = await self.config.consumer_secret()
+        access_token = await self.config.access_token()
+        access_secret = await self.config.access_secret()
+        if not consumer_key or not consumer_secret or not access_token\
+                or not access_secret:
+            return None
+        retval = {
+            "consumer_key": consumer_key,
+            "consumer_secret": consumer_secret,
+            "access_token": access_token,
+            "access_token_secret": access_secret
+        }
+        return retval
 
     async def tweet_menu(self, ctx, post_list: list,
                          message: discord.Message=None,
@@ -66,7 +78,6 @@ class Tweets():
                      for x in range(6)])
         colour = int(colour, 16)
         created_at = s.created_at
-        created_at = created_at.strftime("%Y-%m-%d %H:%M:%S")
         post_url =\
             "https://twitter.com/{}/status/{}".format(s.user.screen_name, s.id)
         desc = "Created at: {}".format(created_at)
@@ -80,23 +91,26 @@ class Tweets():
             em.set_image(url=s.extended_entities["media"][0]["media_url"] + ":thumb")
         if not message:
             message =\
-                await self.bot.send_message(ctx.message.channel, embed=em)
-            await self.bot.add_reaction(message, "⬅")
-            await self.bot.add_reaction(message, "❌")
-            await self.bot.add_reaction(message, "➡")
+                await ctx.send(embed=em)
+            await message.add_reaction("⬅")
+            await message.add_reaction("❌")
+            await message.add_reaction("➡")
         else:
-            message = await self.bot.edit_message(message, embed=em)
-        react = await self.bot.wait_for_reaction(
-            message=message, user=ctx.message.author, timeout=timeout,
-            emoji=["➡", "⬅", "❌"]
+            await message.edit(embed=em)
+
+        def check_react(r, u):
+            return u == ctx.author and r.emoji in ["➡", "⬅", "❌"]
+
+        react, user = await self.bot.wait_for(
+            "reaction_add", check=check_react
         )
         if react is None:
-            await self.bot.remove_reaction(message, "⬅", self.bot.user)
-            await self.bot.remove_reaction(message, "❌", self.bot.user)
-            await self.bot.remove_reaction(message, "➡", self.bot.user)
+            await message.remove_reaction("⬅", ctx.guild.me)
+            await message.remove_reaction("❌", ctx.guild.me)
+            await message.remove_reaction("➡", ctx.guild.me)
             return None
         reacts = {v: k for k, v in numbs.items()}
-        react = reacts[react.reaction.emoji]
+        react = reacts[react.emoji]
         if react == "next":
             next_page = 0
             if page == len(post_list) - 1:
@@ -115,78 +129,62 @@ class Tweets():
                                          page=next_page, timeout=timeout)
         else:
             return await\
-                self.bot.delete_message(message)
+                message.delete()
 
-    @commands.group(pass_context=True, no_pm=True, name='tweets')
+    @commands.group(name='tweets')
     async def _tweets(self, ctx):
         """Gets various information from Twitter's API"""
         if ctx.invoked_subcommand is None:
             await self.bot.send_cmd_help(ctx)
 
-    @_tweets.command(pass_context=True, no_pm=True, name='getuser')
+    @_tweets.command(name='getuser')
     async def get_user(self, ctx, username: str):
         """Get info about the specified user"""
         message = ""
-        if username is not None:
-            api = self.authenticate()
-            user = api.get_user(username)
+        print(type(self.client))
+        user = await self.client.api.users.show.get(screen_name=username)
 
-            colour =\
-                ''.join([randchoice('0123456789ABCDEF')
-                     for x in range(6)])
-            colour = int(colour, 16)
-            url = "https://twitter.com/" + user.screen_name
-            emb = discord.Embed(title=user.name,
-                                colour=discord.Colour(value=colour),
-                                url=url,
-                                description=user.description)
-            emb.set_thumbnail(url=user.profile_image_url)
-            emb.add_field(name="Followers", value=user.followers_count)
-            emb.add_field(name="Friends", value=user.friends_count)
-            if user.verified:
-                emb.add_field(name="Verified", value="Yes")
-            else:
-                emb.add_field(name="Verified", value="No")
-            footer = "Created at " + user.created_at.strftime("%Y-%m-%d %H:%M:%S")
-            emb.set_footer(text=footer)
-            await self.bot.send_message(ctx.message.channel, embed=emb)
+        colour =\
+            ''.join([randchoice('0123456789ABCDEF')
+                 for x in range(6)])
+        colour = int(colour, 16)
+        url = "https://twitter.com/" + user.screen_name
+        emb = discord.Embed(title=user.name,
+                            colour=discord.Colour(value=colour),
+                            url=url,
+                            description=user.description)
+        emb.set_thumbnail(url=user.profile_image_url)
+        emb.add_field(name="Followers", value=user.followers_count)
+        emb.add_field(name="Friends", value=user.friends_count)
+        if user.verified:
+            emb.add_field(name="Verified", value="Yes")
         else:
-            message = "Uh oh, an error occurred somewhere!"
-            await self.bot.say(message)
+            emb.add_field(name="Verified", value="No")
+        footer = "Created at " + user.created_at
+        emb.set_footer(text=footer)
+        await ctx.send(embed=emb)
 
-    @_tweets.command(pass_context=True, no_pm=True, name='gettweets')
+    @_tweets.command(name='gettweets')
     async def get_tweets(self, ctx, username: str, count: int):
         """Gets the specified number of tweets for the specified username"""
-        cnt = count
         if count > 25:
-            cnt = 25
-
-        if username is not None:
-            if cnt < 1:
-                await self.bot.say("I can't do that, silly! Please specify a \
-                    number greater than or equal to 1")
-                return
-            msg_list = []
-            api = self.authenticate()
-            try:
-                for status in\
-                        tw.Cursor(api.user_timeline, id=username).items(cnt):
-                    if not self.settings["servers"][ctx.message.server.id]["ignorementions"] or not status.text.startswith("@"):
-                        msg_list.append(status)
-            except tw.TweepError as e:
-                await self.bot.say("Whoops! Something went wrong here. \
-                    The error code is " + str(e))
-                return
-            if len(msg_list) > 0:
-                await self.tweet_menu(ctx, msg_list, page=0, timeout=30)
-            else:
-                await self.bot.say("No tweets available to display!")
-        else:
-            await self.bot.say("No username specified!")
+            count = 25
+        elif count < 1:
+            await ctx.send("I can't do that, silly! Please specify a \
+                number greater than or equal to 1")
             return
 
-    @commands.group(pass_context=True, name='tweetset')
-    @checks.admin_or_permissions(manage_server=True)
+        msg_list = await self.client.api.statuses.user_timeline.get(
+            screen_name=username, count=count
+        )
+
+        if len(msg_list) > 0:
+            await self.tweet_menu(ctx, msg_list, page=0, timeout=30)
+        else:
+            await ctx.send("No tweets available to display!")
+
+    @commands.group(name='tweetset')
+    @checks.admin_or_permissions(manage_guild=True)
     async def _tweetset(self, ctx):
         """Command for setting required access information for the API.
         To get this info, visit https://apps.twitter.com and create a new application.
@@ -196,138 +194,122 @@ class Tweets():
         if ctx.invoked_subcommand is None:
             await self.bot.send_cmd_help(ctx)
 
-    @_tweetset.command(pass_context=True, name="ignorementions")
-    @checks.admin_or_permissions(manage_server=True)
+    @_tweetset.command(name="ignorementions")
+    @checks.admin_or_permissions(manage_guild=True)
     async def tweetset_ignorementions(self, ctx, toggle: str):
         """Toggle ignoring tweets starting with an @ mention
            toggle should be one of on or off"""
-        server = ctx.message.server
-        if server.id not in self.settings["servers"]:
-            self.settings["servers"][server.id] = {}
         if toggle.lower() == "on":
-            self.settings["servers"][server.id]["ignorementions"] = True
-            await self.bot.say("@ mentions at the start of tweets will be ignored!")
+            await self.config.guild(ctx.guild).ignorementions.set(True)
+            await ctx.send("@ mentions at the start of tweets will be ignored!")
         elif toggle.lower() == "off":
-            self.settings["servers"][server.id]["ignorementions"] = False
-            await self.bot.say("@ mentions at the start of tweets will not be ignored!")
+            await self.config.guild(ctx.guild).ignorementions.set(False)
+            await ctx.send("@ mentions at the start of tweets will not be ignored!")
         else:
-            await self.bot.say("That isn't a valid input!")
-        dataIO.save_json(self.settings_file, self.settings)
+            await ctx.send("That isn't a valid input!")
 
-    @_tweetset.command(pass_context=True, name="channel")
-    @checks.admin_or_permissions(manage_server=True)
-    async def tweetset_channel(self, ctx, channel: discord.Channel):
+    @_tweetset.command(name="channel")
+    @checks.admin_or_permissions(manage_guild=True)
+    async def tweetset_channel(self, ctx, channel: discord.TextChannel):
         """Set the channel for the tweets stream to post to"""
-        server = ctx.message.server
-        if server.id not in self.settings["servers"]:
-            self.settings["servers"][server.id] = {}
-        self.settings["servers"][server.id]["channel"] = channel.id
-        dataIO.save_json(self.settings_file, self.settings)
-        await self.bot.say("Channel set!")
-
-    @_tweetset.group(pass_context=True, name="stream")
-    @checks.admin_or_permissions(manage_server=True)
+        await self.config.guild(ctx.guild).channel.set(channel.id)
+        await ctx.send("Channel set to {}!".format(channel.mention))
+    
+    @_tweetset.group(name="stream")
+    @checks.admin_or_permissions(manage_guild=True)
     async def _stream(self, ctx):
         if ctx.invoked_subcommand is None:
             await self.bot.send_cmd_help(ctx)
 
-    @_stream.group(pass_context=True, name="user")
-    @checks.admin_or_permissions(manage_server=True)
+    @_stream.group(name="user")
+    @checks.admin_or_permissions(manage_guild=True)
     async def _user(self, ctx):
         if ctx.invoked_subcommand is None:
             await self.bot.send_cmd_help(ctx)
 
-    @_user.command(pass_context=True, name="add")
-    @checks.admin_or_permissions(manage_server=True)
+    @_user.command(name="add")
+    @checks.admin_or_permissions(manage_guild=True)
     async def _add(self, ctx, user_to_track):
-        if user_to_track is None:
-            await self.bot.say("I can't do that, silly!")
+        """Add a new tweet alert for the specified user"""
+        tweets = await self.client.api.statuses.user_timeline.get(
+            screen_name=user_to_track, count=1
+        )
+        for tweet in tweets:
+            last_tweet = tweet
+        current_streams = await self.config.guild(ctx.guild).streams()
+        if current_streams:
+            for stream in current_streams:
+                if stream["username"] == user_to_track:
+                    await ctx.send("Already tracking that user in this guild!")
+                    return
         else:
-            api = self.authenticate()
-            tweet = None
-            for twt in tw.Cursor(api.user_timeline, id=user_to_track).items(1):
-                tweet = twt
-            if ctx.message.server.id in self.settings:
-                cur_terms = self.settings["servers"][ctx.message.server.id]["users"]
-                new_user = {
-                    "username": user_to_track,
-                    "last_id": tweet.id_str
-                }
-                cur_terms.append(new_user.copy())
-                self.settings["servers"][ctx.message.server.id]["user"] = cur_terms
-            else:
-                cur_terms = []
-                new_user = {
-                    "username": user_to_track,
-                    "last_id": tweet.id_str
-                }
-                cur_terms.append(new_user.copy())
-                self.settings["servers"] = {}
-                self.settings["servers"][ctx.message.server.id] = {}
-                self.settings["servers"][ctx.message.server.id]["users"] = cur_terms
-            dataIO.save_json(self.settings_file, self.settings)
-            await self.bot.say("Added the requested user!")
+            current_streams = []
 
-    @_user.command(pass_context=True, name="remove")
-    @checks.admin_or_permissions(manage_server=True)
+        new_user = {
+            "username": user_to_track,
+            "last_id": last_tweet.id
+        }
+
+        current_streams.append(new_user)
+
+        await self.config.guild(ctx.guild).streams.set(current_streams)
+
+        await ctx.send("Added a tweet stream for the requested user!")
+
+    @_user.command(name="remove")
+    @checks.admin_or_permissions(manage_guild=True)
     async def _remove(self, ctx, user_to_remove):
-        if user_to_remove is None:
-            await self.bot.say("You didn't specify a user to remove!")
-        elif user_to_remove == "all":
-            self.settings["servers"][ctx.message.server.id]["users"] = []
-            dataIO.save_json(self.settings_file, self.settings)
-            await self.bot.say("Cleared the tracking list!")
+        if user_to_remove.lower() == "all":
+            await self.config.guild(ctx.guild).clear()
+            await ctx.send("Cleared the tracking list!")
         else:
-            cur_list = self.settings["servers"][ctx.message.server.id]["users"]
+            cur_list = await self.config.guild(ctx.guild).streams()
             user_out = [m for m in cur_list if m["username"] == user_to_remove][0]
             cur_list.remove(user_out)
-            self.settings["servers"][ctx.message.server.id]["users"] = cur_list
-            dataIO.save_json(self.settings_file, self.settings)
-            await self.bot.say("Removed the specified term!")
+            await self.config.guild(ctx.guild).streams.set(cur_list)
+            await ctx.send("Removed the specified term!")
 
     @_tweetset.command(name='creds')
     @checks.is_owner()
-    async def set_creds(self, consumer_key: str, consumer_secret: str, access_token: str, access_secret: str):
+    async def set_creds(self, ctx, consumer_key: str, consumer_secret: str, access_token: str, access_secret: str):
         """Sets the access credentials. See [p]help tweetset for instructions on getting these"""
-        if consumer_key is not None:
-            self.settings["consumer_key"] = consumer_key
-        else:
-            await self.bot.say("No consumer key provided!")
-            return
-        if consumer_secret is not None:
-            self.settings["consumer_secret"] = consumer_secret
-        else:
-            await self.bot.say("No consumer secret provided!")
-            return
-        if access_token is not None:
-            self.settings["access_token"] = access_token
-        else:
-            await self.bot.say("No access token provided!")
-            return
-        if access_secret is not None:
-            self.settings["access_secret"] = access_secret
-        else:
-            await self.bot.say("No access secret provided!")
-            return
-        dataIO.save_json(self.settings_file, self.settings)
-        await self.bot.say('Set the access credentials!')
+        await self.config.consumer_key.set(consumer_key)
+        await self.config.consumer_secret.set(consumer_secret)
+        await self.config.access_token.set(access_token)
+        await self.config.access_secret.set(access_secret)
+
+        # Attempt to get the client going after setting creds
+        self.creds = await self.get_creds()
+        self.client = self.get_client()
+        await ctx.send('Set the access credentials!')
 
     async def user_loop(self):
         CHECK_TIME=120
-
         while self == self.bot.get_cog("Tweets"):
-            api = self.authenticate()
-            for server in self.settings["servers"]:
-                channel = discord.utils.get(self.bot.get_all_channels(), id=self.settings["servers"][server]["channel"])
-                for user in self.settings["servers"][server]["users"]:
+            for guild in self.bot.guilds:
+                channel_id = await self.config.guild(guild).channel()
+                if channel_id is None:
+                    continue
+                channel = guild.get_channel(channel_id)
+                tweets_list = await self.config.guild(guild).streams()
+                for stream in await self.config.guild(guild).streams():
+                    new_tweets = await \
+                        self.client.api.statuses.user_timeline.get(
+                            screen_name=stream["username"], since_id=stream["last_id"]
+                        )
+                    new_data = {
+                        "username": stream["username"],
+                    }
                     have_set_new_lastid = False
-                    for tweet in tw.Cursor(api.user_timeline, id=user["username"], since_id=user["last_id"]).items():
+                    for tweet in new_tweets:
+                        if not have_set_new_lastid:
+                            new_data["last_id"] = tweet.id
+                            have_set_new_lastid = True
                         colour =\
                             ''.join([randchoice('0123456789ABCDEF')
                                     for x in range(6)])
                         colour = int(colour, 16)
                         created_at = tweet.created_at
-                        created_at = created_at.strftime("%Y-%m-%d %H:%M:%S")
                         post_url =\
                             "https://twitter.com/{}/status/{}".format(tweet.user.screen_name, tweet.id)
                         desc = "Created at: {}".format(created_at)
@@ -339,36 +321,9 @@ class Tweets():
                         em.add_field(name="Retweet count", value=str(tweet.retweet_count))
                         if hasattr(tweet, "extended_entities"):
                             em.set_image(url=tweet.extended_entities["media"][0]["media_url"] + ":thumb")
-                        await self.bot.send_message(channel, embed=em)
-                        if not have_set_new_lastid:
-                            user["last_id"] = tweet.id_str
-                            have_set_new_lastid = True
-                    dataIO.save_json(self.settings_file, self.settings)
+                        await channel.send(embed=em)
+                    tweets_list.remove(stream)
+                    tweets_list.append(new_data)
+                await self.config.guild(guild).streams.set(tweets_list)
             await asyncio.sleep(CHECK_TIME)
 
-
-def check_folder():
-    if not os.path.exists("data/tweets"):
-        print("Creating data/tweets folder")
-        os.makedirs("data/tweets")
-
-
-def check_file():
-    data = {'consumer_key': '', 'consumer_secret': '',
-            'access_token': '', 'access_secret': '', 'servers': {}}
-    f = "data/tweets/settings.json"
-    if not dataIO.is_valid_json(f):
-        print("Creating default settings.json...")
-        dataIO.save_json(f, data)
-
-
-def setup(bot):
-    check_folder()
-    check_file()
-    if not twInstalled:
-        bot.pip_install("tweepy")
-        import tweepy as tw
-    n = Tweets(bot)
-    loop = asyncio.get_event_loop()
-    loop.create_task(n.user_loop())
-    bot.add_cog(n)
