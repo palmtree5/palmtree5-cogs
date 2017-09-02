@@ -183,7 +183,7 @@ class Mcsvr:
                         if channel is None:
                             continue
                         server_ip = mc_svr["server_ip"]
-                        server_message = self.bot.get_message(channel, mc_svr["server_message"])
+                        server_message = await self.bot.get_message(channel, mc_svr["server_message"])
                         loop = asyncio.get_event_loop()
 
                         mc_server = await loop.run_in_executor(None, partial(self.check_server, server_ip))
