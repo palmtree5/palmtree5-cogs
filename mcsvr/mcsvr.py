@@ -56,7 +56,7 @@ class Mcsvr:
                 await self.bot.say("I'm not sure what server you want to check!")
                 return
         loop = asyncio.get_event_loop()
-        mc_server = loop.run_in_executor(None, partial(self.check_server, server_ip))
+        mc_server = await loop.run_in_executor(None, partial(self.check_server, server_ip))
         message = "Server version for " + server_ip + ":\n\n" + \
             str(
                 mc_server.software.version if hasattr(mc_server, "software")
