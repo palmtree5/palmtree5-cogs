@@ -67,7 +67,7 @@ class Mcsvr:
     @checks.admin_or_permissions(administrator=True)
     @commands.command(pass_context=True, no_pm=True)
     async def addserver(self, ctx, channel: discord.Channel, server_ip: str):
-        """Settings for being notified of server issues"""
+        """Add a server to the tracker"""
         if not channel or not server_ip:
             await self.bot.say("Sorry, can't do that! Try specifying a channel and a server IP")
         else:
@@ -172,7 +172,7 @@ class Mcsvr:
             return emb
 
     async def mc_servers_check(self):
-        CHECK_TIME = 60
+        CHECK_TIME = 120
         while self == self.bot.get_cog("Mcsvr"):
             bot_servers = list(self.bot.servers)
             for server in bot_servers:
