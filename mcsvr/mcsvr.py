@@ -124,6 +124,10 @@ class Mcsvr:
                 status = mc_server.status()
             except socket.timeout:
                 print("Cannot reach server {}".format(addr))
+            except ConnectionRefusedError:
+                print("Connection refused")
+        except ConnectionRefusedError:
+            print("Connection refused")
 
         if query is not None:
             return query
