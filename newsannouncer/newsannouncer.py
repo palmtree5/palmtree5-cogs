@@ -17,7 +17,7 @@ class NewsAnnouncer():
         self.bot = bot
         self.settings = dataIO.load_json("data/newsannouncer/settings.json")
 
-    @checks.mod_or_permissions(manage_channel=True)
+    @checks.mod_or_permissions(manage_channels=True)
     @commands.command(pass_context=True)
     async def addnewschannel(self, ctx, channel_prefix: str=None):
         """Adds news functionality for a channel. Channel prefix is
@@ -48,7 +48,7 @@ class NewsAnnouncer():
         self.settings[server.id][channel.id]["joined"] = []
         dataIO.save_json("data/newsannouncer/settings.json", self.settings)
 
-    @checks.mod_or_permissions(manage_channel=True)
+    @checks.mod_or_permissions(manage_channels=True)
     @commands.command(pass_context=True)
     async def deletenewschannel(self, ctx, channel: discord.Channel):
         """Removes news functionality for a channel"""
@@ -129,7 +129,7 @@ class NewsAnnouncer():
         self.settings[server.id][channel.id]["joined"].remove(author.id)
         dataIO.save_json("data/newsannouncer/settings.json", self.settings)
 
-    @checks.mod_or_permissions(manage_channel=True)
+    @checks.mod_or_permissions(manage_channels=True)
     @commands.command(pass_context=True)
     async def makeannouncement(self, ctx, *, message: str):
         """Makes an announcement in the current channel"""
