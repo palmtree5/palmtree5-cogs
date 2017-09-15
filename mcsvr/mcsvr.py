@@ -9,6 +9,12 @@ import asyncio
 from functools import partial
 from mcstatus import MinecraftServer
 
+MC_FORMATTING_CODES = [
+    "§0", "§1", "§2", "§3", "§4", "§5", "§6", "§7", "§8", "§9",
+    "§a", "§b", "§c", "§d", "§e", "§f", "§k", "§l", "§m", "§n",
+    "§o", "§r"
+]
+
 
 class Mcsvr:
     """Cog for getting info about a Minecraft server"""
@@ -172,6 +178,9 @@ class Mcsvr:
             if brand:
                 emb.add_field(name="Type", value=brand)
             if motd:
+                for code in MC_FORMATTING_CODES:
+                    if code in motd:
+                        motd = motd.replace(code, "")
                 emb.add_field(name="MOTD", value=motd)
             return emb
 
