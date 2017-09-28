@@ -2,3 +2,4 @@ mpapi/
 slowchat/
 channelcreate/
 dah/
+*/__pycache__/
