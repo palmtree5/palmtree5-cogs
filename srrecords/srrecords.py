@@ -3,10 +3,10 @@ import datetime
 from random import choice as randchoice
 import os
 import aiohttp
+import asyncio
 import discord
 from discord.ext import commands
-from core import checks
-from core.utils.helpers import JsonGuildDB
+from redbot.core import checks, Config
 
 
 numbs = {
@@ -16,35 +16,52 @@ numbs = {
 }
 
 
-class SRRecords():
+class SRRecords:
     """An interface for viewing speedrun records from speedrun.com"""
-    def __init__(self, bot):
-        self.bot = bot
-        self.settings = JsonGuildDB(os.path.join("data", "srrecords", "settings.json"))
+
+    default_guild = {
+        "game": ""
+    }
+
+    def __init__(self):
+        self.config = Config.get_conf(
+            self, identifier=59595922, force_registration=True
+        )
+        self.config.register_guild(**self.default_guild)
+        self.session = aiohttp.ClientSession()
     
-    @commands.command(pass_context=True, no_pm=True)
+    @commands.command()
     async def getrecords(self, ctx, game: str=None):
         """Gets records for the specified game"""
-        server = ctx.message.server
-        session = aiohttp.ClientSession()
+        guild = ctx.guild
+    
         record_list = []
         if game is None:
-            if server.id in self.settings["servers"]:
-                game = self.settings["servers"][server.id]
-            else:
-                await self.bot.say("No game specified and no default for the server!")
+            game = await self.config.guild(guild).game() if guild else None
+            if not game:
+                if guild is None:
+                    await ctx.send(
+                        "No game specified and cannot find a default "
+                        "because the command was not run in a server!"
+                    )
+                else:
+                    await ctx.send(
+                        "No game specified and no default for the server!"
+                    )
+                return
         categories_url = "http://www.speedrun.com/api/v1/games/{}/categories".format(game)
-        async with session.get(categories_url) as cat_req:
+        async with self.session.get(categories_url) as cat_req:
             cat_list = await cat_req.json()
         if "status" in cat_list and cat_list["status"] == 404:
-            await self.bot.say(cat_list["message"])
+            await ctx.send("An error occurred!")
+            await ctx.send(cat_list["message"])
         else:
             for cat in cat_list["data"]:
                 cat_record = {}
                 record_url = "http://speedrun.com/api/v1/leaderboards/{}/category/{}".format(game, cat["id"])
-                async with session.get(record_url) as record_req:
+                async with self.session.get(record_url) as record_req:
                     lead_list = await record_req.json()
-                async with session.get("http://speedrun.com/api/v1/games/{}".format(game)) as game_get:
+                async with self.session.get("http://speedrun.com/api/v1/games/{}".format(game)) as game_get:
                     game_info = await game_get.json()
                 cat_record["game_name"] = game_info["data"]["names"]["international"]
                 cat_record["cat_info"] = cat
@@ -54,27 +71,26 @@ class SRRecords():
                         record_list.append(cat_record)
             await self.wr_menu(ctx, record_list, message=None, page=0, timeout=30)
 
-    @checks.admin_or_permissions(manage_sever=True)
-    @commands.group(pass_context=True)
+    @checks.admin_or_permissions(manage_guild=True)
+    @commands.group()
     async def srset(self, ctx):
         """Speedrun settings"""
         if ctx.invoked_subcommand is None:
-            await self.bot.send_cmd_help(ctx)
+            await ctx.bot.send_cmd_help(ctx)
 
-    @checks.admin_or_permissions(manage_server=True)
-    @srset.command(pass_context=True, no_pm=True, name="game")
+    @checks.admin_or_permissions(manage_guild=True)
+    @srset.command(name="game")
+    @commands.guild_only()
     async def srset_game(self, ctx, game: str):
-        """Sets the default game to get records for in this server.
-        Use the name used for starting a race on SRL (i.e. oot = Ocarina of Time)"""
+        """Sets the default game to get records for in this server."""
         url = "http://www.speedrun.com/api/v1/games/" + game
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as do_req:
-                data = await do_req.json()
+
+        async with self.session.get(url) as do_req:
+            data = await do_req.json()
         if "status" in data and data["status"] == 404:
             await ctx.send(data["message"])
         else:
-            server = ctx.message.server
-            self.settings.set(server, "game", game)
+            await self.config.guild(ctx.guild).game.set(game)
 
     async def wr_menu(self, ctx, wr_list: list,
                       message: discord.Message=None,
@@ -92,7 +108,7 @@ class SRRecords():
 
         runner_url = cur_page["record"]["run"]["players"][0]["uri"]
         async with aiohttp.ClientSession() as session:
-            async with session.get(runner_url) as runner_get:
+            async with self.session.get(runner_url) as runner_get:
                 runner_data = await runner_get.json()
         if "names" in runner_data["data"]:
             runner = runner_data["data"]["names"]["international"]
@@ -113,23 +129,27 @@ class SRRecords():
         emb.set_footer(text=submit_time)
         if not message:
             message =\
-                await self.bot.send_message(ctx.message.channel, embed=emb)
-            await self.bot.add_reaction(message, "⬅")
-            await self.bot.add_reaction(message, "❌")
-            await self.bot.add_reaction(message, "➡")
+                await ctx.send(embed=emb)
+            await message.add_reaction("⬅")
+            await message.add_reaction("❌")
+            await message.add_reaction("➡")
         else:
-            message = await self.bot.edit_message(message, embed=emb)
-        react = await self.bot.wait_for_reaction(
-            message=message, user=ctx.message.author, timeout=timeout,
-            emoji=["➡", "⬅", "❌"]
-        )
-        if react is None:
-            await self.bot.remove_reaction(message, "⬅", self.bot.user)
-            await self.bot.remove_reaction(message, "❌", self.bot.user)
-            await self.bot.remove_reaction(message, "➡", self.bot.user)
+            await message.edit(embed=emb)
+
+        def react_check(reaction: discord.Reaction, user):
+            if str(reaction.emoji) in numbs.values() and user == ctx.author:
+                return True
+            return False
+        try:
+            react, user = await ctx.bot.wait_for("reaction_add", timeout=timeout, check=react_check)
+        except asyncio.TimeoutError:
+            await message.remove_reaction("⬅", ctx.guild.me)
+            await message.remove_reaction("❌", ctx.guild.me)
+            await message.remove_reaction("➡", ctx.guild.me)
             return None
-        reacts = {v: k for k, v in numbs.items()}
-        react = reacts[react.reaction.emoji]
+        else:
+            reacts = {v: k for k, v in numbs.items()}
+            react = reacts[str(react)]
         if react == "next":
             next_page = 0
             if page == len(wr_list) - 1:
@@ -147,5 +167,4 @@ class SRRecords():
             return await self.wr_menu(ctx, wr_list, message=message,
                                       page=next_page, timeout=timeout)
         else:
-            return await\
-                self.bot.delete_message(message)
+            return await message.delete()
