@@ -1,5 +1,6 @@
 from distutils.core import setup
 from setuptools import find_packages
+from pathlib import Path
 
 
 def get_requirements():
@@ -9,10 +10,30 @@ def get_requirements():
     return requirements
 
 
+def find_data_folders():
+    def glob_data_files(path: Path):
+        data = path.glob("*")
+        parents = path.parents
+        return [str(d.relative_to(parents[0])) for d in data]
+
+    ret = {}
+    cogs_path = Path("palmtree5-cogs")
+
+    for cog_folder in cogs_path.iterdir():
+        data_folder = cog_folder / "data"
+        if not data_folder.is_dir():
+            continue
+
+        pkg_name = str(cog_folder).replace("/", ".")
+        ret[pkg_name] = glob_data_files(data_folder)
+    return ret
+
+
 setup(
     name='palmtree5-cogs',
     version='3.0.0a1',
     packages=find_packages(include=["palmtree5-cogs", "palmtree5-cogs.*"]),
+    package_data=find_data_folders(),
     url='https://github.com/palmtree5/palmtree5-cogs',
     license='GPLv3',
     author='palmtree5',

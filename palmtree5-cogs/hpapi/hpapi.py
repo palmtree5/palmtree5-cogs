@@ -2,14 +2,14 @@
 from discord.ext import commands
 import discord
 from random import choice as randchoice
-from .utils.dataIO import dataIO
-from .utils import checks
+from redbot.core import Config, checks, data_manager
 import aiohttp
-import asyncio
-import os
-from copy import deepcopy
 from datetime import datetime as dt
 import datetime
+import os
+import json
+import aiofiles
+import asyncio
 
 
 numbs = {
@@ -19,21 +19,35 @@ numbs = {
 }
 
 
-class Hpapi():
+class Hpapi:
     """Cog for getting info from Hypixel's API"""
-    def __init__(self, bot):
-        self.bot = bot
-        self.settings_file = 'data/hpapi/hpapi.json'
-        settings = dataIO.load_json(self.settings_file)
-        self.hpapi_key = settings['API_KEY']
-        self.games = dataIO.load_json(os.path.join('data', 'hpapi', 'games.json'))
-        self.payload = {}
-        self.payload["key"] = self.hpapi_key
-        if os.path.isfile("data/hpapi/achievements.json"):
-            self.achievements = dataIO.load_json("data/hpapi/achievements.json")
+    default_global = {
+        "api_key": ""
+    }
+
+    def __init__(self):
+        self.settings = Config.get_conf(
+            self, identifier=59595922, force_registration=True
+        )
+        self.settings.register_global(**self.default_global)
+        self.session = aiohttp.ClientSession()
+        loop = asyncio.get_event_loop()
+        loop.create_task(self.achievements_getter())
+        self.achievements = loop.create_task(self.load_achievements())
+        self.games = loop.create_task(self.load_games())
+
+    async def load_achievements(self):
+        async with aiofiles.open(os.path.join(data_manager.cog_data_path(self), "achievements.json")) as f:
+            content = json.loads(await f.read())
+        return content
+
+    async def load_games(self):
+        async with aiofiles.open(os.path.join(data_manager.bundled_data_path(self), "games.json")) as f:
+            content = json.loads(await f.read())
+        return content
 
     async def get_json(self, url):
-        async with aiohttp.get(url) as r:
+        async with self.session.get(url) as r:
             ret = await r.json()
         return ret
 
@@ -65,25 +79,35 @@ class Hpapi():
         em.set_thumbnail(url="http://minotar.net/avatar/{}/128.png".format(s["purchaser"]))
         if not message:
             message =\
-                await self.bot.send_message(ctx.message.channel, embed=em)
-            await self.bot.add_reaction(message, "⬅")
-            await self.bot.add_reaction(message, "❌")
-            await self.bot.add_reaction(message, "➡")
+                await ctx.send(embed=em)
+            await message.add_reaction("⬅")
+            await message.add_reaction("❌")
+            await message.add_reaction("➡")
         else:
-            message = await self.bot.edit_message(message, embed=em)
-        react = await self.bot.wait_for_reaction(
-            message=message, user=ctx.message.author, timeout=timeout,
-            emoji=["➡", "⬅", "❌"]
+            await message.edit(embed=em)
+
+        def react_check(reaction, user):
+            return user == ctx.author \
+                and str(reaction.emoji) in ["➡", "⬅", "❌"]
+
+        react, _ = await ctx.bot.wait_for(
+            "reaction_add", timeout=timeout, check=react_check
         )
         if react is None:
-            await self.bot.remove_reaction(message, "⬅", self.bot.user)
-            await self.bot.remove_reaction(message, "❌", self.bot.user)
-            await self.bot.remove_reaction(message, "➡", self.bot.user)
+            await message.remove_reaction("⬅", ctx.guild.me)
+            await message.remove_reaction("❌", ctx.guild.me)
+            await message.remove_reaction("➡", ctx.guild.me)
             return None
         reacts = {v: k for k, v in numbs.items()}
-        react = reacts[react.reaction.emoji]
+        react = reacts[react.emoji]
         if react == "next":
             next_page = 0
+            perms = message.channel.permissions_for(ctx.guild.me)
+            if perms.manage_messages:  # Can manage messages, so remove react
+                try:
+                    await message.remove_reaction("➡", ctx.author)
+                except discord.NotFound:
+                    pass
             if page == len(booster_list) - 1:
                 next_page = 0  # Loop around to the first item
             else:
@@ -92,6 +116,12 @@ class Hpapi():
                                            page=next_page, timeout=timeout)
         elif react == "back":
             next_page = 0
+            perms = message.channel.permissions_for(ctx.guild.me)
+            if perms.manage_messages:  # Can manage messages, so remove react
+                try:
+                    await message.remove_reaction("⬅", ctx.author)
+                except discord.NotFound:
+                    pass
             if page == 0:
                 next_page = len(booster_list) - 1  # Loop around to the last item
             else:
@@ -100,7 +130,7 @@ class Hpapi():
                                            page=next_page, timeout=timeout)
         else:
             return await\
-                self.bot.delete_message(message)
+                message.delete()
 
     async def friends_menu(self, ctx, friends_list: list,
                            message: discord.Message=None,
@@ -124,25 +154,35 @@ class Hpapi():
         em.set_thumbnail(url="http://minotar.net/avatar/{}/128.png".format(s["fname"]))
         if not message:
             message =\
-                await self.bot.send_message(ctx.message.channel, embed=em)
-            await self.bot.add_reaction(message, "⬅")
-            await self.bot.add_reaction(message, "❌")
-            await self.bot.add_reaction(message, "➡")
+                await ctx.send(ctx.message.channel, embed=em)
+            await message.add_reaction("⬅")
+            await message.add_reaction("❌")
+            await message.add_reaction("➡")
         else:
-            message = await self.bot.edit_message(message, embed=em)
-        react = await self.bot.wait_for_reaction(
-            message=message, user=ctx.message.author, timeout=timeout,
-            emoji=["➡", "⬅", "❌"]
+            message = await message.edit(embed=em)
+
+        def react_check(reaction, user):
+            return user == ctx.author \
+                and str(reaction.emoji) in ["➡", "⬅", "❌"]
+
+        react, _ = await ctx.bot.wait_for(
+            "reaction_add", timeout=timeout, check=react_check
         )
         if react is None:
-            await self.bot.remove_reaction(message, "⬅", self.bot.user)
-            await self.bot.remove_reaction(message, "❌", self.bot.user)
-            await self.bot.remove_reaction(message, "➡", self.bot.user)
+            await message.remove_reaction("⬅", ctx.guild.me)
+            await message.remove_reaction("❌", ctx.guild.me)
+            await message.remove_reaction("➡", ctx.guild.me)
             return None
         reacts = {v: k for k, v in numbs.items()}
-        react = reacts[react.reaction.emoji]
+        react = reacts[react.emoji]
         if react == "next":
             next_page = 0
+            perms = message.channel.permissions_for(ctx.guild.me)
+            if perms.manage_messages:  # Can manage messages, so remove react
+                try:
+                    await message.remove_reaction("➡", ctx.author)
+                except discord.NotFound:
+                    pass
             if page == len(friends_list) - 1:
                 next_page = 0  # Loop around to the first item
             else:
@@ -151,6 +191,12 @@ class Hpapi():
                                            page=next_page, timeout=timeout)
         elif react == "back":
             next_page = 0
+            perms = message.channel.permissions_for(ctx.guild.me)
+            if perms.manage_messages:  # Can manage messages, so remove react
+                try:
+                    await message.remove_reaction("⬅", ctx.author)
+                except discord.NotFound:
+                    pass
             if page == 0:
                 next_page = len(friends_list) - 1  # Loop around to the last item
             else:
@@ -159,16 +205,22 @@ class Hpapi():
                                            page=next_page, timeout=timeout)
         else:
             return await\
-                self.bot.delete_message(message)
+                message.delete()
 
-    @commands.command(pass_context=True)
+    def no_apikey(self):
+        return "No api key available! Use `[p]hpset apikey` to set one!"
+
+    @commands.command()
     async def hpbooster(self, ctx, *game: str):
         """
         Get active boosters. A game can be specified, in which case only the
         active booster for that game will be shown
         """
         data = {}
-        url = "https://api.hypixel.net/boosters?key=" + self.hpapi_key
+        api_key = await self.settings.api_key()
+        if not api_key:
+            await ctx.send(self.no_apikey())
+        url = "https://api.hypixel.net/boosters?key=" + api_key
         data = await self.get_json(url)
 
         message = ""
@@ -234,18 +286,21 @@ class Hpapi():
                         em.add_field(name="Purchaser", value=name)
                         em.add_field(name="Remaining time", value=item["length"])
                         em.set_thumbnail(url="http://minotar.net/avatar/{}/128.png".format(name))
-                        await self.bot.send_message(ctx.message.channel, embed=em)
+                        await ctx.send(ctx.message.channel, embed=em)
         else:
             message = "An error occurred in getting the data"
-            await self.bot.say('```{}```'.format(message))
+            await ctx.send('```{}```'.format(message))
 
-    @commands.command(pass_context=True)
+    @commands.command()
     async def hpplayer(self, ctx, name):
         """Gets data about the specified player"""
 
+        api_key = await self.settings.api_key()
+        if not api_key:
+            await ctx.send(self.no_apikey())
         message = ""
         url = "https://api.hypixel.net/player?key=" + \
-            self.hpapi_key + "&name=" + name
+            api_key + "&name=" + name
 
         data = await self.get_json(url)
         if data["success"]:
@@ -293,7 +348,7 @@ class Hpapi():
                 rank = "None"
             else:
                 message = "That player has never logged into Hypixel"
-                await self.bot.say('```{}```'.format(message))
+                await ctx.send('```{}```'.format(message))
                 return
             em.add_field(name="Rank", value=rank)
             if "networkLevel" in player_data:
@@ -310,21 +365,25 @@ class Hpapi():
             last_login = self.get_time(player_data["lastLogin"])
             em.add_field(name="Last login", value=last_login, inline=False)
             em.set_thumbnail(url="http://minotar.net/avatar/{}/128.png".format(name))
-            await self.bot.send_message(ctx.message.channel, embed=em)
+            await ctx.send(ctx.message.channel, embed=em)
         else:
             message = "An error occurred in getting the data."
-            await self.bot.say('```{}```'.format(message))
+            await ctx.send('```{}```'.format(message))
 
-    @commands.command(pass_context=True)
+    @commands.command()
     async def hpfriends(self, ctx, player_name: str):
         """Gets friends for the specified player"""
+        api_key = await self.settings.api_key()
+        if not api_key:
+            await ctx.send(self.no_apikey())
         uuid_json = await self.get_json(
             "https://api.mojang.com/users/profiles/minecraft/{}".format(
                 player_name
             )
         )
+
         friends_json = await self.get_json("https://api.hypixel.net/friends?key={}&uuid={}".format(
-            self.hpapi_key,
+            api_key,
             uuid_json["id"]
         ))
         friends_list = []
@@ -347,9 +406,12 @@ class Hpapi():
                 friends_list.append(cur_friend)
             await self.friends_menu(ctx, friends_list, message=None, page=0)
 
-    @commands.command(pass_context=True)
+    @commands.command()
     async def hpguild(self, ctx, player_name: str):
         """Gets guild info based on the specified player"""
+        api_key = await self.settings.api_key()
+        if not api_key:
+            await ctx.send(self.no_apikey())
         uuid_json = await self.get_json(
             "https://api.mojang.com/users/profiles/minecraft/{}".format(
                 player_name
@@ -357,17 +419,17 @@ class Hpapi():
         )
         guild_find_url =\
             "https://api.hypixel.net/findGuild?key={}&byUuid={}".format(
-                self.hpapi_key,
+                api_key,
                 uuid_json["id"]
             )
         guild_find_json = await self.get_json(guild_find_url)
         if not guild_find_json["guild"]:
-            await self.bot.say("The specified player does not appear to "
+            await ctx.send("The specified player does not appear to "
                                "be in a guild")
             return
         guild_id = guild_find_json["guild"]
         guild_get_url = "https://api.hypixel.net/guild?key={}&id={}".format(
-            self.hpapi_key,
+            api_key,
             guild_id
         )
         guild = await self.get_json(guild_get_url)
@@ -390,19 +452,22 @@ class Hpapi():
         em.add_field(name="Officer count", value=str(len([m for m in guild["members"] if m["rank"] == "OFFICER"])))
         em.set_thumbnail(url=guildmaster_face)
 
-        await self.bot.send_message(ctx.message.channel, embed=em)
+        await ctx.send(ctx.message.channel, embed=em)
 
-    @commands.command(pass_context=True)
+    @commands.command()
     async def hpsession(self, ctx, player_name: str):
         """Shows player session status"""
+        api_key = await self.settings.api_key()
+        if not api_key:
+            await ctx.send(self.no_apikey())
         uuid_url = "https://api.mojang.com/users/profiles/minecraft/{}".format(player_name)
         uuid = await self.get_json(uuid_url)
         uuid = uuid["id"]
-        session_url = "https://api.hypixel.net/session?key={}&uuid={}".format(self.hpapi_key, uuid)
+        session_url = "https://api.hypixel.net/session?key={}&uuid={}".format(api_key, uuid)
         session_json = await self.get_json(session_url)
         if session_json["session"]:
             await\
-                self.bot.say(
+                ctx.send(
                     "{} is online in {}. There are {} players there".format(
                         player_name,
                         session_json["session"]["server"],
@@ -410,13 +475,16 @@ class Hpapi():
                     )
                 )
         else:
-            await self.bot.say("That player does not appear to be online!")
+            await ctx.send("That player does not appear to be online!")
 
-    @commands.command(pass_context=True)
+    @commands.command()
     async def hpachievements(self, ctx, player, *, game):
         """Display achievements for the specified player and game"""
+        api_key = await self.settings.api_key()
+        if not api_key:
+            await ctx.send(self.no_apikey())
         url = "https://api.hypixel.net/player?key=" + \
-            self.hpapi_key + "&name=" + player
+            api_key + "&name=" + player
         data = await self.get_json(url)
         points = 0
         achievement_count = 0
@@ -424,7 +492,7 @@ class Hpapi():
             onetime = [item for item in data["player"]["achievementsOneTime"] if item.startswith(game)]
             tiered = [item for item in list(data["player"]["achievements"].keys()) if item.startswith(game)]
             if len(onetime) == 0 and len(tiered) == 0:
-                await self.bot.say("That player hasn't completed any achievements for that game!")
+                await ctx.send("That player hasn't completed any achievements for that game!")
                 return
             for item in onetime:
                 achvmt_name = item[item.find("_")+1:]
@@ -441,52 +509,24 @@ class Hpapi():
                         have_ach = True
                 if have_ach:
                     achievement_count += 1
-            await self.bot.say("{} has completed {} achievements worth {} points in {}".format(player, achievement_count, points, game))
+            await ctx.send("{} has completed {} achievements worth {} points in {}".format(player, achievement_count, points, game))
 
-
-
-    @commands.group(pass_context=True)
+    @commands.group()
     @checks.is_owner()
     async def hpset(self, ctx):
         """Settings for Hypixel cog"""
         if ctx.invoked_subcommand is None:
-            await self.bot.send_cmd_help(ctx)
+            await ctx.send_help(ctx)
 
-    @hpset.command(pass_context=True)
+    @hpset.command()
     @checks.is_owner()
-    async def apikey(self, context, *key: str):
+    async def apikey(self, ctx, key: str):
         """Sets the Hypixel API key - owner only"""
-        settings = dataIO.load_json(self.settings_file)
-        if key:
-            settings['API_KEY'] = key[0]
-            dataIO.save_json(self.settings_file, settings)
-            await self.bot.say('```API key set```')
+        await self.settings.api_key.set(key)
+        await ctx.send('API key set!')
     
     async def achievements_getter(self):
-        if not dataIO.is_valid_json("data/hpapi/achievements.json"):
-            async with aiohttp.get("https://raw.githubusercontent.com/HypixelDev/PublicAPI/master/Documentation/misc/Achievements.json") as achievements_get:
-                achievements = await achievements_get.json()
-                dataIO.save_json("data/hpapi/achievements.json", achievements)
-
-
-def check_folder():
-    if not os.path.exists("data/hpapi"):
-        print("Creating data/hpapi folder")
-        os.makedirs("data/hpapi")
-
-
-def check_file():
-    f = "data/hpapi/hpapi.json"
-    data = {}
-    data["API_KEY"] = ''
-    if not dataIO.is_valid_json(f):
-        print("Creating default hpapi.json...")
-        dataIO.save_json(f, data)
-
-def setup(bot):
-    check_folder()
-    check_file()
-    n = Hpapi(bot)
-    loop = asyncio.get_event_loop()
-    loop.create_task(n.achievements_getter())
-    bot.add_cog(n)
+        async with self.session.get("https://raw.githubusercontent.com/HypixelDev/PublicAPI/master/Documentation/misc/Achievements.json") as achievements_get:
+            achievements = json.loads(await achievements_get.text())
+        with aiofiles.open(os.path.join(data_manager.cog_data_path(self), "achievements.json"), "w") as f:
+            await f.write(json.dumps(achievements, indent=4))
