@@ -1,9 +1,0 @@
-{
-    "AUTHOR" : "palmtree5",
-    "INSTALL_MSG" : "[p]help SVUtil to see commands.",
-    "NAME" : "SVUtil",
-    "DISABLED" : false,
-    "SHORT" : "Helper cog for certain aspects of Stardew Valley",
-    "DESCRIPTION" : "Helps with Stardew Valley in game events like the luau and the fair",
-    "TAGS": ["utility", "gaming"]
-}

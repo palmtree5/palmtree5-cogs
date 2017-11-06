@@ -1,4 +1,5 @@
 from distutils.core import setup
+from setuptools import find_packages
 
 
 def get_requirements():
@@ -11,7 +12,7 @@ def get_requirements():
 setup(
     name='palmtree5-cogs',
     version='3.0.0a1',
-    packages=['tweets', 'coventry', 'lockdown', 'srrecords', 'eventmaker'],
+    packages=find_packages(include=["palmtree5-cogs", "palmtree5-cogs.*"]),
     url='https://github.com/palmtree5/palmtree5-cogs',
     license='GPLv3',
     author='palmtree5',
