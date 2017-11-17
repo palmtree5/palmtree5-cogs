@@ -7,7 +7,7 @@ import asyncio
 import discord
 from discord.ext import commands
 from redbot.core import checks, Config
-
+from redbot.core.i18n import CogI18n
 
 numbs = {
     "next": "➡",
