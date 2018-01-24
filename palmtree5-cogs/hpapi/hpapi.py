@@ -1,22 +1,21 @@
 """Extension for Red-DiscordBot"""
-from discord.ext import commands
-import discord
-from random import choice as randchoice
-from redbot.core import Config, checks, data_manager
-import aiohttp
-from datetime import datetime as dt
-import datetime
-import os
-import json
-import aiofiles
 import asyncio
+import datetime
+import json
+from datetime import datetime as dt
 
+import aiofiles
+import aiohttp
+import discord
+from discord.ext import commands
+from redbot.core import Config, checks, data_manager, RedContext
+from redbot.core.i18n import CogI18n
+from redbot.core.utils.embed import randomize_colour
 
-numbs = {
-    "next": "➡",
-    "back": "⬅",
-    "exit": "❌"
-}
+from .helpers import get_rank, get_network_level
+from .menus import friends_menu, booster_menu
+
+_ = CogI18n("Hpapi", __file__)
 
 
 class Hpapi:
@@ -33,385 +32,275 @@ class Hpapi:
         self.session = aiohttp.ClientSession()
         loop = asyncio.get_event_loop()
         loop.create_task(self.achievements_getter())
-        self.achievements = loop.create_task(self.load_achievements())
-        self.games = loop.create_task(self.load_games())
+        self.achievements = None
+        self.games = None
+        loop.create_task(self.load_achievements())
+        loop.create_task(self.load_games())
+
+    def __unload(self):
+        self.session.close()
 
     async def load_achievements(self):
-        async with aiofiles.open(os.path.join(data_manager.cog_data_path(self), "achievements.json")) as f:
-            content = json.loads(await f.read())
-        return content
+        async with aiofiles.open(str(data_manager.cog_data_path(self) / "achievements.json")) as f:
+            self.achievements = json.loads(await f.read())
 
     async def load_games(self):
-        async with aiofiles.open(os.path.join(data_manager.bundled_data_path(self), "games.json")) as f:
-            content = json.loads(await f.read())
-        return content
+        async with aiofiles.open(str(data_manager.bundled_data_path(self) / "games.json")) as f:
+            self.games = json.loads(await f.read())
 
     async def get_json(self, url):
         async with self.session.get(url) as r:
             ret = await r.json()
         return ret
 
-    def get_time(self, ms):
+    async def get_mc_uuid(self, name: str):
+        url = "https://api.mojang.com/users/profiles/minecraft/{}".format(name)
+        async with self.session.get(url) as r:
+            if r.status == 204:  # name is not in use
+                return None
+            else:
+                data = await r.json()
+                return data["id"]
+
+    @staticmethod
+    def get_time(ms):
         time = dt.utcfromtimestamp(ms/1000)
-        return time.strftime('%m-%d-%Y %H:%M:%S') + "\n"
+        return time.strftime('%Y-%m-%d %H:%M:%S')
+    
+    @commands.group()
+    @checks.is_owner()
+    async def hpset(self, ctx: RedContext):
+        """Settings for Hypixel cog"""
+        if ctx.invoked_subcommand is None:
+            await ctx.send_help()
 
-    async def booster_menu(self, ctx, booster_list: list,
-                           message: discord.Message=None,
-                           page=0, timeout: int=30):
-        """menu control logic for this taken from
-           https://github.com/Lunar-Dust/Dusty-Cogs/blob/master/menu/menu.py"""
-        s = booster_list[page]
-        colour =\
-            ''.join([randchoice('0123456789ABCDEF')
-                     for x in range(6)])
-        colour = int(colour, 16)
-        created_at = dt.utcfromtimestamp(s["dateActivated"])
-        created_at = created_at.strftime("%Y-%m-%d %H:%M:%S")
-        post_url = "https://www.hypixel.net"
-        desc = "Activated at " + created_at
-        em = discord.Embed(title="Booster info",
-                           colour=discord.Colour(value=colour),
-                           url=post_url,
-                           description=desc)
-        em.add_field(name="Game", value=s["game"])
-        em.add_field(name="Purchaser", value=str(s["purchaser"]))
-        em.add_field(name="Remaining time", value=s["remaining"])
-        em.set_thumbnail(url="http://minotar.net/avatar/{}/128.png".format(s["purchaser"]))
-        if not message:
-            message =\
-                await ctx.send(embed=em)
-            await message.add_reaction("⬅")
-            await message.add_reaction("❌")
-            await message.add_reaction("➡")
-        else:
-            await message.edit(embed=em)
+    @hpset.command()
+    @checks.is_owner()
+    async def apikey(self, ctx: RedContext, key: str):
+        """Sets the Hypixel API key - owner only
+        Get this by logging onto Hypixel and doing /api"""
+        await self.settings.api_key.set(key)
+        await ctx.send('API key set!')
 
-        def react_check(reaction, user):
-            return user == ctx.author \
-                and str(reaction.emoji) in ["➡", "⬅", "❌"]
+    @commands.group(name="hypixel", aliases=["hp"])
+    async def hp(self, ctx: RedContext):
+        """Base command for getting info from Hypixel's API"""
+        if ctx.invoked_subcommand is None:
+            await ctx.send_help()
 
-        react, _ = await ctx.bot.wait_for(
-            "reaction_add", timeout=timeout, check=react_check
-        )
-        if react is None:
-            await message.remove_reaction("⬅", ctx.guild.me)
-            await message.remove_reaction("❌", ctx.guild.me)
-            await message.remove_reaction("➡", ctx.guild.me)
-            return None
-        reacts = {v: k for k, v in numbs.items()}
-        react = reacts[react.emoji]
-        if react == "next":
-            next_page = 0
-            perms = message.channel.permissions_for(ctx.guild.me)
-            if perms.manage_messages:  # Can manage messages, so remove react
-                try:
-                    await message.remove_reaction("➡", ctx.author)
-                except discord.NotFound:
-                    pass
-            if page == len(booster_list) - 1:
-                next_page = 0  # Loop around to the first item
-            else:
-                next_page = page + 1
-            return await self.booster_menu(ctx, booster_list, message=message,
-                                           page=next_page, timeout=timeout)
-        elif react == "back":
-            next_page = 0
-            perms = message.channel.permissions_for(ctx.guild.me)
-            if perms.manage_messages:  # Can manage messages, so remove react
-                try:
-                    await message.remove_reaction("⬅", ctx.author)
-                except discord.NotFound:
-                    pass
-            if page == 0:
-                next_page = len(booster_list) - 1  # Loop around to the last item
-            else:
-                next_page = page - 1
-            return await self.booster_menu(ctx, booster_list, message=message,
-                                           page=next_page, timeout=timeout)
-        else:
-            return await\
-                message.delete()
-
-    async def friends_menu(self, ctx, friends_list: list,
-                           message: discord.Message=None,
-                           page=0, timeout: int=30):
-        """menu control logic for this taken from
-           https://github.com/Lunar-Dust/Dusty-Cogs/blob/master/menu/menu.py"""
-        s = friends_list[page]
-        colour =\
-            ''.join([randchoice('0123456789ABCDEF')
-                     for x in range(6)])
-        colour = int(colour, 16)
-        created_at = dt.utcfromtimestamp(s["time"])
-        created_at = created_at.strftime("%Y-%m-%d %H:%M:%S")
-        post_url = "https://www.hypixel.net"
-        em = discord.Embed(title="Friends",
-                           colour=discord.Colour(value=colour),
-                           url=post_url)
-        em.add_field(name="Name", value=s["name"])
-        em.add_field(name="Friend", value=str(s["fname"]))
-        em.add_field(name="Since", value=created_at, inline=False)
-        em.set_thumbnail(url="http://minotar.net/avatar/{}/128.png".format(s["fname"]))
-        if not message:
-            message =\
-                await ctx.send(ctx.message.channel, embed=em)
-            await message.add_reaction("⬅")
-            await message.add_reaction("❌")
-            await message.add_reaction("➡")
-        else:
-            message = await message.edit(embed=em)
-
-        def react_check(reaction, user):
-            return user == ctx.author \
-                and str(reaction.emoji) in ["➡", "⬅", "❌"]
-
-        react, _ = await ctx.bot.wait_for(
-            "reaction_add", timeout=timeout, check=react_check
-        )
-        if react is None:
-            await message.remove_reaction("⬅", ctx.guild.me)
-            await message.remove_reaction("❌", ctx.guild.me)
-            await message.remove_reaction("➡", ctx.guild.me)
-            return None
-        reacts = {v: k for k, v in numbs.items()}
-        react = reacts[react.emoji]
-        if react == "next":
-            next_page = 0
-            perms = message.channel.permissions_for(ctx.guild.me)
-            if perms.manage_messages:  # Can manage messages, so remove react
-                try:
-                    await message.remove_reaction("➡", ctx.author)
-                except discord.NotFound:
-                    pass
-            if page == len(friends_list) - 1:
-                next_page = 0  # Loop around to the first item
-            else:
-                next_page = page + 1
-            return await self.friends_menu(ctx, friends_list, message=message,
-                                           page=next_page, timeout=timeout)
-        elif react == "back":
-            next_page = 0
-            perms = message.channel.permissions_for(ctx.guild.me)
-            if perms.manage_messages:  # Can manage messages, so remove react
-                try:
-                    await message.remove_reaction("⬅", ctx.author)
-                except discord.NotFound:
-                    pass
-            if page == 0:
-                next_page = len(friends_list) - 1  # Loop around to the last item
-            else:
-                next_page = page - 1
-            return await self.friends_menu(ctx, friends_list, message=message,
-                                           page=next_page, timeout=timeout)
-        else:
-            return await\
-                message.delete()
-
-    def no_apikey(self):
-        return "No api key available! Use `[p]hpset apikey` to set one!"
-
-    @commands.command()
-    async def hpbooster(self, ctx, *game: str):
-        """
-        Get active boosters. A game can be specified, in which case only the
-        active booster for that game will be shown
-        """
-        data = {}
+    @hp.command()
+    async def currentboosters(self, ctx: RedContext):
+        """Get all active boosters on the network"""
         api_key = await self.settings.api_key()
         if not api_key:
-            await ctx.send(self.no_apikey())
+            await ctx.send(_("No api key available! Use `{}` to set one!").format("[p]hpset apikey"))
+            return
+        url = "https://api.hypixel.net/boosters?key=" + api_key
+        data = await self.get_json(url)
+        if data["success"]:
+            booster_list = data["boosters"]
+            modified_list = []
+            l = [i for i in booster_list if i["length"] < i["originalLength"]]
+            for item in l:
+                game_name = ""
+                for game in self.games:
+                    if item["gameType"] == game["id"]:
+                        game_name = game["clean_name"]
+                        break
+                name_url = "https://api.mojang.com/user/profiles/" \
+                           + item["purchaserUuid"] + "/names"
+                name_data = await self.get_json(name_url)
+                name = name_data[-1]["name"]
+                desc = "Activated at {}".format(
+                    dt.utcfromtimestamp(
+                        item["dateActivated"] / 1000
+                    ).strftime("%Y-%m-%d %H:%M:%S")
+                )
+                thumb_url = "http://minotar.net/avatar/{}/128.png".format(
+                    name
+                )
+                remaining = \
+                    str(datetime.timedelta(seconds=item["length"]))
+                fields = [
+                    {
+                        "name": "Game",
+                        "value": game_name
+                    },
+                    {
+                        "name": "Purchaser",
+                        "value": name
+                    },
+                    {
+                        "name": "Remaining time",
+                        "value": remaining
+                    }
+                ]
+                embed = discord.Embed(
+                    title="Booster info",
+                    url="https://store.hypixel.net/category/307502",
+                    description=desc
+                )
+                for field in fields:
+                    embed.add_field(**field)
+                embed.set_thumbnail(url=thumb_url)
+                embed = randomize_colour(embed)
+                modified_list.append(embed)
+            await booster_menu(ctx, modified_list, page=0, timeout=30)
+        else:
+            await ctx.send(_("An error occurred in getting the data"))
+
+    @hp.command()
+    async def gamebooster(self, ctx: RedContext, *, game: str=None):
+        """
+        Get the active booster for the specified game.
+        """
+        api_key = await self.settings.api_key()
+        if not api_key:
+            await ctx.send(_("No api key available! Use `{}` to set one!").format("[p]hpset apikey"))
+            return
         url = "https://api.hypixel.net/boosters?key=" + api_key
         data = await self.get_json(url)
 
-        message = ""
         if data["success"]:
             booster_list = data["boosters"]
-            if not game:
-                modified_list = []
-                l = [i for i in booster_list if i["length"] < i["originalLength"]]
-                for item in l:
-                    game_name = ""
-                    remaining = \
-                        str(datetime.timedelta(seconds=item["length"]))
-                    name_url = "https://api.mojang.com/user/profiles/" \
-                        + item["purchaserUuid"] + "/names"
-                    name_data = await self.get_json(name_url)
-                    name = name_data[-1]["name"]
-                    for game in self.games:
-                        if item["gameType"] == game["id"]:
-                            game_name = game["name"]
-                            break
-                    cur_item = {
-                        "dateActivated": item["dateActivated"]/1000,
-                        "game": game_name,
-                        "purchaser": name,
-                        "remaining": item["length"]
-                    }
-                    modified_list.append(cur_item)
-                await self.booster_menu(ctx, modified_list, page=0, timeout=30)
-
+            game_n = game
+            game_name = game_n.lower().strip()
+            for game in self.games:
+                if game_name == game["clean_name"].lower() or\
+                        game_name == game["db_name"].lower() or\
+                        game_name == game["type_name"].lower():
+                    game_name = game["clean_name"]
+                    game_type = game["id"]
+                    break
             else:
-                game_n = " ".join(game)
-                game_name = game_n.lower().strip()
-                gameType = None
-                for game in self.games:
-                    if game_name == game["name"].lower():
-                        game_name = game["name"]
-                        gameType = game["id"]
-                        break
-                for item in booster_list:
-                    if item["length"] < item["originalLength"] and \
-                            item["gameType"] == gameType:
-                        remaining = \
-                           str(datetime.timedelta(seconds=item["length"]))
-                        name_get_url = \
-                            "https://api.mojang.com/user/profiles/" + \
-                            item["purchaserUuid"] + "/names"
+                await ctx.send(_("That game doesn't exist!"))
+                return
+            booster_list = [i for i in booster_list if i["gameType"] == game_type]
+            sorted_booster_list = sorted(booster_list, key=lambda i: i["dateActivated"])
+            if not sorted_booster_list:
+                await ctx.send(_("No boosters active for game {}").format(game_name))
+                return
+            current_booster = sorted_booster_list[0]
+            sorted_booster_list.remove(current_booster)
+            remaining_boosters = len(sorted_booster_list)
+            remaining = str(datetime.timedelta(seconds=current_booster["length"]))
+            name_get_url = \
+                "https://api.mojang.com/user/profiles/" + \
+                current_booster["purchaserUuid"] + "/names"
 
-                        name_data = await self.get_json(name_get_url)
-                        name = name_data[-1]["name"]
-                        colour =\
-                            ''.join([randchoice('0123456789ABCDEF')
-                                     for x in range(6)])
-                        colour = int(colour, 16)
-                        created_at = dt.utcfromtimestamp(item["dateActivated"]/1000)
-                        created_at = created_at.strftime("%Y-%m-%d %H:%M:%S")
-                        post_url = "https://www.hypixel.net"
-                        desc = "Activated at " + created_at
-                        em = discord.Embed(title="Booster info",
-                                           colour=discord.Colour(value=colour),
-                                           url=post_url,
-                                           description=desc)
-                        em.add_field(name="Game", value=game_name)
-                        em.add_field(name="Purchaser", value=name)
-                        em.add_field(name="Remaining time", value=item["length"])
-                        em.set_thumbnail(url="http://minotar.net/avatar/{}/128.png".format(name))
-                        await ctx.send(ctx.message.channel, embed=em)
+            name_data = await self.get_json(name_get_url)
+            name = name_data[-1]["name"]
+
+            created_at = dt.utcfromtimestamp(current_booster["dateActivated"]/1000)
+            created_at = created_at.strftime("%Y-%m-%d %H:%M:%S")
+            desc = "Activated at " + created_at
+            em = discord.Embed(title="Current booster for {}".format(game_name),
+                               url="https://store.hypixel.net/category/307502",
+                               description="and {} boosters remaining".format(remaining_boosters))
+            em = randomize_colour(em)
+            em.add_field(name="Purchaser", value=name)
+            em.add_field(name="Remaining time", value=remaining)
+            em.set_thumbnail(url="http://minotar.net/avatar/{}/128.png".format(name))
+            em.set_footer(text=desc)
+            await ctx.send(embed=em)
         else:
-            message = "An error occurred in getting the data"
-            await ctx.send('```{}```'.format(message))
+            await ctx.send(_("An error occurred in getting the data"))
 
-    @commands.command()
-    async def hpplayer(self, ctx, name):
+    @hp.command(name="player")
+    async def hpplayer(self, ctx: RedContext, name: str):
         """Gets data about the specified player"""
-
         api_key = await self.settings.api_key()
         if not api_key:
-            await ctx.send(self.no_apikey())
-        message = ""
+            await ctx.send(_("No api key available! Use `{}` to set one!").format("[p]hpset apikey"))
+            return
+
+        uuid = await self.get_mc_uuid(name)  # let's get the user's UUID
+        if uuid is None:
+            await ctx.send("That name does not have a UUID associated with it!")
+            return
+
         url = "https://api.hypixel.net/player?key=" + \
-            api_key + "&name=" + name
+            api_key + "&uuid=" + uuid
 
         data = await self.get_json(url)
         if data["success"]:
             player_data = data["player"]
-            title = "Player data for " + name + ""
-            colour =\
-                ''.join([randchoice('0123456789ABCDEF')
-                         for x in range(6)])
-            colour = int(colour, 16)
-            em = discord.Embed(title=title,
-                               colour=discord.Colour(value=colour),
-                               url="https://hypixel.net/player/{}".format(name),
-                               description="Retrieved at {} UTC".format(dt.utcnow().strftime("%Y-%m-%d %H:%M:%S")))
-            if "buildTeam" in player_data:
-                if player_data["buildTeam"] is True:
-                    rank = "Build Team"
-            elif "rank" in player_data:
-                if player_data["rank"] == "ADMIN":
-                    rank = "Admin"
-                elif player_data["rank"] == "MODERATOR":
-                    rank = "Moderator"
-                elif player_data["rank"] == "HELPER":
-                    rank = "Helper"
-                elif player_data["rank"] == "YOUTUBER":
-                    rank = "Youtuber"
-            elif "newPackageRank" in player_data:
-                if player_data["newPackageRank"] == "MVP_PLUS":
-                    rank = "MVP+"
-                elif player_data["newPackageRank"] == "MVP":
-                    rank = "MVP"
-                elif player_data["newPackageRank"] == "VIP_PLUS":
-                    rank = "VIP+"
-                elif player_data["newPackageRank"] == "VIP":
-                    rank = "VIP"
-            elif "packageRank" in player_data:
-                if player_data["packageRank"] == "MVP_PLUS":
-                    rank = "MVP+"
-                elif player_data["packageRank"] == "MVP":
-                    rank = "MVP"
-                elif player_data["packageRank"] == "VIP_PLUS":
-                    rank = "VIP+"
-                elif player_data["packageRank"] == "VIP":
-                    rank = "VIP"
-            elif bool(player_data):
-                rank = "None"
-            else:
-                message = "That player has never logged into Hypixel"
-                await ctx.send('```{}```'.format(message))
+            rank = get_rank(player_data)
+            if rank is None:
+                await ctx.send(_("That player has never logged into {}!").format("Hypixel"))
                 return
-            em.add_field(name="Rank", value=rank)
-            if "networkLevel" in player_data:
-                level = str(player_data["networkLevel"])
-                em.add_field(name="Level", value=level)
-            else:
-                level = "1"
-                em.add_field(name="Level", value=level)
-            if "vanityTokens" in player_data:
-                tokens = str(player_data["vanityTokens"])
-                em.add_field(name="Credits", value=tokens)
-            first_login = self.get_time(player_data["firstLogin"])
-            em.add_field(name="First login", value=first_login, inline=False)
-            last_login = self.get_time(player_data["lastLogin"])
-            em.add_field(name="Last login", value=last_login, inline=False)
-            em.set_thumbnail(url="http://minotar.net/avatar/{}/128.png".format(name))
-            await ctx.send(ctx.message.channel, embed=em)
-        else:
-            message = "An error occurred in getting the data."
-            await ctx.send('```{}```'.format(message))
+            title = "{}{}".format("[{}] ".format(rank) if rank else "", player_data["displayname"])
 
-    @commands.command()
+            em = discord.Embed(title=title,
+                               url="https://hypixel.net/player/{}".format(player_data["displayname"]),
+                               description="Minecraft version: {}".format(
+                                   player_data["mcVersionRp"] if "mcVersionRp" in player_data else "Unknown"
+                               ))
+            em = randomize_colour(em)
+
+            em.add_field(name="Rank", value=rank if rank else "None")
+            em.add_field(name="Level", value=str(get_network_level(player_data["networkExp"])))
+
+            first_login = self.get_time(player_data["firstLogin"])
+            last_login = self.get_time(player_data["lastLogin"])
+            em.add_field(name="First/Last login", value="{} / {}".format(first_login, last_login), inline=False)
+
+            em.set_thumbnail(url="http://minotar.net/avatar/{}/128.png".format(name))
+            await ctx.send(embed=em)
+        else:
+            await ctx.send(_("An error occurred in getting the data."))
+
+    @hp.command(name="friends")
     async def hpfriends(self, ctx, player_name: str):
         """Gets friends for the specified player"""
         api_key = await self.settings.api_key()
         if not api_key:
-            await ctx.send(self.no_apikey())
+            await ctx.send(_("No api key available! Use `{}` to set one!").format("[p]hpset apikey"))
+            return
         uuid_json = await self.get_json(
             "https://api.mojang.com/users/profiles/minecraft/{}".format(
                 player_name
             )
         )
-
         friends_json = await self.get_json("https://api.hypixel.net/friends?key={}&uuid={}".format(
             api_key,
             uuid_json["id"]
         ))
         friends_list = []
         if friends_json["success"]:
-            for item in friends_json["records"]:
-                if item["uuidSender"] == uuid_json["id"]:
-                    name_url = "https://api.mojang.com/user/profiles/" \
-                        + item["uuidReceiver"] + "/names"
-                    name_data = await self.get_json(name_url)
-                else:
-                    name_url = "https://api.mojang.com/user/profiles/" \
-                        + item["uuidSender"] + "/names"
-                    name_data = await self.get_json(name_url)
-                friend_name = name_data[-1]["name"]
-                cur_friend = {
-                    "name": player_name,
-                    "fname": friend_name,
-                    "time": item["started"]/1000
-                }
-                friends_list.append(cur_friend)
-            await self.friends_menu(ctx, friends_list, message=None, page=0)
+            msg = await ctx.send(
+                "Looking up friends for {}. This may take a while if the user has "
+                "a lot of users on their friends list".format(player_name))
+            async with ctx.channel.typing():
+                # gives some indication that the command is working, because
+                # this could take some time if the specified player has a lot
+                # of users friended on the server
+                for item in friends_json["records"]:
+                    if item["uuidSender"] == uuid_json["id"]:
+                        name_url = "https://api.mojang.com/user/profiles/" \
+                            + item["uuidReceiver"] + "/names"
+                        name_data = await self.get_json(name_url)
+                    else:
+                        name_url = "https://api.mojang.com/user/profiles/" \
+                            + item["uuidSender"] + "/names"
+                        name_data = await self.get_json(name_url)
+                    friend_name = name_data[-1]["name"]  # last item in list is most recent name
+                    cur_friend = {
+                        "name": player_name,
+                        "fname": friend_name,
+                        "time": item["started"]/1000
+                    }
+                    friends_list.append(cur_friend)
+                    await asyncio.sleep(1)
+            await msg.delete()
+            await friends_menu(ctx, friends_list, message=None, page=0)
 
-    @commands.command()
+    @hp.command(name="guild")
     async def hpguild(self, ctx, player_name: str):
         """Gets guild info based on the specified player"""
         api_key = await self.settings.api_key()
         if not api_key:
-            await ctx.send(self.no_apikey())
+            await ctx.send(_("No api key available! Use `{}` to set one!").format("[p]hpset apikey"))
         uuid_json = await self.get_json(
             "https://api.mojang.com/users/profiles/minecraft/{}".format(
                 player_name
@@ -425,7 +314,7 @@ class Hpapi:
         guild_find_json = await self.get_json(guild_find_url)
         if not guild_find_json["guild"]:
             await ctx.send("The specified player does not appear to "
-                               "be in a guild")
+                           "be in a guild")
             return
         guild_id = guild_find_json["guild"]
         guild_get_url = "https://api.hypixel.net/guild?key={}&id={}".format(
@@ -434,32 +323,29 @@ class Hpapi:
         )
         guild = await self.get_json(guild_get_url)
         guild = guild["guild"]
-        guildmaster_uuid = [m for m in guild["members"] if m["rank"] == "GUILDMASTER"][0]["uuid"]
-        guildmaster_lookup = await self.get_json("https://api.mojang.com/user/profiles/{}/names".format(guildmaster_uuid))
-        guildmaster = guildmaster_lookup[-1]["name"]
-        guildmaster_face = "http://minotar.net/avatar/{}/128.png".format(guildmaster)
-        colour =\
-            ''.join([randchoice('0123456789ABCDEF')
-                     for x in range(6)])
-        colour = int(colour, 16)
+        gmaster_uuid = [m for m in guild["members"] if m["rank"] == "GUILDMASTER"][0]["uuid"]
+        gmaster_lookup = await self.get_json("https://api.mojang.com/user/profiles/{}/names".format(gmaster_uuid))
+        gmaster = gmaster_lookup[-1]["name"]
+        gmaster_face = "http://minotar.net/avatar/{}/128.png".format(gmaster)
         em = discord.Embed(title=guild["name"],
-                           colour=discord.Colour(value=colour),
                            url="https://hypixel.net/player/{}".format(player_name),
                            description="Created at {} UTC".format(dt.utcfromtimestamp(guild["created"]/1000).strftime("%Y-%m-%d %H:%M:%S")))
-        em.add_field(name="Guildmaster", value=guildmaster, inline=False)
+        em = randomize_colour(em)
+        em.add_field(name="Guildmaster", value=gmaster, inline=False)
         em.add_field(name="Guild coins", value=guild["coins"])
         em.add_field(name="Member count", value=str(len(guild["members"])))
         em.add_field(name="Officer count", value=str(len([m for m in guild["members"] if m["rank"] == "OFFICER"])))
-        em.set_thumbnail(url=guildmaster_face)
+        em.set_thumbnail(url=gmaster_face)
 
-        await ctx.send(ctx.message.channel, embed=em)
+        await ctx.send(embed=em)
 
-    @commands.command()
+    @hp.command(name="session")
     async def hpsession(self, ctx, player_name: str):
         """Shows player session status"""
         api_key = await self.settings.api_key()
         if not api_key:
-            await ctx.send(self.no_apikey())
+            await ctx.send(_("No api key available! Use `{}` to set one!").format("[p]hpset apikey"))
+            return
         uuid_url = "https://api.mojang.com/users/profiles/minecraft/{}".format(player_name)
         uuid = await self.get_json(uuid_url)
         uuid = uuid["id"]
@@ -468,21 +354,43 @@ class Hpapi:
         if session_json["session"]:
             await\
                 ctx.send(
-                    "{} is online in {}. There are {} players there".format(
+                    _("{} is online in {}. There are {} players there").format(
                         player_name,
                         session_json["session"]["server"],
                         str(len(session_json["session"]["players"]))
                     )
                 )
         else:
-            await ctx.send("That player does not appear to be online!")
+            await ctx.send(_("That player does not appear to be online!"))
 
-    @commands.command()
+    @hp.command(name="wdstats")
+    async def hpwdstats(self, ctx: RedContext):
+        """Displays Watchdog's stats"""
+        api_key = await self.settings.api_key()
+        if not api_key:
+            await ctx.send(_("No api key available! Use `{}` to set one!").format("[p]hpset apikey"))
+            return
+        url = "https://api.hypixel.net/watchdogstats?key={}".format(api_key)
+        data = await self.get_json(url)
+        if not data["success"]:
+            await ctx.send(_("Error! {}").format(data["cause"]))
+            return
+        else:
+            embed = discord.Embed(title="Watchdog stats")
+            embed = randomize_colour(embed)
+            embed.add_field(name="Past day (Watchdog)", value=str(data["watchdog_rollingDaily"]), inline=False)
+            embed.add_field(name="Past day (Staff)", value=str(data["staff_rollingDaily"]), inline=False)
+            embed.add_field(name="Total (Watchdog)", value=str(data["watchdog_total"]), inline=False)
+            embed.add_field(name="Total (Staff)", value=str(data["staff_total"]), inline=False)
+            await ctx.send(embed=embed)
+
+    @hp.command(name="achievements")
     async def hpachievements(self, ctx, player, *, game):
         """Display achievements for the specified player and game"""
         api_key = await self.settings.api_key()
         if not api_key:
-            await ctx.send(self.no_apikey())
+            await ctx.send(_("No api key available! Use `{}` to set one!").format("[p]hpset apikey"))
+            return
         url = "https://api.hypixel.net/player?key=" + \
             api_key + "&name=" + player
         data = await self.get_json(url)
@@ -510,23 +418,9 @@ class Hpapi:
                 if have_ach:
                     achievement_count += 1
             await ctx.send("{} has completed {} achievements worth {} points in {}".format(player, achievement_count, points, game))
-
-    @commands.group()
-    @checks.is_owner()
-    async def hpset(self, ctx):
-        """Settings for Hypixel cog"""
-        if ctx.invoked_subcommand is None:
-            await ctx.send_help(ctx)
-
-    @hpset.command()
-    @checks.is_owner()
-    async def apikey(self, ctx, key: str):
-        """Sets the Hypixel API key - owner only"""
-        await self.settings.api_key.set(key)
-        await ctx.send('API key set!')
     
     async def achievements_getter(self):
         async with self.session.get("https://raw.githubusercontent.com/HypixelDev/PublicAPI/master/Documentation/misc/Achievements.json") as achievements_get:
             achievements = json.loads(await achievements_get.text())
-        with aiofiles.open(os.path.join(data_manager.cog_data_path(self), "achievements.json"), "w") as f:
+        async with aiofiles.open(str(data_manager.cog_data_path(self) / "achievements.json"), "w") as f:
             await f.write(json.dumps(achievements, indent=4))

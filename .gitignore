@@ -1,5 +1,3 @@
-mpapi/
-slowchat/
-channelcreate/
-dah/
 */__pycache__/
+.idea
+lib/

@@ -112,5 +112,41 @@
         "type_name": "SKYCLASH",
         "db_name": "SkyClash",
         "clean_name": "SkyClash"
+    },
+    {
+        "id": 56,
+        "type_name": "LEGACY",
+        "db_name": "Legacy",
+        "clean_name": "Classic Games"
+    },
+    {
+        "id": 57,
+        "type_name": "PROTOTYPE",
+        "db_name": "Prototype",
+        "clean_name": "Prototype"
+    },
+    {
+        "id": 58,
+        "type_name": "BEDWARS",
+        "db_name": "Bedwars",
+        "clean_name": "Bed Wars"
+    },
+    {
+        "id": 59,
+        "type_name": "MURDER_MYSTERY",
+        "db_name": "MurderMystery",
+        "clean_name": "Murder Mystery"
+    },
+    {
+        "id": 60,
+        "type_name": "BUILD_BATTLE",
+        "db_name": "BuildBattle",
+        "clean_name": "Build Battle"
+    },
+    {
+        "id": 61,
+        "type_name": "DUELS",
+        "db_name": "Duels",
+        "clean_name": "Duels"
     }
 ]

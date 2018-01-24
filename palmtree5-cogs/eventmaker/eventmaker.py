@@ -1,11 +1,11 @@
-from discord.ext import commands
-from core import checks
-from core.utils.helpers import JsonGuildDB
-from datetime import datetime as dt
 import asyncio
-import discord
-import os
 import calendar
+import os
+from datetime import datetime as dt
+
+import discord
+from discord.ext import commands
+from redbot.core import Config, RedContext, checks
 
 
 numbs = {
@@ -15,7 +15,7 @@ numbs = {
 }
 
 
-class EventMaker():
+class EventMaker:
     """A tool for creating events inside of Discord. Anyone can
     create an event by default. If a specific role has been
     specified, users must have that role, the server's mod or
@@ -23,6 +23,11 @@ class EventMaker():
     will be posted to the configured channel (default: the server's
     default channel), as well as direct messaged to
     everyone who has signed up"""
+
+    default_guild = {
+
+    }
+
     def __init__(self, bot):
         self.bot = bot
         self.events = JsonGuildDB(
@@ -79,8 +84,14 @@ class EventMaker():
             return await\
                 self.bot.delete_message(message)
 
-    @commands.command(pass_context=True)
-    async def eventcreate(self, ctx):
+    @commands.group()
+    async def event(self, ctx: RedContext):
+        """Base command for events"""
+        if ctx.invoked_subcommand is None:
+            await ctx.send_help()
+
+    @event.command(name="create")
+    async def event_create(self, ctx: RedContext):
         """Wizard-style event creation tool. The event will only be created if
         all information is provided properly
         """
@@ -162,12 +173,12 @@ class EventMaker():
                 new_event["create_time"]).strftime("%Y-%m-%d %H:%M:%S"))
         emb.add_field(name="Event ID", value=str(new_event["id"]))
         emb.add_field(
-            name="Start time (UTC)", value=dt.utcfromtimestamp(
-                new_event["event_start_time"]))
+            name="Start time (UTC)", value=str(dt.utcfromtimestamp(
+                new_event["event_start_time"])))
         await ctx.send(embed=emb)
 
-    @commands.command(pass_context=True)
-    async def joinevent(self, ctx, event_id: int):
+    @event.command(name="join")
+    async def event_join(self, ctx: RedContext, event_id: int):
         """Join the specified event"""
         server = ctx.message.server
         for event in self.events[server.id]:
@@ -188,8 +199,8 @@ class EventMaker():
             await ctx.send("It appears as if that event does not exist!" +
                                "Perhaps it was cancelled or never created?")
 
-    @commands.command(pass_context=True)
-    async def leaveevent(self, ctx, event_id: int):
+    @event.command(name="leave")
+    async def event_leave(self, ctx: RedContext, event_id: int):
         """Leave the specified event"""
         server = ctx.message.server
         author = ctx.message.author
@@ -206,8 +217,8 @@ class EventMaker():
                     await ctx.send("That event already started!")
                 break
 
-    @commands.command(pass_context=True)
-    async def eventlist(self, ctx):
+    @event.command(name="list")
+    async def event_list(self, ctx: RedContext):
         """List events for this server that have not started yet"""
         server = ctx.message.server
         events = []
@@ -236,8 +247,8 @@ class EventMaker():
         else:
             await self.event_menu(ctx, events, message=None, page=0, timeout=30)
 
-    @commands.command(pass_context=True)
-    async def whojoined(self, ctx, event_id: int):
+    @event.command(name="who")
+    async def event_who(self, ctx: RedContext, event_id: int):
         """List all participants of the event"""
         server = ctx.message.server
         for event in self.events[server.id]:
@@ -252,8 +263,8 @@ class EventMaker():
                     await ctx.send("That event has already started!")
                 break
 
-    @commands.command(pass_context=True)
-    async def cancelevent(self, ctx, event_id: int):
+    @event.command(name="cancel")
+    async def event_cancel(self, ctx, event_id: int):
         """Cancels the specified event"""
         server = ctx.message.server
         if event_id < self.settings[server.id]["next_id"]:
@@ -311,16 +322,16 @@ class EventMaker():
                 return None  # something went wrong in user's input
             return start_time
 
-    @commands.group(pass_context=True)
-    @checks.admin_or_permissions(manage_server=True)
-    async def eventset(self, ctx):
+    @commands.group()
+    @checks.admin_or_permissions(manage_guild=True)
+    async def eventset(self, ctx: RedContext):
         """Event maker settings"""
         if ctx.invoked_subcommand is None:
-            await self.bot.send_cmd_help(ctx)
+            await ctx.send_help()
 
-    @eventset.command(pass_context=True, name="channel")
-    @checks.admin_or_permissions(manage_server=True)
-    async def eventset_channel(self, ctx, channel: discord.Channel):
+    @eventset.command(name="channel")
+    @checks.admin_or_permissions(manage_guild=True)
+    async def eventset_channel(self, ctx: RedContext, channel: discord.TextChannel):
         """Set the channel used for creating announcements and displaying reminders
         Make sure users who should be able to create events can send messages
         in this channel"""
@@ -330,9 +341,9 @@ class EventMaker():
                          self.settings)
         await ctx.send("Channel set to {}".format(channel.mention))
 
-    @eventset.command(pass_context=True, name="role")
-    @checks.admin_or_permissions(manage_server=True)
-    async def eventset_role(self, ctx, *, role: str=None):
+    @eventset.command(name="role")
+    @checks.admin_or_permissions(manage_guild=True)
+    async def eventset_role(self, ctx: RedContext, *, role: str=None):
         """Set the role allowed to create events. Default
         is for everyone to be able to create events"""
         server = ctx.message.server
@@ -350,9 +361,9 @@ class EventMaker():
                 self.settings)
             await ctx.send("Role unset!")
 
-    @eventset.command(pass_context=True, name="defaultsettings", hidden=True)
-    @checks.admin_or_permissions(manage_server=True)
-    async def eventset_defaultsettings(self, ctx):
+    @eventset.command(name="defaultsettings")
+    @checks.admin_or_permissions(manage_guild=True)
+    async def eventset_defaultsettings(self, ctx: RedContext):
         """Intended for situations where the cog gets installed
            but the bot is already in a number of servers.
            Emulates the functionality of the server join listener"""
@@ -410,48 +421,3 @@ class EventMaker():
                     os.path.join("data", "eventmaker", "events.json"),
                     self.events)
             await asyncio.sleep(CHECK_DELAY)
-
-    async def server_join(self, server):
-        if server.id not in self.settings:
-            self.settings[server.id] = {
-                "role": None,
-                "next_id": 1,
-                "channel": server.id
-            }
-        if server.id not in self.events:
-            self.events[server.id] = []
-        dataIO.save_json(os.path.join("data", "eventmaker", "events.json"))
-        dataIO.save_json(os.path.join("data", "eventmaker", "settings.json"))
-
-    async def server_leave(self, server):
-        """Cleanup after leaving server"""
-        if server.id in self.events:
-            self.events.pop(server.id)
-        if server.id in self.settings:
-            self.settings.pop(server.id)
-        dataIO.save_json(os.path.join("data", "eventmaker", "events.json"))
-        dataIO.save_json(os.path.join("data", "eventmaker", "settings.json"))
-
-
-def check_folder():
-    if not os.path.isdir(os.path.join("data", "eventmaker")):
-        print("Creating the eventmaker directory in data")
-        os.mkdir(os.path.join("data", "eventmaker"))
-
-
-def check_file():
-    if not dataIO.is_valid_json(os.path.join("data", "eventmaker", "events.json")):
-        dataIO.save_json(os.path.join("data", "eventmaker", "events.json"), {})
-    if not dataIO.is_valid_json(os.path.join("data", "eventmaker", "settings.json")):
-        dataIO.save_json(os.path.join("data", "eventmaker", "settings.json"), {})
-
-
-def setup(bot):
-    check_folder()
-    check_file()
-    n = EventMaker(bot)
-    loop = asyncio.get_event_loop()
-    loop.create_task(n.check_events())
-    bot.add_listener(n.server_join, "on_server_join")
-    bot.add_listener(n.server_leave, "on_server_remove")
-    bot.add_cog(n)

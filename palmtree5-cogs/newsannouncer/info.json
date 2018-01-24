@@ -1,9 +1,0 @@
-{
-    "AUTHOR" : "palmtree5",
-    "INSTALL_MSG" : "[p]help NewsAnnouncer to see commands. No additional dependencies needed.",
-    "NAME" : "NewsAnnouncer",
-    "DISABLED" : false,
-    "SHORT" : "Cog for subscribing to news notifications for a channel",
-    "DESCRIPTION" : "Gives users a role to be mentioned for updates, etc.",
-    "TAGS": ["news", "alerts", "utility"]
-}

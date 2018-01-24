@@ -4,10 +4,10 @@ from discord.ext import commands
 import discord
 import asyncio
 from peony import events, PeonyClient
-import os
 
-from core import Config, checks
-from core.bot import Red
+from redbot.core import Config, checks
+from redbot.core.bot import Red
+from redbot.core.context import RedContext
 
 numbs = {
     "next": "➡",
@@ -34,10 +34,15 @@ class Tweets:
     def __init__(self, bot: Red):
         self.bot = bot
         self.config = Config.get_conf(self, 55755755)
+        self.config.register_global(**self.default_global)
+        self.config.register_guild(**self.default_guild)
         self.creds = None
         self.client = None
         self.bot.loop.create_task(self.get_creds_and_client())
-        self.bot.loop.create_task(self.user_loop())
+        self.usr_loop = self.bot.loop.create_task(self.user_loop())
+
+    def __unload(self):
+        self.usr_loop.cancel()
 
     async def get_creds_and_client(self):
         self.creds = await self.get_creds()
@@ -59,15 +64,14 @@ class Tweets:
         if not consumer_key or not consumer_secret or not access_token\
                 or not access_secret:
             return None
-        retval = {
+        return {
             "consumer_key": consumer_key,
             "consumer_secret": consumer_secret,
             "access_token": access_token,
             "access_token_secret": access_secret
         }
-        return retval
 
-    async def tweet_menu(self, ctx, post_list: list,
+    async def tweet_menu(self, ctx: RedContext, post_list: list,
                          message: discord.Message=None,
                          page=0, timeout: int=30):
         """menu control logic for this taken from
@@ -132,13 +136,13 @@ class Tweets:
                 message.delete()
 
     @commands.group(name='tweets')
-    async def _tweets(self, ctx):
+    async def _tweets(self, ctx: RedContext):
         """Gets various information from Twitter's API"""
         if ctx.invoked_subcommand is None:
-            await self.bot.send_cmd_help(ctx)
+            await ctx.send_help()
 
     @_tweets.command(name='getuser')
-    async def get_user(self, ctx, username: str):
+    async def get_user(self, ctx: RedContext, username: str):
         """Get info about the specified user"""
         message = ""
         print(type(self.client))
@@ -165,7 +169,7 @@ class Tweets:
         await ctx.send(embed=emb)
 
     @_tweets.command(name='gettweets')
-    async def get_tweets(self, ctx, username: str, count: int):
+    async def get_tweets(self, ctx: RedContext, username: str, count: int):
         """Gets the specified number of tweets for the specified username"""
         if count > 25:
             count = 25
@@ -196,7 +200,7 @@ class Tweets:
 
     @_tweetset.command(name="ignorementions")
     @checks.admin_or_permissions(manage_guild=True)
-    async def tweetset_ignorementions(self, ctx, toggle: str):
+    async def tweetset_ignorementions(self, ctx: RedContext, toggle: str):
         """Toggle ignoring tweets starting with an @ mention
            toggle should be one of on or off"""
         if toggle.lower() == "on":
@@ -210,7 +214,7 @@ class Tweets:
 
     @_tweetset.command(name="channel")
     @checks.admin_or_permissions(manage_guild=True)
-    async def tweetset_channel(self, ctx, channel: discord.TextChannel):
+    async def tweetset_channel(self, ctx: RedContext, channel: discord.TextChannel):
         """Set the channel for the tweets stream to post to"""
         await self.config.guild(ctx.guild).channel.set(channel.id)
         await ctx.send("Channel set to {}!".format(channel.mention))
@@ -229,7 +233,7 @@ class Tweets:
 
     @_user.command(name="add")
     @checks.admin_or_permissions(manage_guild=True)
-    async def _add(self, ctx, user_to_track):
+    async def _add(self, ctx: RedContext, user_to_track):
         """Add a new tweet alert for the specified user"""
         tweets = await self.client.api.statuses.user_timeline.get(
             screen_name=user_to_track, count=1
@@ -258,7 +262,7 @@ class Tweets:
 
     @_user.command(name="remove")
     @checks.admin_or_permissions(manage_guild=True)
-    async def _remove(self, ctx, user_to_remove):
+    async def _remove(self, ctx: RedContext, user_to_remove):
         if user_to_remove.lower() == "all":
             await self.config.guild(ctx.guild).clear()
             await ctx.send("Cleared the tracking list!")
@@ -271,7 +275,7 @@ class Tweets:
 
     @_tweetset.command(name='creds')
     @checks.is_owner()
-    async def set_creds(self, ctx, consumer_key: str, consumer_secret: str, access_token: str, access_secret: str):
+    async def set_creds(self, ctx: RedContext, consumer_key: str, consumer_secret: str, access_token: str, access_secret: str):
         """Sets the access credentials. See [p]help tweetset for instructions on getting these"""
         await self.config.consumer_key.set(consumer_key)
         await self.config.consumer_secret.set(consumer_secret)
