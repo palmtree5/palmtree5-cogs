@@ -14,6 +14,7 @@ from redbot.core.utils.chat_formatting import warning
 from redbot.core.utils.embed import randomize_colour
 
 from .helpers import get_modmail_messages, make_request, private_only
+from .errors import NoAccessTokenError
 
 numbs = {
     "next": "➡",
@@ -60,6 +61,9 @@ class Reddit:
             self.modmail_checker.cancel()
         if not self.session.closed:
             self.session.close()
+
+    async def __error(self, ctx, error):
+        await ctx.send("Error in command {0.command.qualified_name}:\n\n{1.original}".format(ctx, error))
 
     async def get_access_token(self):
         client_id = await self.settings.client_id()
@@ -194,6 +198,8 @@ class Reddit:
         remaining = self.token_expiration_time - dt.utcnow().timestamp()
         if remaining < 60:
             await self.get_access_token()
+        if not self.access_token:  # No access token for some reason
+            raise NoAccessTokenError("Have you set the credentials with `[p]redditset creds`?")
         headers = {
             "Authorization": "bearer " + self.access_token,
             "User-Agent": "Red-DiscordBotRedditCog/0.1 by /u/palmtree5"
@@ -231,6 +237,8 @@ class Reddit:
         remaining = self.token_expiration_time - dt.utcnow().timestamp()
         if remaining < 60:
             await self.get_access_token()
+        if not self.access_token:  # No access token for some reason
+            raise NoAccessTokenError("Have you set the credentials with `[p]redditset creds`?")
         headers = {
             "Authorization": "bearer " + self.access_token,
             "User-Agent": "Red-DiscordBotRedditCog/0.1 by /u/palmtree5"
@@ -269,6 +277,8 @@ class Reddit:
             remaining = self.token_expiration_time - dt.utcnow().timestamp()
             if remaining < 60:
                 await self.get_access_token()
+            if not self.access_token:  # No access token for some reason
+                raise NoAccessTokenError("Have you set the credentials with `[p]redditset creds`?")
             headers = {
                 "Authorization": "bearer " + self.access_token,
                 "User-Agent": "Red-DiscordBotRedditCog/0.1 by /u/palmtree5"
@@ -291,6 +301,8 @@ class Reddit:
             remaining = self.token_expiration_time - dt.utcnow().timestamp()
             if remaining < 60:
                 await self.get_access_token()
+            if not self.access_token:  # No access token for some reason
+                raise NoAccessTokenError("Have you set the credentials with `[p]redditset creds`?")
             headers = {
                 "Authorization": "bearer " + self.access_token,
                 "User-Agent": "Red-DiscordBotRedditCog/0.1 by /u/palmtree5"
@@ -313,6 +325,8 @@ class Reddit:
             remaining = self.token_expiration_time - dt.utcnow().timestamp()
             if remaining < 60:
                 await self.get_access_token()
+            if not self.access_token:  # No access token for some reason
+                raise NoAccessTokenError("Have you set the credentials with `[p]redditset creds`?")
             headers = {
                 "Authorization": "bearer " + self.access_token,
                 "User-Agent": "Red-DiscordBotRedditCog/0.1 by /u/palmtree5"
@@ -336,6 +350,8 @@ class Reddit:
             remaining = self.token_expiration_time - dt.utcnow().timestamp()
             if remaining < 60:
                 await self.get_access_token()
+            if not self.access_token:  # No access token for some reason
+                raise NoAccessTokenError("Have you set the credentials with `[p]redditset creds`?")
             headers = {
                 "Authorization": "bearer " + self.access_token,
                 "User-Agent": "Red-DiscordBotRedditCog/0.1 by /u/palmtree5"
@@ -381,6 +397,8 @@ class Reddit:
         remaining = self.token_expiration_time - dt.utcnow().timestamp()
         if remaining < 60:
             await self.get_access_token()
+        if not self.access_token:  # No access token for some reason
+            raise NoAccessTokenError("Have you set the credentials with `[p]redditset creds`?")
         headers = {
             "Authorization": "bearer " + self.access_token,
             "User-Agent": "Red-DiscordBotRedditCog/0.1 by /u/palmtree5"

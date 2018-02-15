@@ -3,6 +3,6 @@ from redbot.core import data_manager
 
 
 def setup(bot):
-    n = Hpapi()
+    n = Hpapi(bot)
     data_manager.load_bundled_data(n, __file__)
     bot.add_cog(n)

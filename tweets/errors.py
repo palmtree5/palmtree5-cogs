@@ -1,0 +1,2 @@
+class NoClientException(Exception):
+    pass

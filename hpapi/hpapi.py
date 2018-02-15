@@ -2,51 +2,142 @@
 import asyncio
 import datetime
 import json
-from datetime import datetime as dt
+import logging
+from datetime import datetime as dt, timedelta
 
 import aiofiles
 import aiohttp
 import discord
 from discord.ext import commands
-from redbot.core import Config, checks, data_manager, RedContext
+from redbot.core import Config, RedContext, checks, data_manager
+from redbot.core.bot import Red
 from redbot.core.i18n import CogI18n
 from redbot.core.utils.embed import randomize_colour
 
-from .helpers import get_rank, get_network_level
-from .menus import friends_menu, booster_menu
+from .errors import NoAPIKeyException
+from .helpers import get_network_level, get_rank, get_achievement_points, count_quest_completions
+from .menus import booster_menu, friends_menu
 
 _ = CogI18n("Hpapi", __file__)
+
+log = logging.getLogger("red.hpapi")
 
 
 class Hpapi:
     """Cog for getting info from Hypixel's API"""
     default_global = {
-        "api_key": ""
+        "api_key": "",
+        "known_guilds": []
     }
 
-    def __init__(self):
+    default_channel = {
+        "guild_id": "",
+        "message": 0
+    }
+
+    def __init__(self, bot: Red):
+        self.bot = bot
         self.settings = Config.get_conf(
             self, identifier=59595922, force_registration=True
         )
         self.settings.register_global(**self.default_global)
+        self.settings.register_channel(**self.default_channel)
         self.session = aiohttp.ClientSession()
         loop = asyncio.get_event_loop()
+        self.guild_update_task = loop.create_task(self.update_guilds())
         loop.create_task(self.achievements_getter())
+        loop.create_task(self.check_api_key())
         self.achievements = None
         self.games = None
-        loop.create_task(self.load_achievements())
         loop.create_task(self.load_games())
 
     def __unload(self):
         self.session.close()
+        self.guild_update_task.cancel()
 
+    async def __error(self, ctx: RedContext, error):
+        await ctx.send("`Error in {0.command.qualified_name}: {1}`".format(ctx, error))
+
+    # Section: Load and update
     async def load_achievements(self):
-        async with aiofiles.open(str(data_manager.cog_data_path(self) / "achievements.json")) as f:
+        achieve_file = data_manager.cog_data_path(self) / "achievements.json"
+        async with aiofiles.open(str(achieve_file)) as f:
             self.achievements = json.loads(await f.read())
 
     async def load_games(self):
         async with aiofiles.open(str(data_manager.bundled_data_path(self) / "games.json")) as f:
             self.games = json.loads(await f.read())
+
+    async def check_api_key(self):
+        api_key = await self.settings.api_key()
+        if not api_key:  # No API key, so disable the base command
+            base_cmd = self.bot.get_command("hypixel")
+            base_cmd.enabled = False
+            guild_track_cmd = self.bot.get_command("hpset guild")
+            guild_track_cmd.enabled = False
+
+    async def update_guilds(self):
+        """Updates the guild members for the list of known guilds.
+        This may take a while if there are a lot of them.
+
+        Note that [p]hypixel and all of its subcommands are disabled 
+        while the update is in progress. This is to ensure that new additions 
+        are not made while the update is in progress and to ensure this 
+        function has exclusive use of the api key during the update process"""
+        while self == self.bot.get_cog("Hpapi"):
+            com = self.bot.get_command("hypixel")
+            com.enabled = False  # disable the commands while this is in progress
+            guild_track_cmd = self.bot.get_command("hpset guild")
+            guild_track_cmd.enabled = False
+            log.info("Starting weekly guild update")
+            api_key = await self.settings.api_key()
+            if api_key:  # no sense in even checking guilds if we don't have an API key
+                async with self.settings.known_guilds() as known_guilds:
+                    tmp = known_guilds
+                    for g in tmp:
+                        known_guilds.remove(g)
+
+                        guild_get_url = "https://api.hypixel.net/guild?key={}&id={}".format(
+                            api_key,
+                            g["id"]
+                        )
+                        guild_data = await self.get_json(guild_get_url)
+                        if guild_data["success"]:
+                            data = {
+                                "id": g["id"],
+                                "members": [x["uuid"] for x in guild_data["guild"]["members"]]
+                            }
+                        else:
+                            data = g
+                        known_guilds.append(data)
+                        await asyncio.sleep(1)  # allow 1 request per second, to avoid hitting the ratelimit
+            com.enabled = True  # Done, so reenable the commands
+            guild_track_cmd.enabled = True
+            log.info("Weekly log update complete")
+            await asyncio.sleep(timedelta(weeks=1).total_seconds())  # update once per week
+
+    async def update_tracked(self):
+        pass
+
+    async def achievements_getter(self):
+        achieve_file = data_manager.cog_data_path(self) / "achievements.json"
+        if achieve_file.exists():
+            async with self.session.get("https://api.github.com/repos/HypixelDev/PublicAPI/contents/Documentation/misc/Achievements.json") as sha_check:
+                data = await sha_check.json()
+            if data["size"] != achieve_file.stat().st_size: # File on Github is not the same as the local one
+                achieve_file.unlink()  # need to replace
+                async with self.session.get("https://raw.githubusercontent.com/HypixelDev/PublicAPI/master/Documentation/misc/Achievements.json") as achievements_get:
+                    achievements = json.loads(await achievements_get.text())
+                async with aiofiles.open(str(achieve_file), "w") as f:
+                    await f.write(json.dumps(achievements, separators=(',', ':')) + "\n")
+        else:
+            async with self.session.get("https://raw.githubusercontent.com/HypixelDev/PublicAPI/master/Documentation/misc/Achievements.json") as achievements_get:
+                achievements = json.loads(await achievements_get.text())
+            async with aiofiles.open(str(achieve_file), "w") as f:
+                await f.write(json.dumps(achievements, separators=(',', ':')) + "\n")
+        await self.load_achievements()
+    
+    # End Section: Load and update
 
     async def get_json(self, url):
         async with self.session.get(url) as r:
@@ -68,33 +159,114 @@ class Hpapi:
         return time.strftime('%Y-%m-%d %H:%M:%S')
     
     @commands.group()
-    @checks.is_owner()
+    @checks.mod_or_permissions(manage_channel=True)
     async def hpset(self, ctx: RedContext):
         """Settings for Hypixel cog"""
         if ctx.invoked_subcommand is None:
             await ctx.send_help()
 
+    @hpset.command(name="guild")
+    async def hpset_guild(self, ctx: RedContext, player_name: str, channel: discord.TextChannel):
+        """Sets the guild to track in the specified channel"""
+        api_key = await self.settings.api_key()
+        if not api_key:
+            raise NoAPIKeyException(_("No api key available! Use `{}` to set one!").format("[p]hpset apikey"))
+        add_to_known = False
+        uuid_json = await self.get_json(
+            "https://api.mojang.com/users/profiles/minecraft/{}".format(
+                player_name
+            )
+        )
+        for g in await self.settings.known_guilds():
+            if uuid_json["id"] in g["players"]:
+                guild_id = g["id"]
+                break
+        else:
+            guild_find_url = \
+                "https://api.hypixel.net/findGuild?key={}&byUuid={}".format(
+                    api_key,
+                    uuid_json["id"]
+                )
+            guild_find_json = await self.get_json(guild_find_url)
+            if not guild_find_json["guild"]:
+                await ctx.send("The specified player does not appear to "
+                               "be in a guild")
+                return
+            guild_id = guild_find_json["guild"]
+            add_to_known = True
+        guild_get_url = "https://api.hypixel.net/guild?key={}&id={}".format(
+            api_key,
+            guild_id
+        )
+        guild = await self.get_json(guild_get_url)
+        guild = guild["guild"]
+        gmaster_uuid = [m for m in guild["members"] if m["rank"] == "GUILDMASTER"][0]["uuid"]
+        gmaster_lookup = await self.get_json("https://api.mojang.com/user/profiles/{}/names".format(gmaster_uuid))
+        gmaster = gmaster_lookup[-1]["name"]
+        gmaster_face = "http://minotar.net/avatar/{}/128.png".format(gmaster)
+        em = discord.Embed(title=guild["name"],
+                           url="https://hypixel.net/player/{}".format(player_name),
+                           description="Created at {} UTC".format(
+                               dt.utcfromtimestamp(guild["created"] / 1000).strftime("%Y-%m-%d %H:%M:%S")))
+        em = randomize_colour(em)
+        em.add_field(name="Guildmaster", value=gmaster, inline=False)
+        em.add_field(name="Guild coins", value=guild["coins"])
+        em.add_field(name="Member count", value=str(len(guild["members"])))
+        em.add_field(name="Officer count", value=str(len([m for m in guild["members"] if m["rank"] == "OFFICER"])))
+        em.set_thumbnail(url=gmaster_face)
+
+        msg = await ctx.send(embed=em)
+        if add_to_known:  # add to list of known guilds to cut lookups.
+            data_to_add = {
+                "id": guild_id,
+                "players": [x["uuid"] for x in guild["members"]]
+            }
+            async with self.settings.known_guilds() as known:
+                known.append(data_to_add)
+        await self.settings.channel(channel).guild_id.set(guild_id)
+        await self.settings.channel(channel).message.set(msg.id)
+
     @hpset.command()
     @checks.is_owner()
     async def apikey(self, ctx: RedContext, key: str):
         """Sets the Hypixel API key - owner only
-        Get this by logging onto Hypixel and doing /api"""
+
+        Get this by logging onto Hypixel 
+        (mc.hypixel.net in MC 1.8-1.12.2) 
+        and doing /api"""
         await self.settings.api_key.set(key)
-        await ctx.send('API key set!')
+        await ctx.send(_('API key set!'))
+        base_cmd = ctx.bot.get_command("hypixel")
+        base_cmd.enabled = True
+        guild_track_cmd = self.bot.get_command("hpset guild")
+        guild_track_cmd.enabled = True
+        try:
+            await ctx.message.delete()
+        except discord.Forbidden:
+            await ctx.send(
+                _("I tried to remove the command message for security reasons "
+                  "but I don't have the necessary permissions to do so!")
+            )
 
     @commands.group(name="hypixel", aliases=["hp"])
     async def hp(self, ctx: RedContext):
-        """Base command for getting info from Hypixel's API"""
+        """Base command for getting info from Hypixel's API
+        
+        Note that this command and all subcommands will be disabled 
+        if a guild member list update is running in order to finish 
+        that process more quickly"""
         if ctx.invoked_subcommand is None:
             await ctx.send_help()
 
     @hp.command()
     async def currentboosters(self, ctx: RedContext):
-        """Get all active boosters on the network"""
+        """List all active boosters on the network"""
         api_key = await self.settings.api_key()
         if not api_key:
-            await ctx.send(_("No api key available! Use `{}` to set one!").format("[p]hpset apikey"))
-            return
+            raise NoAPIKeyException(
+                _("No api key available! Use `{}` to set one!"
+                 ).format("[p]hpset apikey")
+            )
         url = "https://api.hypixel.net/boosters?key=" + api_key
         data = await self.get_json(url)
         if data["success"]:
@@ -156,8 +328,7 @@ class Hpapi:
         """
         api_key = await self.settings.api_key()
         if not api_key:
-            await ctx.send(_("No api key available! Use `{}` to set one!").format("[p]hpset apikey"))
-            return
+            raise NoAPIKeyException(_("No api key available! Use `{}` to set one!").format("[p]hpset apikey"))
         url = "https://api.hypixel.net/boosters?key=" + api_key
         data = await self.get_json(url)
 
@@ -208,11 +379,10 @@ class Hpapi:
 
     @hp.command(name="player")
     async def hpplayer(self, ctx: RedContext, name: str):
-        """Gets data about the specified player"""
+        """Show info for the specified player"""
         api_key = await self.settings.api_key()
         if not api_key:
-            await ctx.send(_("No api key available! Use `{}` to set one!").format("[p]hpset apikey"))
-            return
+            raise NoAPIKeyException(_("No api key available! Use `{}` to set one!").format("[p]hpset apikey"))
 
         uuid = await self.get_mc_uuid(name)  # let's get the user's UUID
         if uuid is None:
@@ -241,6 +411,19 @@ class Hpapi:
             em.add_field(name="Rank", value=rank if rank else "None")
             em.add_field(name="Level", value=str(get_network_level(player_data["networkExp"])))
 
+            if "mostRecentGameType" in player_data:
+                for game in self.games:
+                    if player_data["mostRecentGameType"] == game["type_name"]:
+                        em.add_field(name="Last Playing", value=game["clean_name"])
+                        break
+            if self.achievements:
+                log.info("Calculating achievement points...")
+                achievement_points = get_achievement_points(self.achievements["achievements"], player_data)
+                em.add_field(name="Achievement Points", value=str(achievement_points))
+            if "quests" in player_data:
+                em.add_field(name="Quests Completed", value=str(count_quest_completions(player_data)))
+            if "lastLogout" in player_data and player_data["lastLogin"] > player_data["lastLogout"]:
+                em.add_field(name="Online", value="Yes")
             first_login = self.get_time(player_data["firstLogin"])
             last_login = self.get_time(player_data["lastLogin"])
             em.add_field(name="First/Last login", value="{} / {}".format(first_login, last_login), inline=False)
@@ -252,11 +435,10 @@ class Hpapi:
 
     @hp.command(name="friends")
     async def hpfriends(self, ctx, player_name: str):
-        """Gets friends for the specified player"""
+        """List friends for the specified player"""
         api_key = await self.settings.api_key()
         if not api_key:
-            await ctx.send(_("No api key available! Use `{}` to set one!").format("[p]hpset apikey"))
-            return
+            raise NoAPIKeyException(_("No api key available! Use `{}` to set one!").format("[p]hpset apikey"))
         uuid_json = await self.get_json(
             "https://api.mojang.com/users/profiles/minecraft/{}".format(
                 player_name
@@ -300,23 +482,30 @@ class Hpapi:
         """Gets guild info based on the specified player"""
         api_key = await self.settings.api_key()
         if not api_key:
-            await ctx.send(_("No api key available! Use `{}` to set one!").format("[p]hpset apikey"))
+            raise NoAPIKeyException(_("No api key available! Use `{}` to set one!").format("[p]hpset apikey"))
+        add_to_known = False
         uuid_json = await self.get_json(
-            "https://api.mojang.com/users/profiles/minecraft/{}".format(
-                player_name
+                "https://api.mojang.com/users/profiles/minecraft/{}".format(
+                    player_name
+                )
             )
-        )
-        guild_find_url =\
-            "https://api.hypixel.net/findGuild?key={}&byUuid={}".format(
-                api_key,
-                uuid_json["id"]
-            )
-        guild_find_json = await self.get_json(guild_find_url)
-        if not guild_find_json["guild"]:
-            await ctx.send("The specified player does not appear to "
-                           "be in a guild")
-            return
-        guild_id = guild_find_json["guild"]
+        for g in await self.settings.known_guilds():
+            if uuid_json["id"] in g["players"]:
+                guild_id = g["id"]
+                break
+        else:
+            guild_find_url =\
+                "https://api.hypixel.net/findGuild?key={}&byUuid={}".format(
+                    api_key,
+                    uuid_json["id"]
+                )
+            guild_find_json = await self.get_json(guild_find_url)
+            if not guild_find_json["guild"]:
+                await ctx.send("The specified player does not appear to "
+                               "be in a guild")
+                return
+            guild_id = guild_find_json["guild"]
+            add_to_known = True
         guild_get_url = "https://api.hypixel.net/guild?key={}&id={}".format(
             api_key,
             guild_id
@@ -338,14 +527,20 @@ class Hpapi:
         em.set_thumbnail(url=gmaster_face)
 
         await ctx.send(embed=em)
+        if add_to_known:  # add to list of known guilds to cut lookups.
+            data_to_add = {
+                "id": guild_id,
+                "players": [x["uuid"] for x in guild["members"]]
+            }
+            async with self.settings.known_guilds() as known:
+                known.append(data_to_add)
 
     @hp.command(name="session")
     async def hpsession(self, ctx, player_name: str):
         """Shows player session status"""
         api_key = await self.settings.api_key()
         if not api_key:
-            await ctx.send(_("No api key available! Use `{}` to set one!").format("[p]hpset apikey"))
-            return
+            raise NoAPIKeyException(_("No api key available! Use `{}` to set one!").format("[p]hpset apikey"))
         uuid_url = "https://api.mojang.com/users/profiles/minecraft/{}".format(player_name)
         uuid = await self.get_json(uuid_url)
         uuid = uuid["id"]
@@ -368,8 +563,7 @@ class Hpapi:
         """Displays Watchdog's stats"""
         api_key = await self.settings.api_key()
         if not api_key:
-            await ctx.send(_("No api key available! Use `{}` to set one!").format("[p]hpset apikey"))
-            return
+            raise NoAPIKeyException(_("No api key available! Use `{}` to set one!").format("[p]hpset apikey"))
         url = "https://api.hypixel.net/watchdogstats?key={}".format(api_key)
         data = await self.get_json(url)
         if not data["success"]:
@@ -383,44 +577,3 @@ class Hpapi:
             embed.add_field(name="Total (Watchdog)", value=str(data["watchdog_total"]), inline=False)
             embed.add_field(name="Total (Staff)", value=str(data["staff_total"]), inline=False)
             await ctx.send(embed=embed)
-
-    @hp.command(name="achievements")
-    async def hpachievements(self, ctx, player, *, game):
-        """Display achievements for the specified player and game"""
-        api_key = await self.settings.api_key()
-        if not api_key:
-            await ctx.send(_("No api key available! Use `{}` to set one!").format("[p]hpset apikey"))
-            return
-        url = "https://api.hypixel.net/player?key=" + \
-            api_key + "&name=" + player
-        data = await self.get_json(url)
-        points = 0
-        achievement_count = 0
-        if data["success"]:
-            onetime = [item for item in data["player"]["achievementsOneTime"] if item.startswith(game)]
-            tiered = [item for item in list(data["player"]["achievements"].keys()) if item.startswith(game)]
-            if len(onetime) == 0 and len(tiered) == 0:
-                await ctx.send("That player hasn't completed any achievements for that game!")
-                return
-            for item in onetime:
-                achvmt_name = item[item.find("_")+1:]
-                achvmt = self.achievements["achievements"][game.lower()]["one_time"][achvmt_name.upper()]
-                points += achvmt["points"]
-                achievement_count += 1
-            for item in tiered:
-                achvmt_name = item[item.find("_")+1:]
-                achvmt = self.achievements["achievements"][game.lower()]["tiered"][achvmt_name.upper()]
-                have_ach = False
-                for tier in achvmt:
-                    if data["player"]["achievements"][item] > tier["amount"]:
-                        points += tier["points"]
-                        have_ach = True
-                if have_ach:
-                    achievement_count += 1
-            await ctx.send("{} has completed {} achievements worth {} points in {}".format(player, achievement_count, points, game))
-    
-    async def achievements_getter(self):
-        async with self.session.get("https://raw.githubusercontent.com/HypixelDev/PublicAPI/master/Documentation/misc/Achievements.json") as achievements_get:
-            achievements = json.loads(await achievements_get.text())
-        async with aiofiles.open(str(data_manager.cog_data_path(self) / "achievements.json"), "w") as f:
-            await f.write(json.dumps(achievements, indent=4))

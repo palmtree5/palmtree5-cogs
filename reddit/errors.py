@@ -1,0 +1,2 @@
+class NoAccessTokenError(Exception):
+    pass

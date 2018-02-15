@@ -80,13 +80,12 @@ async def friends_menu(ctx: RedContext, friends_list: list,
        https://github.com/Lunar-Dust/Dusty-Cogs/blob/master/menu/menu.py"""
     s = friends_list[page]
     created_at = dt.utcfromtimestamp(s["time"])
-    created_at = created_at.strftime("%Y-%m-%d %H:%M:%S")
     site_url = "https://www.hypixel.net/player/{}".format(s["name"])
     em = discord.Embed(title="Friends of {}".format(s["name"]),
-                       url=site_url)
+                       url=site_url,
+                       timestamp=created_at)
     em = randomize_colour(em)
     em.add_field(name="Name", value=str(s["fname"]))
-    em.add_field(name="Since", value=created_at)
     em.set_thumbnail(url="http://minotar.net/avatar/{}/128.png".format(s["fname"]))
     if not message:
         message = await ctx.send(embed=em)

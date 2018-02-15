@@ -1,3 +1,2 @@
 peony-twitter[all]
-mcstatus
 aiofiles
