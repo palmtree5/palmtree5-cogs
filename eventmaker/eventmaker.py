@@ -1,12 +1,12 @@
 import asyncio
-from datetime import datetime as dt
+from datetime import datetime as dt, timedelta
 
 import discord
 from discord.ext import commands
 from redbot.core import Config, RedContext, checks
-from redbot.core.utils.chat_formatting import pagify
+from redbot.core.utils.chat_formatting import pagify, warning
 
-from .helpers import parse_time, allowed_to_create
+from .helpers import parse_time, allowed_to_create, get_event_embed, allowed_to_edit
 
 numbs = {
     "next": "➡",
@@ -16,13 +16,12 @@ numbs = {
 
 
 class EventMaker:
-    """A tool for creating events inside of Discord. Anyone can
+    """
+    A tool for creating events inside of Discord. Anyone can
     create an event by default. If a specific role has been
-    specified, users must have that role, the server's mod or
-    admin role, or be the server owner to create events. Reminders
-    will be posted to the configured channel (default: the server's
-    default channel), as well as direct messaged to
-    everyone who has signed up"""
+    specified, users must have that role or any role above it in
+    the hierarchy or be the server owner to create events.
+    """
 
     default_guild = {
         "events": [],
@@ -53,8 +52,8 @@ class EventMaker:
             return u == ctx.author and str(r.emoji) in ["➡", "⬅", "❌"]
         
         try:
-            react = await self.bot.wait_for(
-                "message", check=react_check, timeout=timeout
+            react, user = await self.bot.wait_for(
+                "reaction_add", check=react_check, timeout=timeout
             )
         except asyncio.TimeoutError:
             try:
@@ -65,9 +64,8 @@ class EventMaker:
                 await message.remove_reaction("➡", ctx.guild.me)
             return None
         reacts = {v: k for k, v in numbs.items()}
-        react = reacts[react.reaction.emoji]
+        react = reacts[react.emoji]
         if react == "next":
-            next_page = 0
             perms = message.channel.permissions_for(ctx.guild.me)
             if perms.manage_messages:  # Can manage messages, so remove react
                 try:
@@ -81,7 +79,6 @@ class EventMaker:
             return await self.event_menu(ctx, event_list, message=message,
                                          page=next_page, timeout=timeout)
         elif react == "back":
-            next_page = 0
             perms = message.channel.permissions_for(ctx.guild.me)
             if perms.manage_messages:  # Can manage messages, so remove react
                 try:
@@ -98,6 +95,7 @@ class EventMaker:
             return await message.delete()
 
     @commands.group()
+    @commands.guild_only()
     async def event(self, ctx: RedContext):
         """Base command for events"""
         if ctx.invoked_subcommand is None:
@@ -114,7 +112,7 @@ class EventMaker:
         guild = ctx.guild
 
         event_id = await self.settings.guild(guild).next_available_id()
-        min_role_id = await self.settings.guild(guild).min_role
+        min_role_id = await self.settings.guild(guild).min_role()
         if min_role_id == 0:
             min_role = guild.default_role
         else:
@@ -156,7 +154,7 @@ class EventMaker:
         except asyncio.TimeoutError:
             await ctx.send("No description provided!")
             return
-        if len(msg.content) > 1500:
+        if len(msg.content) > 1000:
             await ctx.send("Your description is too long!")
             return
         else:
@@ -175,17 +173,7 @@ class EventMaker:
         async with self.settings.guild(guild).events() as event_list:
             event_list.append(new_event)
             event_list.sort(key=lambda x: x["create_time"])
-        emb = discord.Embed(title=new_event["event_name"],
-                            description=new_event["description"],
-                            url="https://time.is/UTC",
-                            timestamp=dt.utcfromtimestamp(new_event["create_time"]))
-        emb.set_author(name=author.name, icon_url=author.avatar_url)
-        emb.add_field(
-            name="Start time (UTC)", value=str(dt.utcfromtimestamp(
-                new_event["id"])))
-        emb.add_field(name="Started", value="Yes" if new_event["has_started"] else "No")
-        emb.add_field(name="Participants", value=str(len(new_event["participants"])))
-        await ctx.send(embed=emb)
+        await ctx.send(embed=get_event_embed(ctx, new_event))
 
     @event.command(name="join")
     async def event_join(self, ctx: RedContext, event_id: int):
@@ -193,7 +181,6 @@ class EventMaker:
         guild = ctx.guild
         to_join = None
         async with self.settings.guild(guild).events() as event_list:
-            counter = 0
             for event in event_list:
                 if event["id"] == event_id:
                     to_join = event
@@ -201,13 +188,15 @@ class EventMaker:
                     break
             
             if not to_join["has_started"]:
-                if ctx.author.id not in event["participants"]:
+                if ctx.author.id not in to_join["participants"]:
                     to_join["participants"].append(ctx.author.id)
-                    await ctx.send("Joined the event!")
+                    await ctx.tick()
                     event_list.append(to_join)
                     event_list.sort(key=lambda x: x["id"])
                 else:
                     await ctx.send("You have already joined that event!")
+            else:
+                await ctx.send("That event has already started!")
 
     @event.command(name="leave")
     async def event_leave(self, ctx: RedContext, event_id: int):
@@ -239,23 +228,7 @@ class EventMaker:
         async with self.settings.guild(guild).events() as event_list:
             for event in event_list:
                 if not event["has_started"]:
-                    emb = discord.Embed(title=event["event_name"],
-                                        description=event["description"],
-                                        url="https://time.is/UTC")
-                    emb.add_field(name="Created by",
-                                value=discord.utils.get(
-                                    self.bot.get_all_members(),
-                                    id=event["creator"]))
-                    emb.set_footer(
-                        text="Created at (UTC) " + dt.utcfromtimestamp(
-                            event["create_time"]).strftime("%Y-%m-%d %H:%M:%S"))
-                    emb.add_field(name="Event ID", value=str(event["id"]))
-                    emb.add_field(
-                        name="Participant count", value=str(
-                            len(event["participants"])))
-                    emb.add_field(
-                        name="Start time (UTC)", value=dt.utcfromtimestamp(
-                            event["event_start_time"]))
+                    emb = get_event_embed(ctx, event)
                     events.append(emb)
         if len(events) == 0:
             await ctx.send("No events available to join!")
@@ -268,7 +241,6 @@ class EventMaker:
         guild = ctx.guild
         to_list = None
         async with self.settings.guild(guild).events() as event_list:
-            counter = 0
             for event in event_list:
                 if event["id"] == event_id:
                     to_list = event
@@ -294,13 +266,15 @@ class EventMaker:
             if len(to_remove) == 0:
                 await ctx.send("No event to remove!")
             else:
+                event = to_remove[0]
+                if not await allowed_to_edit(ctx, event):
+                    await ctx.send("You are not allowed to edit that event!")
+                    return
                 event_list.remove(to_remove[0])
-                await ctx.send("Removed the specified event!")
-        else:
-            await ctx.send("I can't remove an event that " +
-                           "hasn't been created yet!")
+                await ctx.tick()
 
     @commands.group()
+    @commands.guild_only()
     @checks.admin_or_permissions(manage_guild=True)
     async def eventset(self, ctx: RedContext):
         """Event maker settings"""
@@ -320,6 +294,23 @@ class EventMaker:
         else:
             await self.settings.guild(guild).min_role.set(0)
             await ctx.send("Role unset!")
+
+    @eventset.command(name="resetevents")
+    @checks.guildowner_or_permissions(administrator=True)
+    async def eventset_resetevents(self, ctx: RedContext, confirm: str=None):
+        """
+        Resets the events list for this guild
+        """
+        if confirm is None or confirm.lower() != "yes":
+            await ctx.send(
+                warning("This will remove all events for this guild! "
+                        "This cannot be undone! To confirm, type "
+                        "`{}eventset resetevents yes`".format(ctx.prefix))
+            )
+        else:
+            await self.settings.guild(ctx.guild).events.set([])
+            await self.settings.guild(ctx.guild).next_available_id.set(1)
+            await ctx.tick()
 
     """
     async def check_events(self):
