@@ -1,6 +1,7 @@
+import contextlib
 from datetime import timedelta, datetime as dt
 import discord
-from redbot.core import RedContext
+from redbot.core import RedContext, Config
 
 from redbot.core.bot import Red
 
@@ -29,25 +30,46 @@ async def allowed_to_create(
         return False
 
 
-def get_event_embed(ctx: RedContext, event: dict) -> discord.Embed:
+async def check_event_start(channel: discord.TextChannel, event: dict, config: Config):
+    cur_time = dt.utcnow()
+    guild = channel.guild
+    if cur_time.timestamp() < event["event_start_time"] or event["has_started"]:
+        return False, None
+    event["has_started"] = True
+    emb = get_event_embed(guild, cur_time, event)
+    with contextlib.suppress(discord.Forbidden):
+        if channel:
+            await channel.send("Event starting now!", embed=emb)
+    for user in [guild.get_member(m) for m in event["participants"] if guild.get_member(m)]:
+        with contextlib.suppress(discord.Forbidden):
+            if await config.member(user).dms():  # Only send to users who have opted into DMs
+                await user.send("Event starting now!", embed=emb)
+
+    return True, event
+
+
+def get_event_embed(guild: discord.Guild, now: dt, event: dict) -> discord.Embed:
     emb = discord.Embed(
         title=event["event_name"],
         description=event["description"],
     )
     emb.add_field(name="Created by",
-                  value=discord.utils.get(ctx.bot.get_all_members(), id=event["creator"])
+                  value=guild.get_member(event["creator"])
                   )
 
-    created_delta_str = get_delta_str(dt.utcfromtimestamp(event["create_time"]), ctx.message.created_at)
+    created_delta_str = get_delta_str(dt.utcfromtimestamp(event["create_time"]), now)
     created_str = "{} ago (at {} UTC)".format(
         created_delta_str,
         dt.utcfromtimestamp(event["create_time"]).strftime("%Y-%m-%d %H:%M:%S")
     )
 
-    start_delta_str = get_delta_str(ctx.message.created_at, dt.utcfromtimestamp(event["event_start_time"]))
-    start_str = "In {} (at {} UTC)".format(
-        start_delta_str,
-        dt.utcfromtimestamp(event["event_start_time"]).strftime("%Y-%m-%d %H:%M:%S"))
+    start_delta_str = get_delta_str(now, dt.utcfromtimestamp(event["event_start_time"]))
+    if event["has_started"]:
+        start_str = "Already started!"
+    else:
+        start_str = "In {} (at {} UTC)".format(
+            start_delta_str,
+            dt.utcfromtimestamp(event["event_start_time"]).strftime("%Y-%m-%d %H:%M:%S"))
     emb.add_field(name="Created", value=created_str, inline=False)
     emb.add_field(name="Starts", value=start_str, inline=False)
     emb.add_field(name="Event ID", value=str(event["id"]))

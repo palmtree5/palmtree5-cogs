@@ -1,12 +1,14 @@
 import asyncio
+import contextlib
 from datetime import datetime as dt, timedelta
 
 import discord
 from discord.ext import commands
 from redbot.core import Config, RedContext, checks
+from redbot.core.bot import Red
 from redbot.core.utils.chat_formatting import pagify, warning
 
-from .helpers import parse_time, allowed_to_create, get_event_embed, allowed_to_edit
+from .helpers import parse_time, allowed_to_create, get_event_embed, allowed_to_edit, check_event_start
 
 numbs = {
     "next": "➡",
@@ -26,13 +28,24 @@ class EventMaker:
     default_guild = {
         "events": [],
         "min_role": 0,
-        "next_available_id": 1
+        "next_available_id": 1,
+        "channel": 0
     }
 
-    def __init__(self, bot):
+    default_member = {
+        "dms": False
+    }
+
+    def __init__(self, bot: Red):
         self.bot = bot
         self.settings = Config.get_conf(self, identifier=59595922, force_registration=True)
         self.settings.register_guild(**self.default_guild)
+        self.settings.register_member(**self.default_member)
+        loop = self.bot.loop
+        self.event_check_task = loop.create_task(self.check_events())
+
+    def __unload(self):
+        self.event_check_task.cancel()
 
     async def event_menu(self, ctx, event_list: list,
                          message: discord.Message=None,
@@ -103,10 +116,12 @@ class EventMaker:
 
     @event.command(name="create")
     async def event_create(self, ctx: RedContext):
-        """Wizard-style event creation tool. The event will only be created if
-        all information is provided properly. If a minimum required role has
-        been set, users must have that role or higher, be in the mod/admin role, 
-        or be the guild owner in order to use this command
+        """
+        Wizard-style event creation tool.
+
+        The event will only be created if all information is provided properly.
+        If a minimum required role has been set, users must have that role or
+        higher, be in the mod/admin role, or be the guild owner in order to use this command
         """
         author = ctx.author
         guild = ctx.guild
@@ -121,7 +136,7 @@ class EventMaker:
             await ctx.send("You aren't allowed to create events!")
             return
 
-        creation_time = dt.utcnow().timestamp()
+        creation_time = ctx.message.created_at.timestamp()
         await ctx.send("Enter a name for the event: ")
         
         def same_author_check(msg):
@@ -173,7 +188,7 @@ class EventMaker:
         async with self.settings.guild(guild).events() as event_list:
             event_list.append(new_event)
             event_list.sort(key=lambda x: x["create_time"])
-        await ctx.send(embed=get_event_embed(ctx, new_event))
+        await ctx.send(embed=get_event_embed(guild, ctx.message.created_at, new_event))
 
     @event.command(name="join")
     async def event_join(self, ctx: RedContext, event_id: int):
@@ -221,15 +236,21 @@ class EventMaker:
                     await ctx.send("You are not part of that event!")
 
     @event.command(name="list")
-    async def event_list(self, ctx: RedContext):
-        """List events for this server that have not started yet"""
+    async def event_list(self, ctx: RedContext, started: bool=False):
+        """List events for this server that have not started yet
+
+        If `started` is True, include events that have already started"""
         guild = ctx.guild
         events = []
         async with self.settings.guild(guild).events() as event_list:
             for event in event_list:
-                if not event["has_started"]:
-                    emb = get_event_embed(ctx, event)
+                if started:
+                    emb = get_event_embed(guild, ctx.message.created_at, event)
                     events.append(emb)
+                else:
+                    if not event["has_started"]:
+                        emb = get_event_embed(guild, ctx.message.created_at, event)
+                        events.append(emb)
         if len(events) == 0:
             await ctx.send("No events available to join!")
         else:
@@ -237,7 +258,7 @@ class EventMaker:
 
     @event.command(name="who")
     async def event_who(self, ctx: RedContext, event_id: int):
-        """List all participants of the event"""
+        """List all participants for the event"""
         guild = ctx.guild
         to_list = None
         async with self.settings.guild(guild).events() as event_list:
@@ -247,15 +268,12 @@ class EventMaker:
                     break
             
             participants = "Participants:\n\n"
-            if not to_list["has_started"]:
-                for uid in to_list["participants"]:
-                    mbr = guild.get_member(uid)
-                    participants += "{}\n".format(mbr)
-                
-                if len(participants) < 2000:
-                    await ctx.send(participants)
-                else:
-                    await ctx.send_interactive(pagify(participants))
+            mbr_list = ["{}".format(guild.get_member(uid)) for uid in to_list["participants"] if guild.get_member(uid)]
+            participants += "\n".join(mbr_list)
+            if len(participants) < 2000:
+                await ctx.send(participants)
+            else:
+                await ctx.send_interactive(pagify(participants))
 
     @event.command(name="cancel")
     async def event_cancel(self, ctx: RedContext, event_id: int):
@@ -275,20 +293,41 @@ class EventMaker:
 
     @commands.group()
     @commands.guild_only()
-    @checks.admin_or_permissions(manage_guild=True)
     async def eventset(self, ctx: RedContext):
         """Event maker settings"""
         if ctx.invoked_subcommand is None:
             await ctx.send_help()
 
+    @eventset.command(name="toggledms")
+    @commands.guild_only()
+    async def eventset_toggledms(self, ctx: RedContext, user: discord.Member=None):
+        """
+        Toggles event start announcement DMs for the specified user
+
+        By default, users will not receive event start announcements via DM
+
+        If `user` is not specified, toggle for the author.
+
+        Only admins and the guild owner may toggle DMs for users other than themselves
+        """
+        if user:
+            if not await ctx.bot.is_admin(ctx.author) and not ctx.author == ctx.guild.owner:
+                await ctx.send("You are not allowed to toggle that for other users!")
+                return
+        if not user:
+            user = ctx.author
+        cur_val = await self.settings.member(user).dms()
+        await self.settings.member(user).dms.set(False if cur_val else True)
+        await ctx.tick()
+
     @eventset.command(name="role")
     @checks.admin_or_permissions(manage_guild=True)
-    async def eventset_role(self, ctx: RedContext, *, role: str=None):
-        """Set the minimum role required to create events. Default 
-        is for everyone to be able to create events"""
+    async def eventset_role(self, ctx: RedContext, *, role: discord.Role=None):
+        """Set the minimum role required to create events.
+
+        Default is for everyone to be able to create events"""
         guild = ctx.guild
         if role is not None:
-            role_obj = discord.utils.get(guild.roles, name=role)
             await self.settings.guild(guild).min_role.set(role.id)
             await ctx.send("Role set to {}".format(role))
         else:
@@ -312,47 +351,34 @@ class EventMaker:
             await self.settings.guild(ctx.guild).next_available_id.set(1)
             await ctx.tick()
 
-    """
+    @eventset.command(name="channel")
+    @checks.admin_or_permissions(manage_guild=True)
+    async def eventset_channel(self, ctx: RedContext, channel: discord.TextChannel):
+        """
+        Sets the channel where event start announcements will be sent
+
+        If this is not set, the channel will default to the channel used
+        for new member messages (Server Settings > Overview > New Member
+        Messages Channel on desktop). If that is set to `No new member messages`,
+        the event start announcement will not be sent to a channel in the server
+        and will only be sent directly to the participants via DM
+        """
+        await self.settings.guild(ctx.guild).channel.set(channel.id)
+        await ctx.tick()
+
     async def check_events(self):
-        CHECK_DELAY = 60
+        CHECK_DELAY = 300
         while self == self.bot.get_cog("EventMaker"):
-            cur_time = dt.utcnow()
-            cur_time = calendar.timegm(cur_time.utctimetuple())
-            save = False
-            for server in list(self.events.keys()):
-                channel = discord.utils.get(self.bot.get_all_channels(),
-                                            id=self.settings[server]["channel"])
-                for event in self.events[server]:
-                    if cur_time >= event["event_start_time"]\
-                            and not event["has_started"]:
-                        emb = discord.Embed(title=event["event_name"],
-                                            description=event["description"])
-                        emb.add_field(name="Created by",
-                                      value=discord.utils.get(
-                                          self.bot.get_all_members(),
-                                          id=event["creator"]))
-                        emb.set_footer(
-                            text="Created at (UTC) " +
-                            dt.utcfromtimestamp(
-                                event["create_time"]).strftime(
-                                    "%Y-%m-%d %H:%M:%S"))
-                        emb.add_field(name="Event ID", value=str(event["id"]))
-                        emb.add_field(
-                            name="Participant count", value=str(
-                                len(event["participants"])))
-                        try:
-                            await self.bot.send_message(channel, embed=emb)
-                        except discord.Forbidden:
-                            pass  # No permissions to send messages
-                        for user in event["participants"]:
-                            target = discord.utils.get(
-                                self.bot.get_all_members(), id=user)
-                            await self.bot.send_message(target, embed=emb)
-                        event["has_started"] = True
-                        save = True
-            if save:
-                dataIO.save_json(
-                    os.path.join("data", "eventmaker", "events.json"),
-                    self.events)
+            for guild in self.bot.guilds:
+                async with self.settings.guild(guild).events() as event_list:
+                    channel = guild.get_channel(await self.settings.guild(guild).channel())
+                    if channel is None:
+                        channel = guild.system_channel
+                    for event in event_list:
+                        changed, data = await check_event_start(channel, event, self.settings)
+                        if not changed:
+                            continue
+                        event_list.remove(event)
+                        event_list.append(data)
+                    event_list.sort(key=lambda x: x["create_time"])
             await asyncio.sleep(CHECK_DELAY)
-    """
