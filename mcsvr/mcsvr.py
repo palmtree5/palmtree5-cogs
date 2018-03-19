@@ -153,6 +153,8 @@ class Mcsvr:
             else:
                 await ctx.send("I was not tracking that server!")
                 return
+            msg = await channel.get_message(to_remove["message"])
+            await msg.delete()
             servers.remove(to_remove)
             await self.config.channel(channel).servers.set(servers)
             await ctx.tick()
@@ -219,6 +221,10 @@ class Mcsvr:
                     await self.config.channel(channel).original_topic.set("")
         else:
             for channel in guild.text_channels:
+                servers = await self.config.channel(channel).servers()
+                for server in servers:
+                    msg = await channel.get_message(server["message"])
+                    await msg.delete()
                 await self.config.channel(channel).servers.set([])
 
     async def server_check_loop(self):
