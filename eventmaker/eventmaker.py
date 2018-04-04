@@ -143,7 +143,7 @@ class EventMaker:
             return msg.author == author
         
         try:
-            msg = await self.bot.wait_for("message", check=same_author_check, timeout=30)
+            msg = await self.bot.wait_for("message", check=same_author_check, timeout=60)
         except asyncio.TimeoutError:
             await ctx.send("No name provided!")
             return
@@ -154,7 +154,7 @@ class EventMaker:
             "place (valid units are w, d, h, m, s): "
         )
         try:
-            msg = await self.bot.wait_for("message", check=same_author_check, timeout=30)
+            msg = await self.bot.wait_for("message", check=same_author_check, timeout=60)
         except asyncio.TimeoutError:
             await ctx.send("No start time provided!")
             return
@@ -165,7 +165,7 @@ class EventMaker:
         msg = None
         await ctx.send("Enter a description for the event: ")
         try:
-            msg = await self.bot.wait_for("message", check=same_author_check, timeout=30)
+            msg = await self.bot.wait_for("message", check=same_author_check, timeout=60)
         except asyncio.TimeoutError:
             await ctx.send("No description provided!")
             return
