@@ -1,29 +1,28 @@
 import asyncio
-import os
+import logging
 import time
-from copy import deepcopy
 from datetime import datetime as dt
-from random import choice as randchoice
 
 import aiohttp
 import discord
 from discord.ext import commands
 from redbot.core import Config, RedContext, checks
 from redbot.core.bot import Red
-from redbot.core.utils.chat_formatting import warning
+from redbot.core.utils.chat_formatting import error
 from redbot.core.utils.embed import randomize_colour
+from redbot.core.i18n import CogI18n
 
-from .helpers import get_modmail_messages, make_request, private_only
-from .errors import NoAccessTokenError
+from reddit.menus import post_menu
+from .errors import NoAccessTokenError, RedditAPIError, NotFoundError, AccessForbiddenError
+from .helpers import get_modmail_messages, make_request, private_only, get_subreddit_posts
 
-numbs = {
-    "next": "➡",
-    "back": "⬅",
-    "exit": "❌"
-}
+log = logging.getLogger("red.reddit")
+
+_ = CogI18n("Reddit", __file__)
 
 REDDIT_ACCESSTOKEN_URL = "https://www.reddit.com/api/v1/access_token"
 REDDIT_OAUTH_API_ROOT = "https://oauth.reddit.com{}"
+
 
 class Reddit:
     """Cog for getting things from Reddit's API"""
@@ -34,9 +33,12 @@ class Reddit:
         "username": "",
         "password": ""
     }
+
     default_guild = {
-        "modmail_channels": []
+        "modmail_channels": [],
+        "posts_channels": []
     }
+
     default_channel = {
         "modmail": {},
         "subreddits": {}
@@ -51,6 +53,7 @@ class Reddit:
         loop = asyncio.get_event_loop()
         self.access_token_getter = loop.create_task(self.get_access_token())
         self.modmail_checker = loop.create_task(self.modmail_check())
+        self.post_checker = loop.create_task(self.posts_check())
         self.access_token = ""
         self.token_expiration_time = None
 
@@ -59,131 +62,13 @@ class Reddit:
     def __unload(self):
         if not self.modmail_checker.cancelled():
             self.modmail_checker.cancel()
+        if not self.post_checker.cancelled():
+            self.post_checker.cancel()
         if not self.session.closed:
             self.session.close()
 
     async def __error(self, ctx, error):
         await ctx.send("Error in command {0.command.qualified_name}:\n\n{1.original}".format(ctx, error))
-
-    async def get_access_token(self):
-        client_id = await self.settings.client_id()
-        client_secret = await self.settings.client_secret()
-        username = await self.settings.username()
-        password = await self.settings.password()
-        if client_id and client_secret and username and password:
-            auth = aiohttp.helpers.BasicAuth(
-                client_id,
-                password=client_secret
-            )
-            post_data = {
-                "grant_type": "password",
-                "username": username,
-                "password": password
-            }
-            headers = {"User-Agent": "Red-DiscordBotRedditCog/0.1 by /u/palmtree5"}
-            response = await make_request(
-                self.session, "POST", REDDIT_ACCESSTOKEN_URL,
-                headers=headers, data=post_data, auth=auth)
-            self.access_token = response["access_token"]
-            self.token_expiration_time = dt.utcnow().timestamp() + response["expires_in"]
-
-    async def modmail_check(self):
-        while self == self.bot.get_cog("Reddit"):
-            for guild in self.bot.guilds:
-                async with self.settings.guild(guild).modmail_channels() as mm_chns:
-                    for chn in mm_chns:
-                        channel = guild.get_channel(chn)
-                        async with self.settings.channel(channel).modmail() as current_sub:
-                            for k in current_sub:
-                                if self.token_expiration_time - dt.utcnow().timestamp() <= 60:
-                                    # close to token expiry time, so wait for a new token
-                                    await asyncio.sleep(90)
-                                need_time_update = await get_modmail_messages(
-                                    self, REDDIT_OAUTH_API_ROOT, channel, k
-                                )
-                                if need_time_update:
-                                    current_sub.update({k: int(dt.utcnow().timestamp())})
-            await asyncio.sleep(280)
-
-    async def post_menu(self, ctx: RedContext, post_list: list,
-                        message: discord.Message=None,
-                        page=0, timeout: int=30):
-        """menu control logic for this taken from
-           https://github.com/Lunar-Dust/Dusty-Cogs/blob/master/menu/menu.py"""
-        s = post_list[page]
-        created_at = dt.utcfromtimestamp(s["data"]["created_utc"])
-        created_at = created_at.strftime("%m/%d/%Y %H:%M:%S")
-        post_url = "https://reddit.com" + s["data"]["permalink"]
-        em = discord.Embed(title=s["data"]["title"],
-                           url=post_url,
-                           description=s["data"]["domain"])
-        em = randomize_colour(em)
-        em.add_field(name="Author", value=s["data"]["author"])
-        em.add_field(name="Created at", value=created_at)
-        if s["data"]["stickied"]:
-            em.add_field(name="Stickied", value="Yes")
-        else:
-            em.add_field(name="Stickied", value="No")
-        em.add_field(name="Comments",
-                     value=str(s["data"]["num_comments"]))
-        print(em.to_dict())
-        if not message:
-            message = await ctx.send(embed=em)
-            await message.add_reaction("⬅")
-            await message.add_reaction("❌")
-            await message.add_reaction("➡")
-        else:
-            await message.edit(embed=em)
-        
-        def react_check(r, u):
-            return u == ctx.author and str(r.emoji) in ["➡", "⬅", "❌"]
-
-        try:
-            react, user = await ctx.bot.wait_for(
-                "reaction_add",
-                check=react_check,
-                timeout=timeout
-            )
-        except asyncio.TimeoutError:
-            try:
-                await message.clear_reactions()
-            except discord.Forbidden:  # cannot remove all reactions
-                await message.remove_reaction("⬅", ctx.guild.me)
-                await message.remove_reaction("❌", ctx.guild.me)
-                await message.remove_reaction("➡", ctx.guild.me)
-            return None
-        reacts = {v: k for k, v in numbs.items()}
-        react = reacts[react.emoji]
-        if react == "next":
-            next_page = 0
-            perms = message.channel.permissions_for(ctx.guild.me)
-            if perms.manage_messages:  # Can manage messages, so remove react
-                try:
-                    await message.remove_reaction("➡", ctx.author)
-                except discord.NotFound:
-                    pass
-            if page == len(post_list) - 1:
-                next_page = 0  # Loop around to the first item
-            else:
-                next_page = page + 1
-            return await self.post_menu(ctx, post_list, message=message,
-                                        page=next_page, timeout=timeout)
-        elif react == "back":
-            next_page = 0
-            perms = message.channel.permissions_for(ctx.guild.me)
-            if perms.manage_messages:  # Can manage messages, so remove react
-                try:
-                    await message.remove_reaction("⬅", ctx.author)
-                except discord.NotFound:
-                    pass
-            if page == 0:
-                next_page = len(post_list) - 1  # Loop around to the last item
-            else:
-                next_page = page - 1
-            return await self.post_menu(ctx, post_list, message=message,
-                                        page=next_page, timeout=timeout)
-        else:
-            return await message.delete()
 
     @commands.group(name="reddit")
     async def _reddit(self, ctx: RedContext):
@@ -204,7 +89,17 @@ class Reddit:
             "Authorization": "bearer " + self.access_token,
             "User-Agent": "Red-DiscordBotRedditCog/0.1 by /u/palmtree5"
         }
-        resp_json = await make_request(self.session, "GET", url, headers=headers)
+        try:
+            resp_json = await make_request(self.session, "GET", url, headers=headers)
+        except NotFoundError as e:
+            await ctx.send(str(e))
+            return
+        except AccessForbiddenError as e:
+            await ctx.send(str(e))
+            return
+        except RedditAPIError as e:
+            await ctx.send(str(e))
+            return
         resp_json = resp_json["data"]
         created_at = dt.utcfromtimestamp(resp_json["created_utc"])
         desc = "Created at " + created_at.strftime("%m/%d/%Y %H:%M:%S")
@@ -243,19 +138,23 @@ class Reddit:
             "Authorization": "bearer " + self.access_token,
             "User-Agent": "Red-DiscordBotRedditCog/0.1 by /u/palmtree5"
         }
-        resp_json = await make_request(self.session, "GET", url, headers=headers)
-        if "data" not in resp_json and resp_json["error"] == 403:
-            await ctx.send("Sorry, I don't have access to that subreddit")
+        try:
+            resp_json = await make_request(self.session, "GET", url, headers=headers)
+        except NotFoundError as e:
+            await ctx.send(str(e))
+            return
+        except AccessForbiddenError as e:
+            await ctx.send(str(e))
+            return
+        except RedditAPIError as e:
+            await ctx.send(str(e))
             return
         resp_json = resp_json["data"]
-        colour = ''.join([randchoice('0123456789ABCDEF') for x in range(6)])
-        colour = int(colour, 16)
-        created_at = dt.utcfromtimestamp(resp_json["created_utc"])
-        created_at = created_at.strftime("%m/%d/%Y %H:%M:%S")
+        created_at = resp_json["created_at"].strftime("%m/%d/%Y %H:%M:%S")
         em = discord.Embed(title=resp_json["url"],
-                           colour=discord.Colour(value=colour),
                            url="https://reddit.com" + resp_json["url"],
                            description=resp_json["header_title"])
+        em = randomize_colour(em)
         em.add_field(name="Title", value=resp_json["title"])
         em.add_field(name="Created at", value=created_at)
         em.add_field(name="Subreddit type", value=resp_json["subreddit_type"])
@@ -270,10 +169,10 @@ class Reddit:
     async def subreddit_hot(self, ctx: RedContext, subreddit: str, post_count: int=3):
         """Command for getting subreddit's hot posts"""
         if post_count <= 0 or post_count > 100:
-            await self.bot.say("Sorry, I can't do that")
+            await ctx.send("Sorry, I can't do that")
         else:
             url = REDDIT_OAUTH_API_ROOT.format("/r/{}/hot".format(subreddit))
-            url += "?limit={}".format(post_count)
+            data = {"limit": post_count}
             remaining = self.token_expiration_time - dt.utcnow().timestamp()
             if remaining < 60:
                 await self.get_access_token()
@@ -283,12 +182,19 @@ class Reddit:
                 "Authorization": "bearer " + self.access_token,
                 "User-Agent": "Red-DiscordBotRedditCog/0.1 by /u/palmtree5"
             }
-            resp_json = await make_request(self.session, "GET", url, headers=headers)
-            if "data" not in resp_json and resp_json["error"] == 403:
-                await self.bot.say("Sorry, the currently authenticated account does not have access to that subreddit")
+            try:
+                resp_json = await make_request(self.session, "GET", url, headers=headers, params=data)
+            except NotFoundError as e:
+                await ctx.send(str(e))
+                return
+            except AccessForbiddenError as e:
+                await ctx.send(str(e))
+                return
+            except RedditAPIError as e:
+                await ctx.send(str(e))
                 return
             resp_json = resp_json["data"]["children"]
-            await self.post_menu(ctx, resp_json, page=0, timeout=30)
+            await post_menu(ctx, resp_json, page=0, timeout=30)
 
     @_subreddit.command(name="new")
     async def subreddit_new(self, ctx: RedContext, subreddit: str, post_count: int=3):
@@ -297,7 +203,7 @@ class Reddit:
             await ctx.send("Sorry, I can't do that")
         else:
             url = REDDIT_OAUTH_API_ROOT.format("/r/{}/new".format(subreddit))
-            url += "?limit={}".format(post_count)
+            data = {"limit": post_count}
             remaining = self.token_expiration_time - dt.utcnow().timestamp()
             if remaining < 60:
                 await self.get_access_token()
@@ -307,21 +213,28 @@ class Reddit:
                 "Authorization": "bearer " + self.access_token,
                 "User-Agent": "Red-DiscordBotRedditCog/0.1 by /u/palmtree5"
             }
-            resp_json = await make_request(self.session, "GET", url, headers=headers)
-            if "data" not in resp_json and resp_json["error"] == 403:
-                await ctx.send("Sorry, the currently authenticated account does not have access to that subreddit")
+            try:
+                resp_json = await make_request(self.session, "GET", url, headers=headers, params=data)
+            except NotFoundError as e:
+                await ctx.send(str(e))
+                return
+            except AccessForbiddenError as e:
+                await ctx.send(str(e))
+                return
+            except RedditAPIError as e:
+                await ctx.send(str(e))
                 return
             resp_json = resp_json["data"]["children"]
-            await self.post_menu(ctx, resp_json, page=0, timeout=30)
+            await post_menu(ctx, resp_json, page=0, timeout=30)
 
     @_subreddit.command(name="top")
     async def subreddit_top(self, ctx: RedContext, subreddit: str, post_count: int=3):
         """Command for getting subreddit's top posts"""
         if post_count <= 0 or post_count > 100:
-            await self.bot.say("Sorry, I can't do that")
+            await ctx.send("Sorry, I can't do that")
         else:
             url = REDDIT_OAUTH_API_ROOT.format("/r/{}/top".format(subreddit))
-            url += "?limit={}".format(post_count)
+            data = {"limit": post_count}
             remaining = self.token_expiration_time - dt.utcnow().timestamp()
             if remaining < 60:
                 await self.get_access_token()
@@ -331,22 +244,29 @@ class Reddit:
                 "Authorization": "bearer " + self.access_token,
                 "User-Agent": "Red-DiscordBotRedditCog/0.1 by /u/palmtree5"
             }
-            resp_json = await make_request(self.session, "GET", url, headers=headers)
-            if "data" not in resp_json and resp_json["error"] == 403:
-                await self.bot.say("Sorry, the currently authenticated account does not have access to that subreddit")
+            try:
+                resp_json = await make_request(self.session, "GET", url, headers=headers, params=data)
+            except NotFoundError as e:
+                await ctx.send(str(e))
+                return
+            except AccessForbiddenError as e:
+                await ctx.send(str(e))
+                return
+            except RedditAPIError as e:
+                await ctx.send(str(e))
                 return
             resp_json = resp_json["data"]["children"]
-            await self.post_menu(ctx, resp_json, page=0, timeout=30)
+            await post_menu(ctx, resp_json, page=0, timeout=30)
 
     @_subreddit.command(name="controversial")
     async def subreddit_controversial(self, ctx: RedContext, subreddit: str,
                                       post_count: int=3):
         """Command for getting subreddit's controversial posts"""
         if post_count <= 0 or post_count > 100:
-            await self.bot.say("Sorry, I can't do that")
+            await ctx.send("Sorry, I can't do that")
         else:
             url = REDDIT_OAUTH_API_ROOT.format("/r/{}/controversial".format(subreddit))
-            url += "?limit={}".format(post_count)
+            data = {"limit": post_count}
             remaining = self.token_expiration_time - dt.utcnow().timestamp()
             if remaining < 60:
                 await self.get_access_token()
@@ -356,12 +276,72 @@ class Reddit:
                 "Authorization": "bearer " + self.access_token,
                 "User-Agent": "Red-DiscordBotRedditCog/0.1 by /u/palmtree5"
             }
-            resp_json = await make_request(self.session, "GET", url, headers=headers)
-            if "data" not in resp_json and resp_json["error"] == 403:
-                await self.bot.say("Sorry, the currently authenticated account does not have access to that subreddit")
+            try:
+                resp_json = await make_request(self.session, "GET", url, headers=headers, params=data)
+            except NotFoundError as e:
+                await ctx.send(str(e))
+                return
+            except AccessForbiddenError as e:
+                await ctx.send(str(e))
+                return
+            except RedditAPIError as e:
+                await ctx.send(str(e))
                 return
             resp_json = resp_json["data"]["children"]
-            await self.post_menu(ctx, resp_json, page=0, timeout=30)
+            await post_menu(ctx, resp_json, page=0, timeout=30)
+
+    @commands.command()
+    @commands.guild_only()
+    @checks.mod_or_permissions(manage_channels=True)
+    async def postnotify(self, ctx: RedContext, subreddit: str):
+        """
+        Set up automatic posting of the specified subreddit's posts.
+        """
+        removed = False
+        async with self.settings.channel(ctx.channel).subreddits() as subreddits:
+            if subreddit in subreddits:
+                del subreddits[subreddit]
+                await ctx.send(
+                    _("Removed automatic posting of posts from {}").format(
+                        subreddit
+                    )
+                )
+                removed = True
+        if removed:
+            async with self.settings.guild(ctx.guild).posts_channels() as posts_channels:
+                if ctx.channel.id in posts_channels:
+                    posts_channels.remove(ctx.channel.id)
+            return
+
+        url = REDDIT_OAUTH_API_ROOT.format("/r/{}/new".format(subreddit))
+        data = {"limit": 1}
+        remaining = self.token_expiration_time - dt.utcnow().timestamp()
+        if remaining < 60:
+            await self.get_access_token()
+        if not self.access_token:  # No access token for some reason
+            raise NoAccessTokenError("Have you set the credentials with `[p]redditset creds`?")
+        headers = {
+            "Authorization": "bearer " + self.access_token,
+            "User-Agent": "Red-DiscordBotRedditCog/0.1 by /u/palmtree5"
+        }
+        try:
+            resp_json = await make_request(self.session, "GET", url, headers=headers, params=data)
+        except NotFoundError as e:
+            await ctx.send(str(e))
+            return
+        except AccessForbiddenError as e:
+            await ctx.send(str(e))
+            return
+        except RedditAPIError as e:
+            await ctx.send(str(e))
+            return
+        current_name = resp_json["data"]["children"][0]["data"]["name"]
+        async with self.settings.channel(ctx.channel).subreddits() as subreddits:
+            subreddits[subreddit] = current_name
+        async with self.settings.guild(ctx.guild).posts_channels() as posts_channels:
+            if ctx.channel.id not in posts_channels:
+                posts_channels.append(ctx.channel.id)
+        await ctx.tick()
 
     @checks.admin_or_permissions(manage_guild=True)
     @commands.group(name="redditset")
@@ -387,11 +367,12 @@ class Reddit:
                              channel: discord.TextChannel):
         """Enable posting modmail to the specified channel"""
         guild = ctx.guild
-        await ctx.send("WARNING: Anybody with access to "
-                        + channel.mention + " will be able to see " +
-                        "your subreddit's modmail messages." +
-                        "Therefore you should make sure that only " +
-                        "your subreddit mods have access to that channel")
+        await ctx.send(
+            "WARNING: Anybody with access to {0.mention} will be able to see "
+            "your subreddit's modmail messages. Therefore you should make "
+            "sure that only your subreddit mods have access to that channel"
+            "".format(channel)
+        )
         await asyncio.sleep(5)
         url = REDDIT_OAUTH_API_ROOT.format("/r/{}/about".format(subreddit))
         remaining = self.token_expiration_time - dt.utcnow().timestamp()
@@ -412,8 +393,10 @@ class Reddit:
                 mm_chns.append(channel.id)
             await ctx.send("Enabled modmail for " + subreddit)
         else:
-            await ctx.send("I'm sorry, this user does not appear to be " +
-                               "a mod of that subreddit")
+            await ctx.send(
+                "I'm sorry, this user does not appear "
+                "to be a mod of that subreddit"
+            )
 
     @checks.admin_or_permissions(manage_guild=True)
     @modmail.command(name="disable")
@@ -439,20 +422,21 @@ class Reddit:
     @checks.is_owner()
     @private_only()
     @_redditset.command(name="credentials", aliases=["creds"])
-    async def set_creds(self, ctx: RedContext, 
-            client_id: str, client_secret: str, 
-            username: str, password: str):
+    async def set_creds(self, ctx: RedContext, client_id: str, 
+                        client_secret: str, username: str, 
+                        password: str):
         """
         Sets the credentials needed to access Reddit's API
         
-        You can obtain your client id and secret by
-        creating an app at https://www.reddit.com/prefs/apps
-        Set the application url to http://127.0.0.1 and set
+        You can obtain your client id and secret by 
+        creating an app at https://www.reddit.com/prefs/apps 
+        Set the application url to http://127.0.0.1 and set 
         the app type to script.
         
-        The username and password are the username and password
+        The username and password are the username and password 
         for the account you created the app (using the above 
-        instructions) on.
+        instructions) on. Be sure to enter them in the correct 
+        order. Failing to do so will cause the commands to fail
         """
         await self.settings.client_id.set(client_id)
         await self.settings.client_secret.set(client_secret)
@@ -460,3 +444,102 @@ class Reddit:
         await self.settings.password.set(password)
         await ctx.send("Credentials set successfully!")
         await self.get_access_token()
+
+    # End commands
+
+    async def get_access_token(self):
+        client_id = await self.settings.client_id()
+        client_secret = await self.settings.client_secret()
+        username = await self.settings.username()
+        password = await self.settings.password()
+        if client_id and client_secret and username and password:
+            auth = aiohttp.helpers.BasicAuth(
+                client_id,
+                password=client_secret
+            )
+            post_data = {
+                "grant_type": "password",
+                "username": username,
+                "password": password
+            }
+            headers = {"User-Agent": "Red-DiscordBotRedditCog/0.1 by /u/palmtree5"}
+            response = await make_request(
+                self.session, "POST", REDDIT_ACCESSTOKEN_URL,
+                headers=headers, data=post_data, auth=auth)
+            if "error" in response:  # Something went wrong in the process
+                owner = await self.bot.get_user_info(self.bot.owner_id)
+                try:
+                    await owner.send(
+                        error(
+                            "I tried to get an access token for the Reddit "
+                            "cog but failed to do so because something was "
+                            "wrong with the credentials you provided me. Try "
+                            "setting them up again with `[p]redditset creds`, "
+                            "ensuring that A) you copy and paste them "
+                            "correctly, and B) that you put them in the "
+                            "correct order when running the command"
+                        )
+                    )
+                except discord.Forbidden:
+                    log.warning(
+                        "Something's wrong with the credentials for the "
+                        "Reddit cog. Tried sending the bot's owner a message "
+                        "but that failed because I can't send messages to them.\n"
+                        "It is recommended you do [p]redditset creds and ensure "
+                        "you enter them correctly and in the right order"
+                    )
+                self.toggle_commands(False)
+                return
+            self.access_token = response["access_token"]
+            self.token_expiration_time = dt.utcnow().timestamp() + response["expires_in"]
+            self.toggle_commands(True)
+        else:
+            self.toggle_commands(False)
+
+    def toggle_commands(self, val: bool):
+        reddit_command = self.bot.get_command("reddit")
+        reddit_command.enabled = val
+        subreddit_command = self.bot.get_command("subreddit")
+        subreddit_command.enabled = val
+        modmail_set_command = self.bot.get_command("redditset modmail")
+        modmail_set_command.enabled = val
+
+    async def modmail_check(self):
+        while self == self.bot.get_cog("Reddit"):
+            for guild in self.bot.guilds:
+                async with self.settings.guild(guild).modmail_channels() as mm_chns:
+                    for chn in mm_chns:
+                        channel = guild.get_channel(chn)
+                        async with self.settings.channel(channel).modmail() as current_sub:
+                            for k in current_sub:
+                                if self.token_expiration_time - dt.utcnow().timestamp() <= 60:
+                                    # close to token expiry time, so wait for a new token
+                                    await self.get_access_token()
+                                need_time_update = await get_modmail_messages(
+                                    self, REDDIT_OAUTH_API_ROOT, channel, k
+                                )
+                                if need_time_update:
+                                    current_sub.update({k: int(dt.utcnow().timestamp())})
+            await asyncio.sleep(280)
+
+    async def posts_check(self):
+        while self == self.bot.get_cog("Reddit"):
+            if not self.access_token:
+                await asyncio.sleep(30)
+                continue
+            log.warning("Starting post check")
+            channels = await self.settings.all_channels()
+            for ch_id, data in channels.items():
+                channel = self.bot.get_channel(ch_id)
+                for subreddit, last_name in data["subreddits"].items():
+                    if not self.token_expiration_time or\
+                            self.token_expiration_time - dt.utcnow().timestamp() <= 60:
+                        await self.get_access_token() 
+                    log.warning("Checking posts for {}".format(subreddit))
+                    new_name = await get_subreddit_posts(
+                        self, REDDIT_OAUTH_API_ROOT, channel, subreddit, last_name
+                    )
+                    if new_name:
+                        async with self.settings.channel(channel).subreddits() as subs:
+                            subs.update({subreddit: new_name})
+            await asyncio.sleep(60)

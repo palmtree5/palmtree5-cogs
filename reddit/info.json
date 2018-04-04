@@ -1,6 +1,6 @@
 {
     "AUTHOR" : "palmtree5",
-    "INSTALL_MSG" : "[p]help Reddit to see commands. No additional dependencies needed.",
+    "INSTALL_MSG" : "To get started, see `[p]help redditset creds`. All other commands will be disabled until you have set valid credentials.",
     "NAME" : "Reddit",
     "DISABLED" : false,
     "SHORT" : "Cog for getting stuff from Reddit",
