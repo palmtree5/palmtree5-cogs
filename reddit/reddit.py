@@ -68,27 +68,13 @@ class Reddit:
             self.session.close()
 
     async def __error(self, ctx, error):
-        await ctx.send("Error in command {0.command.qualified_name}:\n\n{1.original}".format(ctx, error))
+        await ctx.send(_("Error in command {0.command.qualified_name}:\n\n{1.original}").format(ctx, error))
 
-    @commands.group(name="reddit")
-    async def _reddit(self, ctx: RedContext):
-        """Main Reddit command"""
-        if ctx.invoked_subcommand is None:
-            await ctx.send_help()
-
-    @_reddit.command(name="user")
+    @commands.command(name="reddituser")
     async def _user(self, ctx: RedContext, username: str):
         """Commands for getting user info"""
         url = REDDIT_OAUTH_API_ROOT.format("/user/{}/about".format(username))
-        remaining = self.token_expiration_time - dt.utcnow().timestamp()
-        if remaining < 60:
-            await self.get_access_token()
-        if not self.access_token:  # No access token for some reason
-            raise NoAccessTokenError("Have you set the credentials with `[p]redditset creds`?")
-        headers = {
-            "Authorization": "bearer " + self.access_token,
-            "User-Agent": "Red-DiscordBotRedditCog/0.1 by /u/palmtree5"
-        }
+        headers = await self.get_headers()
         try:
             resp_json = await make_request(self.session, "GET", url, headers=headers)
         except NotFoundError as e:
@@ -129,15 +115,7 @@ class Reddit:
     async def subreddit_info(self, ctx: RedContext, subreddit: str):
         """Command for getting subreddit info"""
         url = REDDIT_OAUTH_API_ROOT.format("/r/{}/about".format(subreddit))
-        remaining = self.token_expiration_time - dt.utcnow().timestamp()
-        if remaining < 60:
-            await self.get_access_token()
-        if not self.access_token:  # No access token for some reason
-            raise NoAccessTokenError("Have you set the credentials with `[p]redditset creds`?")
-        headers = {
-            "Authorization": "bearer " + self.access_token,
-            "User-Agent": "Red-DiscordBotRedditCog/0.1 by /u/palmtree5"
-        }
+        headers = await self.get_headers()
         try:
             resp_json = await make_request(self.session, "GET", url, headers=headers)
         except NotFoundError as e:
@@ -173,15 +151,7 @@ class Reddit:
         else:
             url = REDDIT_OAUTH_API_ROOT.format("/r/{}/hot".format(subreddit))
             data = {"limit": post_count}
-            remaining = self.token_expiration_time - dt.utcnow().timestamp()
-            if remaining < 60:
-                await self.get_access_token()
-            if not self.access_token:  # No access token for some reason
-                raise NoAccessTokenError("Have you set the credentials with `[p]redditset creds`?")
-            headers = {
-                "Authorization": "bearer " + self.access_token,
-                "User-Agent": "Red-DiscordBotRedditCog/0.1 by /u/palmtree5"
-            }
+            headers = await self.get_headers()
             try:
                 resp_json = await make_request(self.session, "GET", url, headers=headers, params=data)
             except NotFoundError as e:
@@ -204,15 +174,7 @@ class Reddit:
         else:
             url = REDDIT_OAUTH_API_ROOT.format("/r/{}/new".format(subreddit))
             data = {"limit": post_count}
-            remaining = self.token_expiration_time - dt.utcnow().timestamp()
-            if remaining < 60:
-                await self.get_access_token()
-            if not self.access_token:  # No access token for some reason
-                raise NoAccessTokenError("Have you set the credentials with `[p]redditset creds`?")
-            headers = {
-                "Authorization": "bearer " + self.access_token,
-                "User-Agent": "Red-DiscordBotRedditCog/0.1 by /u/palmtree5"
-            }
+            headers = await self.get_headers()
             try:
                 resp_json = await make_request(self.session, "GET", url, headers=headers, params=data)
             except NotFoundError as e:
@@ -235,15 +197,7 @@ class Reddit:
         else:
             url = REDDIT_OAUTH_API_ROOT.format("/r/{}/top".format(subreddit))
             data = {"limit": post_count}
-            remaining = self.token_expiration_time - dt.utcnow().timestamp()
-            if remaining < 60:
-                await self.get_access_token()
-            if not self.access_token:  # No access token for some reason
-                raise NoAccessTokenError("Have you set the credentials with `[p]redditset creds`?")
-            headers = {
-                "Authorization": "bearer " + self.access_token,
-                "User-Agent": "Red-DiscordBotRedditCog/0.1 by /u/palmtree5"
-            }
+            headers = await self.get_headers()
             try:
                 resp_json = await make_request(self.session, "GET", url, headers=headers, params=data)
             except NotFoundError as e:
@@ -267,15 +221,7 @@ class Reddit:
         else:
             url = REDDIT_OAUTH_API_ROOT.format("/r/{}/controversial".format(subreddit))
             data = {"limit": post_count}
-            remaining = self.token_expiration_time - dt.utcnow().timestamp()
-            if remaining < 60:
-                await self.get_access_token()
-            if not self.access_token:  # No access token for some reason
-                raise NoAccessTokenError("Have you set the credentials with `[p]redditset creds`?")
-            headers = {
-                "Authorization": "bearer " + self.access_token,
-                "User-Agent": "Red-DiscordBotRedditCog/0.1 by /u/palmtree5"
-            }
+            headers = await self.get_headers()
             try:
                 resp_json = await make_request(self.session, "GET", url, headers=headers, params=data)
             except NotFoundError as e:
@@ -315,15 +261,7 @@ class Reddit:
 
         url = REDDIT_OAUTH_API_ROOT.format("/r/{}/new".format(subreddit))
         data = {"limit": 1}
-        remaining = self.token_expiration_time - dt.utcnow().timestamp()
-        if remaining < 60:
-            await self.get_access_token()
-        if not self.access_token:  # No access token for some reason
-            raise NoAccessTokenError("Have you set the credentials with `[p]redditset creds`?")
-        headers = {
-            "Authorization": "bearer " + self.access_token,
-            "User-Agent": "Red-DiscordBotRedditCog/0.1 by /u/palmtree5"
-        }
+        headers = await self.get_headers()
         try:
             resp_json = await make_request(self.session, "GET", url, headers=headers, params=data)
         except NotFoundError as e:
@@ -367,24 +305,27 @@ class Reddit:
                              channel: discord.TextChannel):
         """Enable posting modmail to the specified channel"""
         guild = ctx.guild
-        await ctx.send(
+
+        await ctx.send(_(
             "WARNING: Anybody with access to {0.mention} will be able to see "
             "your subreddit's modmail messages. Therefore you should make "
             "sure that only your subreddit mods have access to that channel"
-            "".format(channel)
+            "").format(channel)
         )
         await asyncio.sleep(5)
         url = REDDIT_OAUTH_API_ROOT.format("/r/{}/about".format(subreddit))
-        remaining = self.token_expiration_time - dt.utcnow().timestamp()
-        if remaining < 60:
-            await self.get_access_token()
-        if not self.access_token:  # No access token for some reason
-            raise NoAccessTokenError("Have you set the credentials with `[p]redditset creds`?")
-        headers = {
-            "Authorization": "bearer " + self.access_token,
-            "User-Agent": "Red-DiscordBotRedditCog/0.1 by /u/palmtree5"
-        }
-        resp_json = await make_request(self.session, "GET", url, headers=headers)
+        headers = await self.get_headers()
+        try:
+            resp_json = await make_request(self.session, "GET", url, headers=headers)
+        except NotFoundError as e:
+            await ctx.send(str(e))
+            return
+        except AccessForbiddenError as e:
+            await ctx.send(str(e))
+            return
+        except RedditAPIError as e:
+            await ctx.send(str(e))
+            return
         resp_json = resp_json["data"]
         if resp_json["user_is_moderator"]:
             async with self.settings.channel(channel).modmail() as mm:
@@ -447,6 +388,19 @@ class Reddit:
 
     # End commands
 
+    async def get_headers(self):
+        remaining = self.token_expiration_time - dt.utcnow().timestamp()
+        if remaining < 60:
+            await self.get_access_token()
+        if not self.access_token:  # No access token for some reason
+            raise NoAccessTokenError("Have you set the credentials with `[p]redditset creds`?")
+        user_agent = "Red-DiscordBotRedditCog/0.1 by /u/palmtree5"
+        headers = {
+            "Authorization": "bearer {}".format(self.access_token),
+            "User-Agent": user_agent
+        }
+        return headers
+
     async def get_access_token(self):
         client_id = await self.settings.client_id()
         client_secret = await self.settings.client_secret()
@@ -483,10 +437,11 @@ class Reddit:
                 except discord.Forbidden:
                     log.warning(
                         "Something's wrong with the credentials for the "
-                        "Reddit cog. Tried sending the bot's owner a message "
-                        "but that failed because I can't send messages to them.\n"
-                        "It is recommended you do [p]redditset creds and ensure "
-                        "you enter them correctly and in the right order"
+                        "Reddit cog. I tried sending my owner a message "
+                        "but that failed because I cannot send messages "
+                        "to them.\nIt is recommended you do [p]redditset "
+                        "creds and ensure you enter them correctly and in "
+                        "the right order."
                     )
                 self.toggle_commands(False)
                 return
