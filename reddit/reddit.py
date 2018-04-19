@@ -289,7 +289,7 @@ class Reddit:
             await ctx.send_help()
 
     @checks.admin_or_permissions(manage_guild=True)
-    @_redditset.group(name="modmail")
+    @_redditset.group(name="modmail", hidden=True)
     @commands.guild_only()
     async def modmail(self, ctx: RedContext):
         """
