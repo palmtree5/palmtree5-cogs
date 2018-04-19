@@ -1,9 +1,8 @@
 import contextlib
 from datetime import timedelta, datetime as dt
 import discord
+from discord.ext import commands
 from redbot.core import RedContext, Config
-
-from redbot.core.bot import Red
 
 
 async def allowed_to_edit(ctx: RedContext, event: dict) -> bool:
@@ -16,18 +15,22 @@ async def allowed_to_edit(ctx: RedContext, event: dict) -> bool:
     return False
 
 
-async def allowed_to_create(
-        bot: Red, member: discord.Member, 
-        role: discord.Role, guild: discord.Guild
-):
-    if member == guild.owner:
-        return True
-    elif await bot.is_mod(member):
-        return True
-    elif member.top_role in sorted(guild.roles)[role.position:]:
-        return True
-    else:
-        return False
+def allowed_to_create():
+    async def pred(ctx):
+        min_role_id = await ctx.cog.settings.guild(ctx.guild).min_role()
+        if min_role_id == 0:
+            min_role = ctx.guild.default_role
+        else:
+            min_role = discord.utils.get(ctx.guild.roles, id=min_role_id)
+        if ctx.author == ctx.guild.owner:
+            return True
+        elif await ctx.bot.is_mod(ctx.author):
+            return True
+        elif ctx.author.top_role in sorted(ctx.guild.roles)[min_role.position:]:
+            return True
+        else:
+            return False
+    return commands.check(pred)
 
 
 async def check_event_start(channel: discord.TextChannel, event: dict, config: Config):

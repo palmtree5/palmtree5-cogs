@@ -7,14 +7,12 @@ from discord.ext import commands
 from redbot.core import Config, RedContext, checks
 from redbot.core.bot import Red
 from redbot.core.utils.chat_formatting import pagify, warning
+from redbot.core.i18n import CogI18n
 
 from .helpers import parse_time, allowed_to_create, get_event_embed, allowed_to_edit, check_event_start
+from .menus import event_menu
 
-numbs = {
-    "next": "➡",
-    "back": "⬅",
-    "exit": "❌"
-}
+_ = CogI18n("EventMaker", __file__)
 
 
 class EventMaker:
@@ -47,66 +45,6 @@ class EventMaker:
     def __unload(self):
         self.event_check_task.cancel()
 
-    async def event_menu(self, ctx, event_list: list,
-                         message: discord.Message=None,
-                         page=0, timeout: int=30):
-        """menu control logic for this taken from
-           https://github.com/Lunar-Dust/Dusty-Cogs/blob/master/menu/menu.py"""
-        emb = event_list[page]
-        if not message:
-            message = await ctx.send(embed=emb)
-            await message.add_reaction("⬅")
-            await message.add_reaction("❌")
-            await message.add_reaction("➡")
-        else:
-            await message.edit(embed=emb)
-        
-        def react_check(r, u):
-            return u == ctx.author and str(r.emoji) in ["➡", "⬅", "❌"]
-        
-        try:
-            react, user = await self.bot.wait_for(
-                "reaction_add", check=react_check, timeout=timeout
-            )
-        except asyncio.TimeoutError:
-            try:
-                await message.clear_reactions()
-            except discord.Forbidden:  # cannot remove all reactions
-                await message.remove_reaction("⬅", ctx.guild.me)
-                await message.remove_reaction("❌", ctx.guild.me)
-                await message.remove_reaction("➡", ctx.guild.me)
-            return None
-        reacts = {v: k for k, v in numbs.items()}
-        react = reacts[react.emoji]
-        if react == "next":
-            perms = message.channel.permissions_for(ctx.guild.me)
-            if perms.manage_messages:  # Can manage messages, so remove react
-                try:
-                    await message.remove_reaction("➡", ctx.author)
-                except discord.NotFound:
-                    pass
-            if page == len(event_list) - 1:
-                next_page = 0  # Loop around to the first item
-            else:
-                next_page = page + 1
-            return await self.event_menu(ctx, event_list, message=message,
-                                         page=next_page, timeout=timeout)
-        elif react == "back":
-            perms = message.channel.permissions_for(ctx.guild.me)
-            if perms.manage_messages:  # Can manage messages, so remove react
-                try:
-                    await message.remove_reaction("⬅", ctx.author)
-                except discord.NotFound:
-                    pass
-            if page == 0:
-                next_page = len(event_list) - 1  # Loop around to the last item
-            else:
-                next_page = page - 1
-            return await self.event_menu(ctx, event_list, message=message,
-                                         page=next_page, timeout=timeout)
-        else:
-            return await message.delete()
-
     @commands.group()
     @commands.guild_only()
     async def event(self, ctx: RedContext):
@@ -115,6 +53,7 @@ class EventMaker:
             await ctx.send_help()
 
     @event.command(name="create")
+    @allowed_to_create()
     async def event_create(self, ctx: RedContext):
         """
         Wizard-style event creation tool.
@@ -127,48 +66,32 @@ class EventMaker:
         guild = ctx.guild
 
         event_id = await self.settings.guild(guild).next_available_id()
-        min_role_id = await self.settings.guild(guild).min_role()
-        if min_role_id == 0:
-            min_role = guild.default_role
-        else:
-            min_role = discord.utils.get(guild.roles, id=min_role_id)
-        if not await allowed_to_create(ctx.bot, author, min_role, guild):
-            await ctx.send("You aren't allowed to create events!")
-            return
 
         creation_time = ctx.message.created_at.timestamp()
-        await ctx.send("Enter a name for the event: ")
+        await ctx.send(_("Enter a name for the event: "))
         
         def same_author_check(msg):
             return msg.author == author
         
-        try:
-            msg = await self.bot.wait_for("message", check=same_author_check, timeout=60)
-        except asyncio.TimeoutError:
-            await ctx.send("No name provided!")
-            return
+        msg = await self.bot.wait_for("message", check=same_author_check)
         name = msg.content
-        msg = None
+        if len(name) > 256:
+            await ctx.send(
+                _("That name is too long! Event names "
+                  "must be 256 charcters or less.")
+            )
+            return
         await ctx.send(
             "Enter the amount of time from now the event will take "
             "place (valid units are w, d, h, m, s): "
         )
-        try:
-            msg = await self.bot.wait_for("message", check=same_author_check, timeout=60)
-        except asyncio.TimeoutError:
-            await ctx.send("No start time provided!")
-            return
+        msg = await self.bot.wait_for("message", check=same_author_check)
         start_time = parse_time(creation_time, msg)
         if start_time is None:
             await ctx.send("Something went wrong with parsing the time you entered!")
             return
-        msg = None
         await ctx.send("Enter a description for the event: ")
-        try:
-            msg = await self.bot.wait_for("message", check=same_author_check, timeout=60)
-        except asyncio.TimeoutError:
-            await ctx.send("No description provided!")
-            return
+        msg = await self.bot.wait_for("message", check=same_author_check, timeout=60)
         if len(msg.content) > 1000:
             await ctx.send("Your description is too long!")
             return
@@ -254,7 +177,7 @@ class EventMaker:
         if len(events) == 0:
             await ctx.send("No events available to join!")
         else:
-            await self.event_menu(ctx, events, message=None, page=0, timeout=30)
+            await event_menu(ctx, events, message=None, page=0, timeout=30)
 
     @event.command(name="who")
     async def event_who(self, ctx: RedContext, event_id: int):
