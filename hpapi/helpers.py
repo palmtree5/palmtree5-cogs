@@ -1,87 +1,75 @@
-import math
+from datetime import datetime
+from aiopixel.models.boosters import Booster
+from aiopixel.models.players import Player
+from aiopixel.models.friends import Friend
+from aiopixel.models.guilds import Guild
+import discord
 
 
-def get_rank(player_data: dict):
-    if "prefix" in player_data:  # User has a prefix, let's use this for the rank
-        open_bracket = player_data["prefix"].find("[")
-        close_bracket = player_data["prefix"].find("]")
-        return player_data["prefix"][open_bracket+1:close_bracket]
-    if "rank" in player_data:  # Staff ranks + Youtuber
-        if player_data["rank"] == "ADMIN":
-            return "Admin"
-        elif player_data["rank"] == "MODERATOR":
-            return "Moderator"
-        elif player_data["rank"] == "HELPER":
-            return "Helper"
-        elif player_data["rank"] == "YOUTUBER":
-            return "Youtuber"
-    elif "buildTeam" in player_data:
-        if player_data["buildTeam"] is True:
-            return "Build Team"
-    elif "monthlyPackageRank" in player_data:  # recurring purchase, only MVP++ atm
-        if player_data["monthlyPackageRank"] == "SUPERSTAR":
-            return "MVP++"
-    elif "newPackageRank" in player_data:  # post-EULA
-        if player_data["newPackageRank"] == "MVP_PLUS":
-            return "MVP+"
-        elif player_data["newPackageRank"] == "MVP":
-            return "MVP"
-        elif player_data["newPackageRank"] == "VIP_PLUS":
-            return "VIP+"
-        elif player_data["newPackageRank"] == "VIP":
-            return "VIP"
-    elif "packageRank" in player_data:  # pre-EULA
-        if player_data["packageRank"] == "MVP_PLUS":
-            return "MVP+"
-        elif player_data["packageRank"] == "MVP":
-            return "MVP"
-        elif player_data["packageRank"] == "VIP_PLUS":
-            return "VIP+"
-        elif player_data["packageRank"] == "VIP":
-            return "VIP"
-    elif bool(player_data):
-        return ""
-    else:
-        return None
+async def get_booster_embed(booster: Booster) -> discord.Embed:
+    game_name = booster.game_type.clean_name
+    purchaser = await booster.purchaser_name()
+    desc = "Activated at {}".format(
+        booster.activated_at.strftime("%Y-%m-%d %H:%M:%S")
+    )
+    thumb_url = "http://minotar.net/avatar/{}/128.png".format(
+        purchaser
+    )
+    remaining = \
+        str(datetime.timedelta(seconds=booster.length))
+    embed = discord.Embed(
+        title="Booster info",
+        url="https://store.hypixel.net/category/307502",
+        description=desc
+    )
+    embed.add_field(name="Game", value=game_name)
+    embed.add_field(name="Purchaser", value=purchaser)
+    embed.add_field(name="Remaining Time", value=remaining)
+    embed.set_thumbnail(url=thumb_url)
+    return embed
 
 
-def get_network_level(exp: int):
-    # Converted from https://github.com/Plancke/hypixel-php/blob/master/src/util/Leveling.php#L39
-    base = 10000
-    growth = 2500
+async def get_player_embed(player: Player) -> discord.Embed:
+    rank = player.rank.pretty_name
 
-    reverse_pq_prefix = -(base - 0.5 * growth) / growth
-    reverse_const = reverse_pq_prefix * reverse_pq_prefix
-    growth_divides_2 = 2 / growth
+    title = "{}{}".format("[{}] ".format(rank) if rank else "", player.displayname)
 
-    return 1 if exp < 0 else math.floor(1 + reverse_pq_prefix + math.sqrt(reverse_const + growth_divides_2 * exp))
+    em = discord.Embed(
+        title=title,
+        url="https://hypixel.net/player/{}".format(player.displayname))
 
+    em.add_field(name="Rank", value=rank if rank else "None")
+    em.add_field(name="Level", value=str(player.network_level()))
+    if player.most_recent_game_type is not None:
+        em.add_field(name="Last Playing", value=player.most_recent_game_type.clean_name)
+    if player.online():
+        em.add_field(name="Online", value="Yes")
+    first_login = player.first_login.strftime("%Y-%m-%d %H:%M:%S")
+    last_login = player.last_login.strftime("%Y-%m-%d %H:%M:%S")
+    em.add_field(name="First/Last login", value="{} / {}".format(first_login, last_login), inline=False)
 
-def get_achievement_points(achievement_list, data):
-    """Gets achievement points"""
-    points = 0
-    for game in achievement_list:
-        if "achievementsOneTime" in data:
-            for item in achievement_list[game]["one_time"]:
-                achvmt_name = "{}_{}".format(game, item.lower())
-                achvmt = achievement_list[game]["one_time"][item]
-                if achvmt_name in data["achievementsOneTime"]:
-                    points += achvmt["points"]
-        if "achievements" in data:
-            for item in achievement_list[game]["tiered"]:
-                achvmt_name = "{}_{}".format(game, item.lower())
-                achvmt = achievement_list[game]["tiered"][item]
-                for tier in achvmt["tiers"]:
-                    if achvmt_name not in data["achievements"]:
-                        break
-                    if data["achievements"][achvmt_name] >= tier["amount"]:
-                        points += tier["points"]
-    return points
+    em.set_thumbnail(url="http://minotar.net/avatar/{}/128.png".format(player.displayname))
+    return em
 
 
-def count_quest_completions(data):
-    total_completed = 0
-    for quest in data["quests"]:
-        if "completions" in data["quests"][quest]:
-            total_completed += len(data["quests"][quest]["completions"])
-    return total_completed
+async def get_friend_embed(friend: Friend) -> discord.Embed:
+    sender = await friend.sender_name()
+    receiver = await friend.receiver_name()
+    em = discord.Embed(title=f"Friendship between {sender} and {receiver}")
+    em.add_field(name="Created at", value=friend.started.strftime("%Y-%m-%d %H:%M:%S"))
+    return em
+
+
+async def get_guild_embed(guild: Guild) -> discord.Embed:
+    gmaster = [await m.name() for m in guild.members if m.rank == "GUILDMASTER"][0]
+    gmaster_face = "http://minotar.net/avatar/{}/128.png".format(gmaster)
+    em = discord.Embed(title=guild.name,
+                        url="https://hypixel.net/guilds/{}".format(guild.name),
+                        description="Created at {} UTC".format(
+                            guild.created.strftime("%Y-%m-%d %H:%M:%S")))
+    em.add_field(name="Guildmaster", value=gmaster, inline=False)
+    em.add_field(name="Guild coins", value=guild.coins)
+    em.add_field(name="Member count", value=str(len(guild.members)))
+    em.add_field(name="Officer count", value=str(len([m for m in guild.members if m.rank == "OFFICER"])))
+    em.set_thumbnail(url=gmaster_face)
+    return em
