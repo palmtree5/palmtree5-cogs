@@ -1,4 +1,5 @@
 from datetime import datetime
+from urllib.parse import quote
 import math
 from aiopixel.models.boosters import Booster
 from aiopixel.models.players import Player
@@ -65,7 +66,7 @@ async def get_guild_embed(guild: Guild) -> discord.Embed:
     gmaster = [await m.name() for m in guild.members if m.rank == "GUILDMASTER"][0]
     gmaster_face = "http://minotar.net/avatar/{}/128.png".format(gmaster)
     em = discord.Embed(title=guild.name,
-                        url="https://hypixel.net/guilds/{}".format(guild.name),
+                        url="https://hypixel.net/guilds/{}".format(quote(guild.name)),
                         description="Created at {} UTC".format(
                             guild.created.strftime("%Y-%m-%d %H:%M:%S")))
     em.add_field(name="Guildmaster", value=gmaster, inline=False)

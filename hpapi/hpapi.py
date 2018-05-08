@@ -289,7 +289,6 @@ class Hpapi:
         guild = await self.api_client.guild(guild_id)
         em = await get_guild_embed(guild)
         em = randomize_colour(em)
-
         await ctx.send(embed=em)
         if add_to_known:  # add to list of known guilds to cut lookups.
             data_to_add = {
