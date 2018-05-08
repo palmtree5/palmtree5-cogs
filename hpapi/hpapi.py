@@ -124,7 +124,7 @@ class Hpapi:
         add_to_known = False
         uuid = await get_player_uuid(player_name, self.api_client._session)
         for g in await self.settings.known_guilds():
-            if uuid in g["players"]:
+            if uuid in g["members"]:
                 guild_id = g["id"]
                 break
         else:
@@ -143,7 +143,7 @@ class Hpapi:
         if add_to_known:  # add to list of known guilds to cut lookups.
             data_to_add = {
                 "id": guild_id,
-                "players": [x.uuid for x in guild.members]
+                "members": [x.uuid for x in guild.members]
             }
             async with self.settings.known_guilds() as known:
                 known.append(data_to_add)
@@ -274,7 +274,7 @@ class Hpapi:
         add_to_known = False
         uuid = await get_player_uuid(player_name, session=self.api_client._session)
         for g in await self.settings.known_guilds():
-            if uuid in g["players"]:
+            if uuid in g["members"]:
                 guild_id = g["id"]
                 break
         else:
@@ -294,7 +294,7 @@ class Hpapi:
         if add_to_known:  # add to list of known guilds to cut lookups.
             data_to_add = {
                 "id": guild_id,
-                "players": [x.uuid for x in guild.members]
+                "members": [x.uuid for x in guild.members]
             }
             async with self.settings.known_guilds() as known:
                 known.append(data_to_add)
