@@ -137,7 +137,7 @@ class Hpapi:
             else:
                 add_to_known = True
         guild = await self.api_client.guild(guild_id)
-        em = get_guild_embed(guild)
+        em = await get_guild_embed(guild)
         em = randomize_colour(em)
         msg = await ctx.send(embed=em)
         if add_to_known:  # add to list of known guilds to cut lookups.
@@ -235,7 +235,7 @@ class Hpapi:
         except PlayerNotFound:
             await ctx.send(_("That player does not exist!"))
             return
-        em = get_player_embed(player)
+        em = await get_player_embed(player)
         em = randomize_colour(em)
         await ctx.send(embed=em)
 
