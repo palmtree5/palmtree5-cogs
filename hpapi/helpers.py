@@ -1,4 +1,5 @@
 from datetime import datetime
+import math
 from aiopixel.models.boosters import Booster
 from aiopixel.models.players import Player
 from aiopixel.models.friends import Friend
@@ -39,7 +40,7 @@ async def get_player_embed(player: Player) -> discord.Embed:
         url="https://hypixel.net/player/{}".format(player.displayname))
 
     em.add_field(name="Rank", value=rank if rank else "None")
-    em.add_field(name="Level", value=str(player.network_level()))
+    em.add_field(name="Level", value=str(round(player.network_level(), 2)))
     if player.most_recent_game_type is not None:
         em.add_field(name="Last Playing", value=player.most_recent_game_type.clean_name)
     if player.online():
