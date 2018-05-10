@@ -7,8 +7,6 @@ import logging
 
 from reddit.errors import RedditAPIError, AccessForbiddenError, NotFoundError
 
-log = logging.getLogger("red.reddit")
-
 
 async def make_request(
         session: aiohttp.ClientSession,
@@ -16,7 +14,6 @@ async def make_request(
         headers: dict=None, data: dict=None,
         params: dict=None,
         auth: aiohttp.BasicAuth=None):
-    log.warning("Making request to {}".format(url))
     async with session.request(
             method, url, headers=headers, data=data, params=params,
             auth=auth, allow_redirects=False

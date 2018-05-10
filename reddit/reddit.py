@@ -482,7 +482,6 @@ class Reddit:
             if not self.access_token:
                 await asyncio.sleep(30)
                 continue
-            log.warning("Starting post check")
             channels = await self.settings.all_channels()
             for ch_id, data in channels.items():
                 channel = self.bot.get_channel(ch_id)
@@ -490,7 +489,6 @@ class Reddit:
                     if not self.token_expiration_time or\
                             self.token_expiration_time - dt.utcnow().timestamp() <= 60:
                         await self.get_access_token() 
-                    log.warning("Checking posts for {}".format(subreddit))
                     new_name = await get_subreddit_posts(
                         self, REDDIT_OAUTH_API_ROOT, channel, subreddit, last_name
                     )
