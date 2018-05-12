@@ -2,10 +2,10 @@ import contextlib
 from datetime import timedelta, datetime as dt
 import discord
 from discord.ext import commands
-from redbot.core import RedContext, Config
+from redbot.core import commands, Config
 
 
-async def allowed_to_edit(ctx: RedContext, event: dict) -> bool:
+async def allowed_to_edit(ctx: commands.Context, event: dict) -> bool:
     if ctx.author.id == event["creator"]:
         return True
     elif await ctx.bot.is_mod(ctx.author):

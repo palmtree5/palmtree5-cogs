@@ -2,7 +2,7 @@ import contextlib
 
 import discord
 from discord.ext import commands
-from redbot.core import Config, checks, RedContext
+from redbot.core import Config, checks, commands
 from redbot.core.bot import Red
 from redbot.core.utils.chat_formatting import bold
 
@@ -30,7 +30,7 @@ class SlowMode:
     @checks.mod_or_permissions(manage_messages=True)
     @commands.guild_only()
     @commands.command()
-    async def toggleslow(self, ctx: RedContext, time: int=0):
+    async def toggleslow(self, ctx: commands.Context, time: int=0):
         """
         Slow the chat
 
@@ -73,7 +73,7 @@ class SlowMode:
     @commands.group()
     @commands.guild_only()
     @checks.admin_or_permissions(manage_guild=True)
-    async def slowset(self, ctx: RedContext):
+    async def slowset(self, ctx: commands.Context):
         """
         Slow mode settings
         """
@@ -81,7 +81,7 @@ class SlowMode:
             await ctx.send_help()
 
     @slowset.command(name="role")
-    async def slowset_role(self, ctx: RedContext, role: discord.Role):
+    async def slowset_role(self, ctx: commands.Context, role: discord.Role):
         """
         Sets the minimum role to be exempt from slow mode
 

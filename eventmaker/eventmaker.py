@@ -4,15 +4,15 @@ from datetime import datetime as dt, timedelta
 
 import discord
 from discord.ext import commands
-from redbot.core import Config, RedContext, checks
+from redbot.core import Config, commands, checks
 from redbot.core.bot import Red
 from redbot.core.utils.chat_formatting import pagify, warning
-from redbot.core.i18n import CogI18n
+from redbot.core.i18n import Translator
 
 from .helpers import parse_time, allowed_to_create, get_event_embed, allowed_to_edit, check_event_start
 from .menus import event_menu
 
-_ = CogI18n("EventMaker", __file__)
+_ = Translator("EventMaker", __file__)
 
 
 class EventMaker:
@@ -47,14 +47,14 @@ class EventMaker:
 
     @commands.group()
     @commands.guild_only()
-    async def event(self, ctx: RedContext):
+    async def event(self, ctx: commands.Context):
         """Base command for events"""
         if ctx.invoked_subcommand is None:
             await ctx.send_help()
 
     @event.command(name="create")
     @allowed_to_create()
-    async def event_create(self, ctx: RedContext):
+    async def event_create(self, ctx: commands.Context):
         """
         Wizard-style event creation tool.
 
@@ -114,7 +114,7 @@ class EventMaker:
         await ctx.send(embed=get_event_embed(guild, ctx.message.created_at, new_event))
 
     @event.command(name="join")
-    async def event_join(self, ctx: RedContext, event_id: int):
+    async def event_join(self, ctx: commands.Context, event_id: int):
         """Join an event"""
         guild = ctx.guild
         to_join = None
@@ -137,7 +137,7 @@ class EventMaker:
                 await ctx.send("That event has already started!")
 
     @event.command(name="leave")
-    async def event_leave(self, ctx: RedContext, event_id: int):
+    async def event_leave(self, ctx: commands.Context, event_id: int):
         """Leave the specified event"""
         guild = ctx.guild
         to_leave = None
@@ -159,7 +159,7 @@ class EventMaker:
                     await ctx.send("You are not part of that event!")
 
     @event.command(name="list")
-    async def event_list(self, ctx: RedContext, started: bool=False):
+    async def event_list(self, ctx: commands.Context, started: bool=False):
         """List events for this server that have not started yet
 
         If `started` is True, include events that have already started"""
@@ -180,7 +180,7 @@ class EventMaker:
             await event_menu(ctx, events, message=None, page=0, timeout=30)
 
     @event.command(name="who")
-    async def event_who(self, ctx: RedContext, event_id: int):
+    async def event_who(self, ctx: commands.Context, event_id: int):
         """List all participants for the event"""
         guild = ctx.guild
         to_list = None
@@ -199,7 +199,7 @@ class EventMaker:
                 await ctx.send_interactive(pagify(participants))
 
     @event.command(name="cancel")
-    async def event_cancel(self, ctx: RedContext, event_id: int):
+    async def event_cancel(self, ctx: commands.Context, event_id: int):
         """Cancels the specified event"""
         guild = ctx.guild
         async with self.settings.guild(guild).events() as event_list:
@@ -216,14 +216,14 @@ class EventMaker:
 
     @commands.group()
     @commands.guild_only()
-    async def eventset(self, ctx: RedContext):
+    async def eventset(self, ctx: commands.Context):
         """Event maker settings"""
         if ctx.invoked_subcommand is None:
             await ctx.send_help()
 
     @eventset.command(name="toggledms")
     @commands.guild_only()
-    async def eventset_toggledms(self, ctx: RedContext, user: discord.Member=None):
+    async def eventset_toggledms(self, ctx: commands.Context, user: discord.Member=None):
         """
         Toggles event start announcement DMs for the specified user
 
@@ -245,7 +245,7 @@ class EventMaker:
 
     @eventset.command(name="role")
     @checks.admin_or_permissions(manage_guild=True)
-    async def eventset_role(self, ctx: RedContext, *, role: discord.Role=None):
+    async def eventset_role(self, ctx: commands.Context, *, role: discord.Role=None):
         """Set the minimum role required to create events.
 
         Default is for everyone to be able to create events"""
@@ -259,7 +259,7 @@ class EventMaker:
 
     @eventset.command(name="resetevents")
     @checks.guildowner_or_permissions(administrator=True)
-    async def eventset_resetevents(self, ctx: RedContext, confirm: str=None):
+    async def eventset_resetevents(self, ctx: commands.Context, confirm: str=None):
         """
         Resets the events list for this guild
         """
@@ -276,7 +276,7 @@ class EventMaker:
 
     @eventset.command(name="channel")
     @checks.admin_or_permissions(manage_guild=True)
-    async def eventset_channel(self, ctx: RedContext, channel: discord.TextChannel):
+    async def eventset_channel(self, ctx: commands.Context, channel: discord.TextChannel):
         """
         Sets the channel where event start announcements will be sent
 

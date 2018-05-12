@@ -5,15 +5,15 @@ from functools import partial
 
 import discord
 from discord.ext import commands
-from redbot.core import Config, checks, RedContext
+from redbot.core import Config, checks, commands
 from redbot.core.bot import Red
-from redbot.core.i18n import CogI18n
+from redbot.core.i18n import Translator
 
 from mcsvr.helpers import check_server, get_server_embed, is_valid_ip, get_server_string
 
 log = logging.getLogger("red.mcsvr")
 
-_ = CogI18n("Mcsvr", __file__)
+_ = Translator("Mcsvr", __file__)
 
 
 class Mcsvr:
@@ -49,7 +49,7 @@ class Mcsvr:
         self.svr_chk_task.cancel()
 
     @commands.command()
-    async def mcserver(self, ctx: RedContext, server_ip: str):
+    async def mcserver(self, ctx: commands.Context, server_ip: str):
         """
         Display info about the specified server
         """
@@ -76,7 +76,7 @@ class Mcsvr:
     @commands.command()
     @commands.guild_only()
     @checks.admin_or_permissions(manage_channels=True)
-    async def addserver(self, ctx: RedContext, server_ip: str, channel: discord.TextChannel=None):
+    async def addserver(self, ctx: commands.Context, server_ip: str, channel: discord.TextChannel=None):
         """
         Set a server to track.
 
@@ -128,7 +128,7 @@ class Mcsvr:
     @commands.command()
     @commands.guild_only()
     @checks.admin_or_permissions(manage_channels=True)
-    async def delserver(self, ctx: RedContext, server_ip: str=None, channel: discord.TextChannel=None):
+    async def delserver(self, ctx: commands.Context, server_ip: str=None, channel: discord.TextChannel=None):
         """
         Removes a server from the tracker
         """
@@ -162,7 +162,7 @@ class Mcsvr:
     @commands.group()
     @commands.guild_only()
     @checks.guildowner_or_permissions(administrator=True)
-    async def mcset(self, ctx: RedContext):
+    async def mcset(self, ctx: commands.Context):
         """
         Settings for the server tracker
         """
@@ -170,7 +170,7 @@ class Mcsvr:
             await ctx.send_help()
 
     @mcset.command(name="mode")
-    async def mcset_mode(self, ctx: RedContext, mode: str, confirm: bool=False):
+    async def mcset_mode(self, ctx: commands.Context, mode: str, confirm: bool=False):
         """
         Sets the server tracker mode for the guild.
 

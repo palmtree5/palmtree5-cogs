@@ -10,16 +10,16 @@ from aiopixel.exceptions import GuildNotFound, PlayerNotInGuild, \
 from aiopixel.gametypes import GameType
 from aiopixel.utils import get_player_uuid
 from discord.ext import commands
-from redbot.core import Config, RedContext, checks, data_manager
+from redbot.core import Config, commands, checks, data_manager
 from redbot.core.bot import Red
-from redbot.core.i18n import CogI18n
+from redbot.core.i18n import Translator
 from redbot.core.utils.embed import randomize_colour
 from redbot.core.utils.menus import DEFAULT_CONTROLS, menu
 
 from .helpers import get_booster_embed, \
     get_friend_embed, get_guild_embed, get_player_embed
 
-_ = CogI18n("Hpapi", __file__)
+_ = Translator("Hpapi", __file__)
 
 log = logging.getLogger("palmtree5.cogs.hpapi")
 
@@ -51,7 +51,7 @@ class Hpapi:
     def __unload(self):
         self.guild_update_task.cancel()
 
-    async def __error(self, ctx: RedContext, error):
+    async def __error(self, ctx: commands.Context, error):
         await ctx.send("`Error in {0.command.qualified_name}: {1}`".format(ctx, error))
 
     # Section: Load and update
@@ -110,13 +110,13 @@ class Hpapi:
     
     @commands.group()
     @checks.mod_or_permissions(manage_channel=True)
-    async def hpset(self, ctx: RedContext):
+    async def hpset(self, ctx: commands.Context):
         """Settings for Hypixel cog"""
         if ctx.invoked_subcommand is None:
             await ctx.send_help()
 
     @hpset.command(name="guild")
-    async def hpset_guild(self, ctx: RedContext, player_name: str, channel: discord.TextChannel):
+    async def hpset_guild(self, ctx: commands.Context, player_name: str, channel: discord.TextChannel):
         """Sets the guild to track in the specified channel"""
         if not self.api_client:
             await ctx.send(_("No api key available! Use `{}` to set one!").format("[p]hpset apikey"))
@@ -152,7 +152,7 @@ class Hpapi:
 
     @hpset.command()
     @checks.is_owner()
-    async def apikey(self, ctx: RedContext, key: str):
+    async def apikey(self, ctx: commands.Context, key: str):
         """Sets the Hypixel API key - owner only
 
         Get this by logging onto Hypixel 
@@ -170,7 +170,7 @@ class Hpapi:
             )
 
     @commands.group(name="hypixel", aliases=["hp"])
-    async def hp(self, ctx: RedContext):
+    async def hp(self, ctx: commands.Context):
         """Base command for getting info from Hypixel's API
         
         Note that this command and all subcommands will be disabled 
@@ -180,7 +180,7 @@ class Hpapi:
             await ctx.send_help()
 
     @hp.command()
-    async def currentboosters(self, ctx: RedContext):
+    async def currentboosters(self, ctx: commands.Context):
         """List all active boosters on the network"""
         if not self.api_client:
             await ctx.send(
@@ -202,7 +202,7 @@ class Hpapi:
             await ctx.send(_("An error occurred in getting the data"))
 
     @hp.command()
-    async def gamebooster(self, ctx: RedContext, *, game: str=None):
+    async def gamebooster(self, ctx: commands.Context, *, game: str=None):
         """
         Get the active booster for the specified game.
         """
@@ -224,7 +224,7 @@ class Hpapi:
             await ctx.send(_("There doesn't appear to be an active booster for that game!"))
 
     @hp.command(name="player")
-    async def hpplayer(self, ctx: RedContext, name: str):
+    async def hpplayer(self, ctx: commands.Context, name: str):
         """Show info for the specified player"""
         if self.api_client is None:
             await ctx.send(_("No api key available! Use `{}` to set one!").format("[p]hpset apikey"))

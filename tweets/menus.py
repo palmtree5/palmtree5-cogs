@@ -1,6 +1,6 @@
 import asyncio
 import discord
-from redbot.core.context import RedContext
+from redbot.core.context import commands
 from redbot.core.utils.embed import randomize_colour
 
 
@@ -11,7 +11,7 @@ numbs = {
 }
 
 
-async def tweet_menu(ctx: RedContext, post_list: list,
+async def tweet_menu(ctx: commands.Context, post_list: list,
                      message: discord.Message=None,
                      page=0, timeout: int=30):
     """menu control logic for this taken from

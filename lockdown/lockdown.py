@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
 from redbot.core import Config, checks
-from redbot.core.context import RedContext
+from redbot.core.context import commands
 from redbot.core.utils.chat_formatting import box
 
 
@@ -40,7 +40,7 @@ class Lockdown:
     @commands.command()
     @commands.guild_only()
     @checks.mod_or_permissions(manage_messages=True)
-    async def lockdown(self, ctx: RedContext, profile: int):
+    async def lockdown(self, ctx: commands.Context, profile: int):
         """Enables lockdown for this server
 
         A profile ID must be specified. To list profiles,
@@ -77,7 +77,7 @@ class Lockdown:
     @commands.command()
     @commands.guild_only()
     @checks.mod_or_permissions(manage_messages=True)
-    async def unlockdown(self, ctx: RedContext):
+    async def unlockdown(self, ctx: commands.Context):
         """Ends the lockdown for this server"""
         guild = ctx.guild
 
@@ -101,14 +101,14 @@ class Lockdown:
     @commands.group()
     @commands.guild_only()
     @checks.mod_or_permissions(manage_roles=True)
-    async def lockdownset(self, ctx: RedContext):
+    async def lockdownset(self, ctx: commands.Context):
         """Settings for lockdown"""
         if ctx.invoked_subcommand is None:
             await ctx.send_help()
 
     @lockdownset.command(name="reset")
     @checks.guildowner_or_permissions(administrator=True)
-    async def ld_reset(self, ctx: RedContext):
+    async def ld_reset(self, ctx: commands.Context):
         """
         Removes all lockdown profiles for the current guild.
         """
@@ -117,7 +117,7 @@ class Lockdown:
         await ctx.tick()
 
     @lockdownset.command(name="listprofiles")
-    async def ld_listprofiles(self, ctx: RedContext):
+    async def ld_listprofiles(self, ctx: commands.Context):
         """
         List all lockdown profiles for the guild.
         """
@@ -135,7 +135,7 @@ class Lockdown:
 
     @lockdownset.command(name="addprofile")
     @checks.admin_or_permissions(manage_guild=True)
-    async def ld_addprofile(self, ctx: RedContext, role: discord.Role):
+    async def ld_addprofile(self, ctx: commands.Context, role: discord.Role):
         """
         Adds a lockdown profile.
 
@@ -151,7 +151,7 @@ class Lockdown:
 
     @lockdownset.command(name="removeprofile")
     @checks.admin_or_permissions(manage_guild=True)
-    async def ld_removeprofile(self, ctx: RedContext, profile_id: int):
+    async def ld_removeprofile(self, ctx: commands.Context, profile_id: int):
         """
         Removes the lockdown profile with the specified IDs
 

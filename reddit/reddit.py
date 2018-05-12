@@ -6,11 +6,11 @@ from datetime import datetime as dt
 import aiohttp
 import discord
 from discord.ext import commands
-from redbot.core import Config, RedContext, checks
+from redbot.core import Config, commands, checks
 from redbot.core.bot import Red
 from redbot.core.utils.chat_formatting import error
 from redbot.core.utils.embed import randomize_colour
-from redbot.core.i18n import CogI18n
+from redbot.core.i18n import Translator
 
 from reddit.menus import post_menu
 from .errors import NoAccessTokenError, RedditAPIError, NotFoundError, AccessForbiddenError
@@ -18,7 +18,7 @@ from .helpers import get_modmail_messages, make_request, private_only, get_subre
 
 log = logging.getLogger("red.reddit")
 
-_ = CogI18n("Reddit", __file__)
+_ = Translator("Reddit", __file__)
 
 REDDIT_ACCESSTOKEN_URL = "https://www.reddit.com/api/v1/access_token"
 REDDIT_OAUTH_API_ROOT = "https://oauth.reddit.com{}"
@@ -71,7 +71,7 @@ class Reddit:
         await ctx.send(_("Error in command {0.command.qualified_name}:\n\n{1.original}").format(ctx, error))
 
     @commands.command(name="reddituser")
-    async def _user(self, ctx: RedContext, username: str):
+    async def _user(self, ctx: commands.Context, username: str):
         """Commands for getting user info"""
         url = REDDIT_OAUTH_API_ROOT.format("/user/{}/about".format(username))
         headers = await self.get_headers()
@@ -106,13 +106,13 @@ class Reddit:
         await ctx.send(embed=em)
 
     @commands.group(name="subreddit")
-    async def _subreddit(self, ctx: RedContext):
+    async def _subreddit(self, ctx: commands.Context):
         """Commands for getting subreddits"""
         if ctx.invoked_subcommand is None:
             await ctx.send_help()
 
     @_subreddit.command(name="info")
-    async def subreddit_info(self, ctx: RedContext, subreddit: str):
+    async def subreddit_info(self, ctx: commands.Context, subreddit: str):
         """Command for getting subreddit info"""
         url = REDDIT_OAUTH_API_ROOT.format("/r/{}/about".format(subreddit))
         headers = await self.get_headers()
@@ -144,7 +144,7 @@ class Reddit:
         await ctx.send(embed=em)
 
     @_subreddit.command(name="hot")
-    async def subreddit_hot(self, ctx: RedContext, subreddit: str, post_count: int=3):
+    async def subreddit_hot(self, ctx: commands.Context, subreddit: str, post_count: int=3):
         """Command for getting subreddit's hot posts"""
         if post_count <= 0 or post_count > 100:
             await ctx.send("Sorry, I can't do that")
@@ -167,7 +167,7 @@ class Reddit:
             await post_menu(ctx, resp_json, page=0, timeout=30)
 
     @_subreddit.command(name="new")
-    async def subreddit_new(self, ctx: RedContext, subreddit: str, post_count: int=3):
+    async def subreddit_new(self, ctx: commands.Context, subreddit: str, post_count: int=3):
         """Command for getting subreddit's new posts"""
         if post_count <= 0 or post_count > 100:
             await ctx.send("Sorry, I can't do that")
@@ -190,7 +190,7 @@ class Reddit:
             await post_menu(ctx, resp_json, page=0, timeout=30)
 
     @_subreddit.command(name="top")
-    async def subreddit_top(self, ctx: RedContext, subreddit: str, post_count: int=3):
+    async def subreddit_top(self, ctx: commands.Context, subreddit: str, post_count: int=3):
         """Command for getting subreddit's top posts"""
         if post_count <= 0 or post_count > 100:
             await ctx.send("Sorry, I can't do that")
@@ -213,7 +213,7 @@ class Reddit:
             await post_menu(ctx, resp_json, page=0, timeout=30)
 
     @_subreddit.command(name="controversial")
-    async def subreddit_controversial(self, ctx: RedContext, subreddit: str,
+    async def subreddit_controversial(self, ctx: commands.Context, subreddit: str,
                                       post_count: int=3):
         """Command for getting subreddit's controversial posts"""
         if post_count <= 0 or post_count > 100:
@@ -239,7 +239,7 @@ class Reddit:
     @commands.command()
     @commands.guild_only()
     @checks.mod_or_permissions(manage_channels=True)
-    async def postnotify(self, ctx: RedContext, subreddit: str):
+    async def postnotify(self, ctx: commands.Context, subreddit: str):
         """
         Set up automatic posting of the specified subreddit's posts.
         """
@@ -283,7 +283,7 @@ class Reddit:
 
     @checks.admin_or_permissions(manage_guild=True)
     @commands.group(name="redditset")
-    async def _redditset(self, ctx: RedContext):
+    async def _redditset(self, ctx: commands.Context):
         """Commands for setting reddit settings."""
         if ctx.invoked_subcommand is None:
             await ctx.send_help()
@@ -291,7 +291,7 @@ class Reddit:
     @checks.admin_or_permissions(manage_guild=True)
     @_redditset.group(name="modmail", hidden=True)
     @commands.guild_only()
-    async def modmail(self, ctx: RedContext):
+    async def modmail(self, ctx: commands.Context):
         """
         Commands for dealing with modmail settings
         NOTE: not really well tested
@@ -301,7 +301,7 @@ class Reddit:
 
     @checks.admin_or_permissions(manage_guild=True)
     @modmail.command(name="enable")
-    async def enable_modmail(self, ctx: RedContext, subreddit: str,
+    async def enable_modmail(self, ctx: commands.Context, subreddit: str,
                              channel: discord.TextChannel):
         """Enable posting modmail to the specified channel"""
         guild = ctx.guild
@@ -341,7 +341,7 @@ class Reddit:
 
     @checks.admin_or_permissions(manage_guild=True)
     @modmail.command(name="disable")
-    async def disable_modmail(self, ctx: RedContext, subreddit: str, channel: discord.TextChannel):
+    async def disable_modmail(self, ctx: commands.Context, subreddit: str, channel: discord.TextChannel):
         """Disable modmail posting to discord"""
         async with self.settings.channel(channel).modmail() as mm:
             try:
@@ -363,7 +363,7 @@ class Reddit:
     @checks.is_owner()
     @private_only()
     @_redditset.command(name="credentials", aliases=["creds"])
-    async def set_creds(self, ctx: RedContext, client_id: str, 
+    async def set_creds(self, ctx: commands.Context, client_id: str, 
                         client_secret: str, username: str, 
                         password: str):
         """

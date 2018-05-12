@@ -1,10 +1,10 @@
 from discord.ext import commands
 import discord
 
-from redbot.core import Config, checks, RedContext
-from redbot.core.i18n import CogI18n
+from redbot.core import Config, checks, commands
+from redbot.core.i18n import Translator
 
-_ = CogI18n("MessagePinner", __file__)
+_ = Translator("MessagePinner", __file__)
 
 
 class MessagePinner:
@@ -23,7 +23,7 @@ class MessagePinner:
     @checks.mod_or_permissions(manage_messages=True)
     @commands.command()
     @commands.guild_only()
-    async def pintrigger(self, ctx: RedContext, *, text: str=None):
+    async def pintrigger(self, ctx: commands.Context, *, text: str=None):
         """Sets the pin trigger for the current channel"""
         if text is None:
             await self.settings.channel(ctx.channel).text.set("")

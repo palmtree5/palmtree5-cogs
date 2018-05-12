@@ -1,7 +1,7 @@
 from discord.ext import commands
 import discord
 
-from redbot.core import RedContext, Config, checks
+from redbot.core import commands, Config, checks
 
 
 class BanRole:
@@ -18,7 +18,7 @@ class BanRole:
 
     @commands.command()
     @checks.admin_or_permissions(ban_members=True)
-    async def banrole(self, ctx: RedContext, *, role: discord.Role):
+    async def banrole(self, ctx: commands.Context, *, role: discord.Role):
         """
         Ban all members with the specified role
 
@@ -46,7 +46,7 @@ class BanRole:
 
     @commands.command()
     @checks.admin_or_permissions(ban_members=True)
-    async def unbanrole(self, ctx: RedContext, *, role: discord.Role):
+    async def unbanrole(self, ctx: commands.Context, *, role: discord.Role):
         """
         Unban members who were banned via banrole and who had the specified role at ban time
         """

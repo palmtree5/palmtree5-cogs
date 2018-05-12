@@ -6,7 +6,7 @@ from discord.ext import commands
 from peony import PeonyClient
 from redbot.core import Config, checks
 from redbot.core.bot import Red
-from redbot.core.context import RedContext
+from redbot.core.context import commands
 
 from .errors import NoClientException
 from .menus import tweet_menu
@@ -75,7 +75,7 @@ class Tweets:
         }
 
     @commands.command(name='getuser')
-    async def get_user(self, ctx: RedContext, username: str):
+    async def get_user(self, ctx: commands.Context, username: str):
         """Get info about the specified user"""
         message = ""
         if self.client is None:
@@ -103,7 +103,7 @@ class Tweets:
         await ctx.send(embed=emb)
 
     @commands.command(name='gettweets')
-    async def get_tweets(self, ctx: RedContext, username: str, count: int=5):
+    async def get_tweets(self, ctx: commands.Context, username: str, count: int=5):
         """Gets the specified number of tweets for the specified username"""
         if count > 25:
             count = 25
@@ -136,7 +136,7 @@ class Tweets:
 
     @_tweetset.command(name='creds')
     @checks.is_owner()
-    async def set_creds(self, ctx: RedContext, consumer_key: str, consumer_secret: str, access_token: str, access_secret: str):
+    async def set_creds(self, ctx: commands.Context, consumer_key: str, consumer_secret: str, access_token: str, access_secret: str):
         """Sets the access credentials. See [p]help tweetset for instructions on getting these"""
         await self.config.consumer_key.set(consumer_key)
         await self.config.consumer_secret.set(consumer_secret)

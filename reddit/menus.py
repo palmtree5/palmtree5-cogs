@@ -1,7 +1,7 @@
 import asyncio
 
 import discord
-from redbot.core import RedContext
+from redbot.core import commands
 
 from .helpers import post_embed
 
@@ -12,7 +12,7 @@ numbs = {
 }
 
 
-async def post_menu(ctx: RedContext, post_list: list,
+async def post_menu(ctx: commands.Context, post_list: list,
                     message: discord.Message = None,
                     page=0, timeout: int = 30):
     """menu control logic for this taken from
