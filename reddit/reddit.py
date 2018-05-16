@@ -459,8 +459,10 @@ class Reddit:
             self.toggle_commands(False)
 
     def toggle_commands(self, val: bool):
-        reddit_command = self.bot.get_command("reddit")
-        reddit_command.enabled = val
+        reddituser_command = self.bot.get_command("reddituser")
+        reddituser_command.enabled = val
+        postnotify_command = self.bot.get_command("postnotify")
+        postnotify_command.enabled = val
         subreddit_command = self.bot.get_command("subreddit")
         subreddit_command.enabled = val
         modmail_set_command = self.bot.get_command("redditset modmail")
