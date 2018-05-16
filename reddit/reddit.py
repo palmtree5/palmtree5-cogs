@@ -368,6 +368,8 @@ class Reddit:
                         password: str):
         """
         Sets the credentials needed to access Reddit's API
+
+        NOTE: This command should be done in a DM with the bot.
         
         You can obtain your client id and secret by 
         creating an app at https://www.reddit.com/prefs/apps 
