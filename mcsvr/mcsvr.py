@@ -25,21 +25,13 @@ class Mcsvr:
     Also available is a server tracker that allows displaying a server and
     automatically updating its information while the cog is loaded."""
 
-    default_channel = {
-        "server_ip": "",
-        "original_topic": "",
-        "servers": []
-    }
+    default_channel = {"server_ip": "", "original_topic": "", "servers": []}
 
-    default_guild = {
-        "tracker_mode": "text"
-    }
+    default_guild = {"tracker_mode": "text"}
 
     def __init__(self, bot: Red):
         self.bot = bot
-        self.config = Config.get_conf(
-            self, identifier=59595922, force_registration=True
-        )
+        self.config = Config.get_conf(self, identifier=59595922, force_registration=True)
         self._svr_cache = {}
         self.config.register_channel(**self.default_channel)
         self.config.register_guild(**self.default_guild)
@@ -76,7 +68,9 @@ class Mcsvr:
     @commands.command()
     @commands.guild_only()
     @checks.admin_or_permissions(manage_channels=True)
-    async def addserver(self, ctx: commands.Context, server_ip: str, channel: discord.TextChannel=None):
+    async def addserver(
+        self, ctx: commands.Context, server_ip: str, channel: discord.TextChannel = None
+    ):
         """
         Set a server to track.
 
@@ -113,9 +107,7 @@ class Mcsvr:
                 current_server_list = await self.config.channel(channel).servers()
                 for server in current_server_list:
                     if server["server_ip"] == server_ip:
-                        await ctx.send(
-                            _("This server is already being tracked in this channel!")
-                        )
+                        await ctx.send(_("This server is already being tracked in this channel!"))
                         return
                 resp = get_server_embed(svr, server_ip)
                 msg = await channel.send(embed=resp)
@@ -128,7 +120,9 @@ class Mcsvr:
     @commands.command()
     @commands.guild_only()
     @checks.admin_or_permissions(manage_channels=True)
-    async def delserver(self, ctx: commands.Context, server_ip: str=None, channel: discord.TextChannel=None):
+    async def delserver(
+        self, ctx: commands.Context, server_ip: str = None, channel: discord.TextChannel = None
+    ):
         """
         Removes a server from the tracker
         """
@@ -170,7 +164,7 @@ class Mcsvr:
             await ctx.send_help()
 
     @mcset.command(name="mode")
-    async def mcset_mode(self, ctx: commands.Context, mode: str, confirm: bool=False):
+    async def mcset_mode(self, ctx: commands.Context, mode: str, confirm: bool = False):
         """
         Sets the server tracker mode for the guild.
 
@@ -183,14 +177,17 @@ class Mcsvr:
             await ctx.send(
                 _("Invalid value for `{}`. Valid values are `{}`, `{}`").format(
                     "mode", "text", "embed"
-                ))
+                )
+            )
             return
         current_mode = await self.config.guild(ctx.guild).tracker_mode()
         if current_mode != mode:
             if not confirm:
                 await ctx.send(
-                    _("This will remove all currently tracked servers! "
-                      "To confirm this is what you want to do, type {}").format(
+                    _(
+                        "This will remove all currently tracked servers! "
+                        "To confirm this is what you want to do, type {}"
+                    ).format(
                         "`{}mcset mode {} yes`".format(ctx.prefix, mode)
                     )
                 )
@@ -236,9 +233,12 @@ class Mcsvr:
                 now = datetime.utcnow().timestamp()
                 channel = self.bot.get_channel(channel_id)
                 cur_mode = await self.config.guild(channel.guild).tracker_mode()
-                if channel is None or (
-                    cur_mode == "text" and
-                    not channel.permissions_for(channel.guild.me).manage_channels
+                if (
+                    channel is None
+                    or (
+                        cur_mode == "text"
+                        and not channel.permissions_for(channel.guild.me).manage_channels
+                    )
                 ):
                     continue
 
@@ -249,9 +249,7 @@ class Mcsvr:
                     if not self.server_ip_in_cache(server_ip, now):
                         chk_svr = partial(check_server, server_ip)
                         svr = await self.bot.loop.run_in_executor(None, chk_svr)
-                        self._svr_cache[server_ip] = {
-                            "resp": svr, "invalid_at": now + 180
-                        }
+                        self._svr_cache[server_ip] = {"resp": svr, "invalid_at": now + 180}
                     else:
                         svr = self._svr_cache[server_ip]["resp"]
                     resp = get_server_string(svr, server_ip)
@@ -265,9 +263,7 @@ class Mcsvr:
                         if not self.server_ip_in_cache(server_ip, now):
                             chk_svr = partial(check_server, server_ip)
                             svr = await self.bot.loop.run_in_executor(None, chk_svr)
-                            self._svr_cache[server_ip] = {
-                                "resp": svr, "invalid_at": now + 180
-                            }
+                            self._svr_cache[server_ip] = {"resp": svr, "invalid_at": now + 180}
                         else:
                             svr = self._svr_cache[server_ip]["resp"]
                         await message.edit(embed=get_server_embed(svr, server_ip))

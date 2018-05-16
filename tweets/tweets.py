@@ -15,17 +15,10 @@ from .menus import tweet_menu
 class Tweets:
     """Cog for displaying info from Twitter's API"""
     default_global = {
-        "consumer_key": None,
-        "consumer_secret": None,
-        "access_token": None,
-        "access_secret": None
+        "consumer_key": None, "consumer_secret": None, "access_token": None, "access_secret": None
     }
 
-    default_guild = {
-        "streams": [],
-        "ignorementions": False,
-        "channel": None
-    }
+    default_guild = {"streams": [], "ignorementions": False, "channel": None}
 
     def __init__(self, bot: Red):
         self.bot = bot
@@ -35,7 +28,7 @@ class Tweets:
         self.creds = None
         self.client = None
         self.bot.loop.create_task(self.get_creds_and_client())
-    
+
     async def __error(self, ctx, error):
         await ctx.send("Error in `{0.command.qualified_name}`:\n\n{1.original}".format(ctx, error))
 
@@ -53,8 +46,12 @@ class Tweets:
             cmd2.enabled = False
 
     async def get_client(self):
-        if self.creds["consumer_key"] is None or self.creds["consumer_secret"] is None or\
-                self.creds["access_token"] is None or self.creds["access_token_secret"] is None:
+        if (
+            self.creds["consumer_key"] is None
+            or self.creds["consumer_secret"] is None
+            or self.creds["access_token"] is None
+            or self.creds["access_token_secret"] is None
+        ):
             return None
         else:
             return PeonyClient(**self.creds)
@@ -64,33 +61,34 @@ class Tweets:
         consumer_secret = await self.config.consumer_secret()
         access_token = await self.config.access_token()
         access_secret = await self.config.access_secret()
-        if not consumer_key or not consumer_secret or not access_token\
-                or not access_secret:
+        if not consumer_key or not consumer_secret or not access_token or not access_secret:
             return None
         return {
             "consumer_key": consumer_key,
             "consumer_secret": consumer_secret,
             "access_token": access_token,
-            "access_token_secret": access_secret
+            "access_token_secret": access_secret,
         }
 
-    @commands.command(name='getuser')
+    @commands.command(name="getuser")
     async def get_user(self, ctx: commands.Context, username: str):
         """Get info about the specified user"""
         message = ""
         if self.client is None:
-            raise NoClientException("Have you set the access credentials with `[p]tweetset creds`?")
+            raise NoClientException(
+                "Have you set the access credentials with `[p]tweetset creds`?"
+            )
         user = await self.client.api.users.show.get(screen_name=username)
 
-        colour =\
-            ''.join([randchoice('0123456789ABCDEF')
-                 for x in range(6)])
+        colour = "".join([randchoice("0123456789ABCDEF") for x in range(6)])
         colour = int(colour, 16)
         url = "https://twitter.com/" + user.screen_name
-        emb = discord.Embed(title=user.name,
-                            colour=discord.Colour(value=colour),
-                            url=url,
-                            description=user.description)
+        emb = discord.Embed(
+            title=user.name,
+            colour=discord.Colour(value=colour),
+            url=url,
+            description=user.description,
+        )
         emb.set_thumbnail(url=user.profile_image_url)
         emb.add_field(name="Followers", value=user.followers_count)
         emb.add_field(name="Friends", value=user.friends_count)
@@ -102,14 +100,16 @@ class Tweets:
         emb.set_footer(text=footer)
         await ctx.send(embed=emb)
 
-    @commands.command(name='gettweets')
-    async def get_tweets(self, ctx: commands.Context, username: str, count: int=5):
+    @commands.command(name="gettweets")
+    async def get_tweets(self, ctx: commands.Context, username: str, count: int = 5):
         """Gets the specified number of tweets for the specified username"""
         if count > 25:
             count = 25
         elif count < 1:
-            await ctx.send("I can't do that, silly! Please specify a \
-                number greater than or equal to 1")
+            await ctx.send(
+                "I can't do that, silly! Please specify a \
+                number greater than or equal to 1"
+            )
             return
 
         msg_list = await self.client.api.statuses.user_timeline.get(
@@ -121,7 +121,7 @@ class Tweets:
         else:
             await ctx.send("No tweets available to display!")
 
-    @commands.group(name='tweetset')
+    @commands.group(name="tweetset")
     @checks.admin_or_permissions(manage_guild=True)
     async def _tweetset(self, ctx):
         """Command for setting required access information for the API."""
@@ -134,9 +134,16 @@ class Tweets:
                 "'Create my access token' and click that."
             )
 
-    @_tweetset.command(name='creds')
+    @_tweetset.command(name="creds")
     @checks.is_owner()
-    async def set_creds(self, ctx: commands.Context, consumer_key: str, consumer_secret: str, access_token: str, access_secret: str):
+    async def set_creds(
+        self,
+        ctx: commands.Context,
+        consumer_key: str,
+        consumer_secret: str,
+        access_token: str,
+        access_secret: str,
+    ):
         """Sets the access credentials. See [p]help tweetset for instructions on getting these"""
         await self.config.consumer_key.set(consumer_key)
         await self.config.consumer_secret.set(consumer_secret)
@@ -146,7 +153,7 @@ class Tweets:
         # Attempt to get the client going after setting creds
         self.creds = await self.get_creds()
         self.client = self.get_client()
-        await ctx.send('Set the access credentials!')
+        await ctx.send("Set the access credentials!")
         try:
             await ctx.message.delete()
         except discord.Forbidden:

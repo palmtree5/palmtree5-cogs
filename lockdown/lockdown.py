@@ -25,18 +25,12 @@ class Lockdown:
     available as this cog depends on using roles to run a lockdown.
     """
 
-    default_guild = {
-        "profiles": {},
-        "next_profile_id": 1,
-        "current_lockdown_role_id": 0
-    }
+    default_guild = {"profiles": {}, "next_profile_id": 1, "current_lockdown_role_id": 0}
 
     def __init__(self):
-        self.settings = Config.get_conf(
-            self, identifier=59595922, force_registration=True
-        )
+        self.settings = Config.get_conf(self, identifier=59595922, force_registration=True)
         self.settings.register_guild(**self.default_guild)
-    
+
     @commands.command()
     @commands.guild_only()
     @checks.mod_or_permissions(manage_messages=True)
@@ -69,9 +63,7 @@ class Lockdown:
         await self.settings.guild(ctx.guild).current_lockdown_role_id.set(role.id)
         await ctx.send(
             "Server is locked down. You can unlock the server by doing "
-            "{}unlockdown".format(
-                ctx.prefix
-            )
+            "{}unlockdown".format(ctx.prefix)
         )
 
     @commands.command()
@@ -97,7 +89,7 @@ class Lockdown:
                 return
         await self.settings.guild(guild).current_lockdown_role_id.set(0)
         await ctx.send("Server has been unlocked!")
-    
+
     @commands.group()
     @commands.guild_only()
     @checks.mod_or_permissions(manage_roles=True)
@@ -145,9 +137,7 @@ class Lockdown:
         next_id = await self.settings.guild(ctx.guild).next_profile_id()
         await self.settings.guild(ctx.guild).profiles.set_raw(next_id, value=role.id)
         await self.settings.guild(ctx.guild).next_profile_id.set(next_id + 1)
-        await ctx.send(
-            "Profile {} added for role {}".format(next_id, role)
-        )
+        await ctx.send("Profile {} added for role {}".format(next_id, role))
 
     @lockdownset.command(name="removeprofile")
     @checks.admin_or_permissions(manage_guild=True)

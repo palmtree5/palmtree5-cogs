@@ -9,7 +9,13 @@ from redbot.core.bot import Red
 from redbot.core.utils.chat_formatting import pagify, warning
 from redbot.core.i18n import Translator
 
-from .helpers import parse_time, allowed_to_create, get_event_embed, allowed_to_edit, check_event_start
+from .helpers import (
+    parse_time,
+    allowed_to_create,
+    get_event_embed,
+    allowed_to_edit,
+    check_event_start,
+)
 from .menus import event_menu
 
 _ = Translator("EventMaker", __file__)
@@ -23,16 +29,9 @@ class EventMaker:
     the hierarchy or be the server owner to create events.
     """
 
-    default_guild = {
-        "events": [],
-        "min_role": 0,
-        "next_available_id": 1,
-        "channel": 0
-    }
+    default_guild = {"events": [], "min_role": 0, "next_available_id": 1, "channel": 0}
 
-    default_member = {
-        "dms": False
-    }
+    default_member = {"dms": False}
 
     def __init__(self, bot: Red):
         self.bot = bot
@@ -69,16 +68,15 @@ class EventMaker:
 
         creation_time = ctx.message.created_at.timestamp()
         await ctx.send(_("Enter a name for the event: "))
-        
+
         def same_author_check(msg):
             return msg.author == author
-        
+
         msg = await self.bot.wait_for("message", check=same_author_check)
         name = msg.content
         if len(name) > 256:
             await ctx.send(
-                _("That name is too long! Event names "
-                  "must be 256 charcters or less.")
+                _("That name is too long! Event names " "must be 256 charcters or less.")
             )
             return
         await ctx.send(
@@ -106,7 +104,7 @@ class EventMaker:
             "event_start_time": start_time,
             "description": desc,
             "has_started": False,
-            "participants": [author.id]
+            "participants": [author.id],
         }
         async with self.settings.guild(guild).events() as event_list:
             event_list.append(new_event)
@@ -124,7 +122,7 @@ class EventMaker:
                     to_join = event
                     event_list.remove(event)
                     break
-            
+
             if not to_join["has_started"]:
                 if ctx.author.id not in to_join["participants"]:
                     to_join["participants"].append(ctx.author.id)
@@ -148,7 +146,7 @@ class EventMaker:
                     to_leave = event
                     event_list.remove(event)
                     break
-            
+
             if not to_leave["has_started"]:
                 if ctx.author.id in to_leave["participants"]:
                     to_leave["participants"].remove(ctx.author.id)
@@ -159,7 +157,7 @@ class EventMaker:
                     await ctx.send("You are not part of that event!")
 
     @event.command(name="list")
-    async def event_list(self, ctx: commands.Context, started: bool=False):
+    async def event_list(self, ctx: commands.Context, started: bool = False):
         """List events for this server that have not started yet
 
         If `started` is True, include events that have already started"""
@@ -189,9 +187,13 @@ class EventMaker:
                 if event["id"] == event_id:
                     to_list = event
                     break
-            
+
             participants = "Participants:\n\n"
-            mbr_list = ["{}".format(guild.get_member(uid)) for uid in to_list["participants"] if guild.get_member(uid)]
+            mbr_list = [
+                "{}".format(guild.get_member(uid))
+                for uid in to_list["participants"]
+                if guild.get_member(uid)
+            ]
             participants += "\n".join(mbr_list)
             if len(participants) < 2000:
                 await ctx.send(participants)
@@ -223,7 +225,7 @@ class EventMaker:
 
     @eventset.command(name="toggledms")
     @commands.guild_only()
-    async def eventset_toggledms(self, ctx: commands.Context, user: discord.Member=None):
+    async def eventset_toggledms(self, ctx: commands.Context, user: discord.Member = None):
         """
         Toggles event start announcement DMs for the specified user
 
@@ -245,7 +247,7 @@ class EventMaker:
 
     @eventset.command(name="role")
     @checks.admin_or_permissions(manage_guild=True)
-    async def eventset_role(self, ctx: commands.Context, *, role: discord.Role=None):
+    async def eventset_role(self, ctx: commands.Context, *, role: discord.Role = None):
         """Set the minimum role required to create events.
 
         Default is for everyone to be able to create events"""
@@ -259,15 +261,17 @@ class EventMaker:
 
     @eventset.command(name="resetevents")
     @checks.guildowner_or_permissions(administrator=True)
-    async def eventset_resetevents(self, ctx: commands.Context, confirm: str=None):
+    async def eventset_resetevents(self, ctx: commands.Context, confirm: str = None):
         """
         Resets the events list for this guild
         """
         if confirm is None or confirm.lower() != "yes":
             await ctx.send(
-                warning("This will remove all events for this guild! "
-                        "This cannot be undone! To confirm, type "
-                        "`{}eventset resetevents yes`".format(ctx.prefix))
+                warning(
+                    "This will remove all events for this guild! "
+                    "This cannot be undone! To confirm, type "
+                    "`{}eventset resetevents yes`".format(ctx.prefix)
+                )
             )
         else:
             await self.settings.guild(ctx.guild).events.set([])

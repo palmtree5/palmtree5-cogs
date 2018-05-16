@@ -10,19 +10,13 @@ from redbot.core.utils.chat_formatting import bold
 class SlowMode:
     """A slowmode cog for Red V3"""
 
-    default_channel = {
-        "time": 0
-    }
+    default_channel = {"time": 0}
 
-    default_guild = {
-        "min_exempt_role": 0
-    }
+    default_guild = {"min_exempt_role": 0}
 
     def __init__(self, bot: Red):
         self.bot = bot
-        self.settings = Config.get_conf(
-            self, identifier=59595922, force_registration=True
-        )
+        self.settings = Config.get_conf(self, identifier=59595922, force_registration=True)
         self.settings.register_channel(**self.default_channel)
         self.settings.register_guild(**self.default_guild)
         self.msg_sender_cache = {}
@@ -30,7 +24,7 @@ class SlowMode:
     @checks.mod_or_permissions(manage_messages=True)
     @commands.guild_only()
     @commands.command()
-    async def toggleslow(self, ctx: commands.Context, time: int=0):
+    async def toggleslow(self, ctx: commands.Context, time: int = 0):
         """
         Slow the chat
 
@@ -62,13 +56,7 @@ class SlowMode:
                 )
             )
         else:
-            await ctx.send(
-                bold(
-                    "Slow mode has been disabled for {0.mention}".format(
-                        ctx.channel
-                    )
-                )
-            )
+            await ctx.send(bold("Slow mode has been disabled for {0.mention}".format(ctx.channel)))
 
     @commands.group()
     @commands.guild_only()
@@ -100,8 +88,7 @@ class SlowMode:
             return
         minimum_role_id = await self.settings.guild(message.guild).min_exempt_role()
         if minimum_role_id == 0:
-            if await self.bot.is_mod(message.author) or \
-                    message.author == message.guild.owner:
+            if await self.bot.is_mod(message.author) or message.author == message.guild.owner:
                 return
         role = discord.utils.get(message.guild.roles, id=minimum_role_id)
         if message.author.top_role >= role or message.author == message.guild.owner:

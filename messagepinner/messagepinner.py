@@ -10,20 +10,16 @@ _ = Translator("MessagePinner", __file__)
 class MessagePinner:
     """Pins messages based on configured text"""
 
-    default_channel = {
-        "text": ""
-    }
+    default_channel = {"text": ""}
 
     def __init__(self):
-        self.settings = Config.get_conf(
-            self, identifier=59595922, force_registration=True
-        )
+        self.settings = Config.get_conf(self, identifier=59595922, force_registration=True)
         self.settings.register_channel(**self.default_channel)
 
     @checks.mod_or_permissions(manage_messages=True)
     @commands.command()
     @commands.guild_only()
-    async def pintrigger(self, ctx: commands.Context, *, text: str=None):
+    async def pintrigger(self, ctx: commands.Context, *, text: str = None):
         """Sets the pin trigger for the current channel"""
         if text is None:
             await self.settings.channel(ctx.channel).text.set("")
@@ -51,6 +47,5 @@ class MessagePinner:
                     print("That channel or message doesn't exist!")
                 except discord.HTTPException:
                     await message.channel.send(
-                        "Something went wrong. Maybe "
-                        "check the number of pinned messages?"
+                        "Something went wrong. Maybe " "check the number of pinned messages?"
                     )

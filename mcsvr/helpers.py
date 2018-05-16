@@ -10,9 +10,28 @@ from mcstatus import MinecraftServer
 log = logging.getLogger("red.mcsvr")
 
 MC_FORMATTING_CODES = [
-    "§0", "§1", "§2", "§3", "§4", "§5", "§6", "§7", "§8", "§9",
-    "§a", "§b", "§c", "§d", "§e", "§f", "§k", "§l", "§m", "§n",
-    "§o", "§r"
+    "§0",
+    "§1",
+    "§2",
+    "§3",
+    "§4",
+    "§5",
+    "§6",
+    "§7",
+    "§8",
+    "§9",
+    "§a",
+    "§b",
+    "§c",
+    "§d",
+    "§e",
+    "§f",
+    "§k",
+    "§l",
+    "§m",
+    "§n",
+    "§o",
+    "§r",
 ]
 
 
@@ -104,9 +123,7 @@ def get_server_string(mc_server, server_ip):
 
 def get_server_embed(mc_server, server_ip):
     if mc_server is None:
-        emb = discord.Embed(
-            title="Server info for {}".format(server_ip)
-        )
+        emb = discord.Embed(title="Server info for {}".format(server_ip))
         emb.add_field(name="Online", value="No")
         return emb
     else:
@@ -122,18 +139,11 @@ def get_server_embed(mc_server, server_ip):
             version = mc_server.version.name
         online_count = mc_server.players.online
         max_count = mc_server.players.max
-        emb = discord.Embed(
-            title="Server info for {}".format(server_ip)
-        )
+        emb = discord.Embed(title="Server info for {}".format(server_ip))
         emb.add_field(name="Online", value="Yes")
-        emb.add_field(
-            name="Online count",
-            value="{}/{}".format(online_count, max_count)
-        )
+        emb.add_field(name="Online count", value="{}/{}".format(online_count, max_count))
         if players:
-            emb.set_footer(
-                text="Players online: {}".format(", ".join(players))
-            )
+            emb.set_footer(text="Players online: {}".format(", ".join(players)))
         emb.add_field(name="Version", value=version)
         if brand:
             emb.add_field(name="Type", value=brand)

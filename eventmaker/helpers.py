@@ -16,6 +16,7 @@ async def allowed_to_edit(ctx: commands.Context, event: dict) -> bool:
 
 
 def allowed_to_create():
+
     async def pred(ctx):
         min_role_id = await ctx.cog.settings.guild(ctx.guild).min_role()
         if min_role_id == 0:
@@ -30,6 +31,7 @@ def allowed_to_create():
             return True
         else:
             return False
+
     return commands.check(pred)
 
 
@@ -52,18 +54,12 @@ async def check_event_start(channel: discord.TextChannel, event: dict, config: C
 
 
 def get_event_embed(guild: discord.Guild, now: dt, event: dict) -> discord.Embed:
-    emb = discord.Embed(
-        title=event["event_name"],
-        description=event["description"],
-    )
-    emb.add_field(name="Created by",
-                  value=guild.get_member(event["creator"])
-                  )
+    emb = discord.Embed(title=event["event_name"], description=event["description"])
+    emb.add_field(name="Created by", value=guild.get_member(event["creator"]))
 
     created_delta_str = get_delta_str(dt.utcfromtimestamp(event["create_time"]), now)
     created_str = "{} ago (at {} UTC)".format(
-        created_delta_str,
-        dt.utcfromtimestamp(event["create_time"]).strftime("%Y-%m-%d %H:%M:%S")
+        created_delta_str, dt.utcfromtimestamp(event["create_time"]).strftime("%Y-%m-%d %H:%M:%S")
     )
 
     start_delta_str = get_delta_str(now, dt.utcfromtimestamp(event["event_start_time"]))
@@ -72,13 +68,12 @@ def get_event_embed(guild: discord.Guild, now: dt, event: dict) -> discord.Embed
     else:
         start_str = "In {} (at {} UTC)".format(
             start_delta_str,
-            dt.utcfromtimestamp(event["event_start_time"]).strftime("%Y-%m-%d %H:%M:%S"))
+            dt.utcfromtimestamp(event["event_start_time"]).strftime("%Y-%m-%d %H:%M:%S"),
+        )
     emb.add_field(name="Created", value=created_str, inline=False)
     emb.add_field(name="Starts", value=start_str, inline=False)
     emb.add_field(name="Event ID", value=str(event["id"]))
-    emb.add_field(
-        name="Participant count", value=str(len(event["participants"]))
-    )
+    emb.add_field(name="Participant count", value=str(len(event["participants"])))
     return emb
 
 

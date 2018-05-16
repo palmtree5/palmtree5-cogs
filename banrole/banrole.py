@@ -9,9 +9,7 @@ class BanRole:
     Ban and unban by role
     """
 
-    default_role = {
-        "banned_members": []
-    }
+    default_role = {"banned_members": []}
 
     def __init__(self):
         self.config = Config.get_conf(self, identifier=59595922, force_registration=True)
@@ -31,11 +29,7 @@ class BanRole:
                 try:
                     await ctx.guild.ban(member)
                 except discord.Forbidden:
-                    failure_list.append(
-                        "{0.name}#{0.discriminator} (id {0.id})".format(
-                            member
-                        )
-                    )
+                    failure_list.append("{0.name}#{0.discriminator} (id {0.id})".format(member))
                 else:
                     banned_list.append(member.id)
         if failure_list:

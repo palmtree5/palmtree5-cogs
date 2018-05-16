@@ -27,22 +27,11 @@ REDDIT_OAUTH_API_ROOT = "https://oauth.reddit.com{}"
 class Reddit:
     """Cog for getting things from Reddit's API"""
 
-    default_global = {
-        "client_id": "",
-        "client_secret": "",
-        "username": "",
-        "password": ""
-    }
+    default_global = {"client_id": "", "client_secret": "", "username": "", "password": ""}
 
-    default_guild = {
-        "modmail_channels": [],
-        "posts_channels": []
-    }
+    default_guild = {"modmail_channels": [], "posts_channels": []}
 
-    default_channel = {
-        "modmail": {},
-        "subreddits": {}
-    }
+    default_channel = {"modmail": {}, "subreddits": {}}
 
     def __init__(self, bot: Red):
         self.bot = bot
@@ -68,7 +57,9 @@ class Reddit:
             self.session.close()
 
     async def __error(self, ctx, error):
-        await ctx.send(_("Error in command {0.command.qualified_name}:\n\n{1.original}").format(ctx, error))
+        await ctx.send(
+            _("Error in command {0.command.qualified_name}:\n\n{1.original}").format(ctx, error)
+        )
 
     @commands.command(name="reddituser")
     async def _user(self, ctx: commands.Context, username: str):
@@ -89,9 +80,11 @@ class Reddit:
         resp_json = resp_json["data"]
         created_at = dt.utcfromtimestamp(resp_json["created_utc"])
         desc = "Created at " + created_at.strftime("%m/%d/%Y %H:%M:%S")
-        em = discord.Embed(title=resp_json["name"],
-                           url="https://reddit.com/u/" + resp_json["name"],
-                           description=desc)
+        em = discord.Embed(
+            title=resp_json["name"],
+            url="https://reddit.com/u/" + resp_json["name"],
+            description=desc,
+        )
         em = randomize_colour(em)
         em.add_field(name="Comment karma", value=resp_json["comment_karma"])
         em.add_field(name="Link karma", value=resp_json["link_karma"])
@@ -129,9 +122,11 @@ class Reddit:
             return
         resp_json = resp_json["data"]
         created_at = resp_json["created_at"].strftime("%m/%d/%Y %H:%M:%S")
-        em = discord.Embed(title=resp_json["url"],
-                           url="https://reddit.com" + resp_json["url"],
-                           description=resp_json["header_title"])
+        em = discord.Embed(
+            title=resp_json["url"],
+            url="https://reddit.com" + resp_json["url"],
+            description=resp_json["header_title"],
+        )
         em = randomize_colour(em)
         em.add_field(name="Title", value=resp_json["title"])
         em.add_field(name="Created at", value=created_at)
@@ -144,7 +139,7 @@ class Reddit:
         await ctx.send(embed=em)
 
     @_subreddit.command(name="hot")
-    async def subreddit_hot(self, ctx: commands.Context, subreddit: str, post_count: int=3):
+    async def subreddit_hot(self, ctx: commands.Context, subreddit: str, post_count: int = 3):
         """Command for getting subreddit's hot posts"""
         if post_count <= 0 or post_count > 100:
             await ctx.send("Sorry, I can't do that")
@@ -153,7 +148,9 @@ class Reddit:
             data = {"limit": post_count}
             headers = await self.get_headers()
             try:
-                resp_json = await make_request(self.session, "GET", url, headers=headers, params=data)
+                resp_json = await make_request(
+                    self.session, "GET", url, headers=headers, params=data
+                )
             except NotFoundError as e:
                 await ctx.send(str(e))
                 return
@@ -167,7 +164,7 @@ class Reddit:
             await post_menu(ctx, resp_json, page=0, timeout=30)
 
     @_subreddit.command(name="new")
-    async def subreddit_new(self, ctx: commands.Context, subreddit: str, post_count: int=3):
+    async def subreddit_new(self, ctx: commands.Context, subreddit: str, post_count: int = 3):
         """Command for getting subreddit's new posts"""
         if post_count <= 0 or post_count > 100:
             await ctx.send("Sorry, I can't do that")
@@ -176,7 +173,9 @@ class Reddit:
             data = {"limit": post_count}
             headers = await self.get_headers()
             try:
-                resp_json = await make_request(self.session, "GET", url, headers=headers, params=data)
+                resp_json = await make_request(
+                    self.session, "GET", url, headers=headers, params=data
+                )
             except NotFoundError as e:
                 await ctx.send(str(e))
                 return
@@ -190,7 +189,7 @@ class Reddit:
             await post_menu(ctx, resp_json, page=0, timeout=30)
 
     @_subreddit.command(name="top")
-    async def subreddit_top(self, ctx: commands.Context, subreddit: str, post_count: int=3):
+    async def subreddit_top(self, ctx: commands.Context, subreddit: str, post_count: int = 3):
         """Command for getting subreddit's top posts"""
         if post_count <= 0 or post_count > 100:
             await ctx.send("Sorry, I can't do that")
@@ -199,7 +198,9 @@ class Reddit:
             data = {"limit": post_count}
             headers = await self.get_headers()
             try:
-                resp_json = await make_request(self.session, "GET", url, headers=headers, params=data)
+                resp_json = await make_request(
+                    self.session, "GET", url, headers=headers, params=data
+                )
             except NotFoundError as e:
                 await ctx.send(str(e))
                 return
@@ -213,8 +214,9 @@ class Reddit:
             await post_menu(ctx, resp_json, page=0, timeout=30)
 
     @_subreddit.command(name="controversial")
-    async def subreddit_controversial(self, ctx: commands.Context, subreddit: str,
-                                      post_count: int=3):
+    async def subreddit_controversial(
+        self, ctx: commands.Context, subreddit: str, post_count: int = 3
+    ):
         """Command for getting subreddit's controversial posts"""
         if post_count <= 0 or post_count > 100:
             await ctx.send("Sorry, I can't do that")
@@ -223,7 +225,9 @@ class Reddit:
             data = {"limit": post_count}
             headers = await self.get_headers()
             try:
-                resp_json = await make_request(self.session, "GET", url, headers=headers, params=data)
+                resp_json = await make_request(
+                    self.session, "GET", url, headers=headers, params=data
+                )
             except NotFoundError as e:
                 await ctx.send(str(e))
                 return
@@ -247,11 +251,7 @@ class Reddit:
         async with self.settings.channel(ctx.channel).subreddits() as subreddits:
             if subreddit in subreddits:
                 del subreddits[subreddit]
-                await ctx.send(
-                    _("Removed automatic posting of posts from {}").format(
-                        subreddit
-                    )
-                )
+                await ctx.send(_("Removed automatic posting of posts from {}").format(subreddit))
                 removed = True
         if removed:
             async with self.settings.guild(ctx.guild).posts_channels() as posts_channels:
@@ -301,16 +301,21 @@ class Reddit:
 
     @checks.admin_or_permissions(manage_guild=True)
     @modmail.command(name="enable")
-    async def enable_modmail(self, ctx: commands.Context, subreddit: str,
-                             channel: discord.TextChannel):
+    async def enable_modmail(
+        self, ctx: commands.Context, subreddit: str, channel: discord.TextChannel
+    ):
         """Enable posting modmail to the specified channel"""
         guild = ctx.guild
 
-        await ctx.send(_(
-            "WARNING: Anybody with access to {0.mention} will be able to see "
-            "your subreddit's modmail messages. Therefore you should make "
-            "sure that only your subreddit mods have access to that channel"
-            "").format(channel)
+        await ctx.send(
+            _(
+                "WARNING: Anybody with access to {0.mention} will be able to see "
+                "your subreddit's modmail messages. Therefore you should make "
+                "sure that only your subreddit mods have access to that channel"
+                ""
+            ).format(
+                channel
+            )
         )
         await asyncio.sleep(5)
         url = REDDIT_OAUTH_API_ROOT.format("/r/{}/about".format(subreddit))
@@ -334,14 +339,13 @@ class Reddit:
                 mm_chns.append(channel.id)
             await ctx.send("Enabled modmail for " + subreddit)
         else:
-            await ctx.send(
-                "I'm sorry, this user does not appear "
-                "to be a mod of that subreddit"
-            )
+            await ctx.send("I'm sorry, this user does not appear " "to be a mod of that subreddit")
 
     @checks.admin_or_permissions(manage_guild=True)
     @modmail.command(name="disable")
-    async def disable_modmail(self, ctx: commands.Context, subreddit: str, channel: discord.TextChannel):
+    async def disable_modmail(
+        self, ctx: commands.Context, subreddit: str, channel: discord.TextChannel
+    ):
         """Disable modmail posting to discord"""
         async with self.settings.channel(channel).modmail() as mm:
             try:
@@ -363,9 +367,14 @@ class Reddit:
     @checks.is_owner()
     @private_only()
     @_redditset.command(name="credentials", aliases=["creds"])
-    async def set_creds(self, ctx: commands.Context, client_id: str, 
-                        client_secret: str, username: str, 
-                        password: str):
+    async def set_creds(
+        self,
+        ctx: commands.Context,
+        client_id: str,
+        client_secret: str,
+        username: str,
+        password: str,
+    ):
         """
         Sets the credentials needed to access Reddit's API
 
@@ -398,8 +407,7 @@ class Reddit:
             raise NoAccessTokenError("Have you set the credentials with `[p]redditset creds`?")
         user_agent = "Red-DiscordBotRedditCog/0.1 by /u/palmtree5"
         headers = {
-            "Authorization": "bearer {}".format(self.access_token),
-            "User-Agent": user_agent
+            "Authorization": "bearer {}".format(self.access_token), "User-Agent": user_agent
         }
         return headers
 
@@ -409,19 +417,17 @@ class Reddit:
         username = await self.settings.username()
         password = await self.settings.password()
         if client_id and client_secret and username and password:
-            auth = aiohttp.helpers.BasicAuth(
-                client_id,
-                password=client_secret
-            )
-            post_data = {
-                "grant_type": "password",
-                "username": username,
-                "password": password
-            }
+            auth = aiohttp.helpers.BasicAuth(client_id, password=client_secret)
+            post_data = {"grant_type": "password", "username": username, "password": password}
             headers = {"User-Agent": "Red-DiscordBotRedditCog/0.1 by /u/palmtree5"}
             response = await make_request(
-                self.session, "POST", REDDIT_ACCESSTOKEN_URL,
-                headers=headers, data=post_data, auth=auth)
+                self.session,
+                "POST",
+                REDDIT_ACCESSTOKEN_URL,
+                headers=headers,
+                data=post_data,
+                auth=auth,
+            )
             if "error" in response:  # Something went wrong in the process
                 owner = await self.bot.get_user_info(self.bot.owner_id)
                 try:
@@ -488,9 +494,11 @@ class Reddit:
             for ch_id, data in channels.items():
                 channel = self.bot.get_channel(ch_id)
                 for subreddit, last_name in data["subreddits"].items():
-                    if not self.token_expiration_time or\
-                            self.token_expiration_time - dt.utcnow().timestamp() <= 60:
-                        await self.get_access_token() 
+                    if (
+                        not self.token_expiration_time
+                        or self.token_expiration_time - dt.utcnow().timestamp() <= 60
+                    ):
+                        await self.get_access_token()
                     new_name = await get_subreddit_posts(
                         self, REDDIT_OAUTH_API_ROOT, channel, subreddit, last_name
                     )

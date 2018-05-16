@@ -5,8 +5,7 @@ from datetime import timedelta
 
 import discord
 from aiopixel import PixelClient
-from aiopixel.exceptions import GuildNotFound, PlayerNotInGuild, \
-    PlayerNotFound, NoSessionForPlayer
+from aiopixel.exceptions import GuildNotFound, PlayerNotInGuild, PlayerNotFound, NoSessionForPlayer
 from aiopixel.gametypes import GameType
 from aiopixel.utils import get_player_uuid
 from discord.ext import commands
@@ -16,8 +15,7 @@ from redbot.core.i18n import Translator
 from redbot.core.utils.embed import randomize_colour
 from redbot.core.utils.menus import DEFAULT_CONTROLS, menu
 
-from .helpers import get_booster_embed, \
-    get_friend_embed, get_guild_embed, get_player_embed
+from .helpers import get_booster_embed, get_friend_embed, get_guild_embed, get_player_embed
 
 _ = Translator("Hpapi", __file__)
 
@@ -26,21 +24,13 @@ log = logging.getLogger("palmtree5.cogs.hpapi")
 
 class Hpapi:
     """Cog for getting info from Hypixel's API"""
-    default_global = {
-        "api_key": "",
-        "known_guilds": []
-    }
+    default_global = {"api_key": "", "known_guilds": []}
 
-    default_channel = {
-        "guild_id": "",
-        "message": 0
-    }
+    default_channel = {"guild_id": "", "message": 0}
 
     def __init__(self, bot: Red):
         self.bot = bot
-        self.settings = Config.get_conf(
-            self, identifier=59595922, force_registration=True
-        )
+        self.settings = Config.get_conf(self, identifier=59595922, force_registration=True)
         self.settings.register_global(**self.default_global)
         self.settings.register_channel(**self.default_channel)
         loop = asyncio.get_event_loop()
@@ -82,7 +72,7 @@ class Hpapi:
             guild_track_cmd = self.bot.get_command("hpset guild")
             guild_track_cmd.enabled = False
             log.info("Starting weekly guild update")
-            if self.api_client is not None:  
+            if self.api_client is not None:
                 async with self.settings.known_guilds() as known_guilds:
                     tmp = known_guilds
                     for g in tmp:
@@ -92,12 +82,11 @@ class Hpapi:
                         except GuildNotFound:
                             data = g
                         else:
-                            data = {
-                                "id": guild.id,
-                                "members": [x.uuid for x in guild.members]
-                            }
+                            data = {"id": guild.id, "members": [x.uuid for x in guild.members]}
                         known_guilds.append(data)
-                        await asyncio.sleep(1)  # allow 1 request per second, to avoid hitting the ratelimit
+                        await asyncio.sleep(
+                            1
+                        )  # allow 1 request per second, to avoid hitting the ratelimit
             com.enabled = True  # Done, so reenable the commands
             guild_track_cmd.enabled = True
             log.info("Weekly log update complete")
@@ -107,7 +96,7 @@ class Hpapi:
         pass
 
     # End Section: Load and update
-    
+
     @commands.group()
     @checks.mod_or_permissions(manage_channel=True)
     async def hpset(self, ctx: commands.Context):
@@ -116,10 +105,14 @@ class Hpapi:
             await ctx.send_help()
 
     @hpset.command(name="guild")
-    async def hpset_guild(self, ctx: commands.Context, player_name: str, channel: discord.TextChannel):
+    async def hpset_guild(
+        self, ctx: commands.Context, player_name: str, channel: discord.TextChannel
+    ):
         """Sets the guild to track in the specified channel"""
         if not self.api_client:
-            await ctx.send(_("No api key available! Use `{}` to set one!").format("[p]hpset apikey"))
+            await ctx.send(
+                _("No api key available! Use `{}` to set one!").format("[p]hpset apikey")
+            )
             return
         add_to_known = False
         uuid = await get_player_uuid(player_name, self.api_client._session)
@@ -131,8 +124,7 @@ class Hpapi:
             try:
                 guild_id = await self.api_client.find_guild_by_uuid(uuid)
             except PlayerNotInGuild:
-                await ctx.send("The specified player does not appear to "
-                               "be in a guild")
+                await ctx.send("The specified player does not appear to " "be in a guild")
                 return
             else:
                 add_to_known = True
@@ -141,10 +133,7 @@ class Hpapi:
         em = randomize_colour(em)
         msg = await ctx.send(embed=em)
         if add_to_known:  # add to list of known guilds to cut lookups.
-            data_to_add = {
-                "id": guild_id,
-                "members": [x.uuid for x in guild.members]
-            }
+            data_to_add = {"id": guild_id, "members": [x.uuid for x in guild.members]}
             async with self.settings.known_guilds() as known:
                 known.append(data_to_add)
         await self.settings.channel(channel).guild_id.set(guild_id)
@@ -159,14 +148,16 @@ class Hpapi:
         (mc.hypixel.net in MC 1.8-1.12.2) 
         and doing /api"""
         await self.settings.api_key.set(key)
-        await ctx.send(_('API key set!'))
+        await ctx.send(_("API key set!"))
         await self.check_api_key()
         try:
             await ctx.message.delete()
         except discord.Forbidden:
             await ctx.send(
-                _("I tried to remove the command message for security reasons "
-                  "but I don't have the necessary permissions to do so!")
+                _(
+                    "I tried to remove the command message for security reasons "
+                    "but I don't have the necessary permissions to do so!"
+                )
             )
 
     @commands.group(name="hypixel", aliases=["hp"])
@@ -184,8 +175,7 @@ class Hpapi:
         """List all active boosters on the network"""
         if not self.api_client:
             await ctx.send(
-                _("No api key available! Use `{}` to set one!"
-                 ).format("[p]hpset apikey")
+                _("No api key available! Use `{}` to set one!").format("[p]hpset apikey")
             )
             return
         boosters = await self.api_client.boosters()
@@ -202,19 +192,20 @@ class Hpapi:
             await ctx.send(_("An error occurred in getting the data"))
 
     @hp.command()
-    async def gamebooster(self, ctx: commands.Context, *, game: str=None):
+    async def gamebooster(self, ctx: commands.Context, *, game: str = None):
         """
         Get the active booster for the specified game.
         """
         if not self.api_client:
-            await ctx.send(_("No api key available! Use `{}` to set one!").format("[p]hpset apikey"))
+            await ctx.send(
+                _("No api key available! Use `{}` to set one!").format("[p]hpset apikey")
+            )
             return
         game_type = GameType.from_clean_name(game)
         boosters = await self.api_client.boosters()
-        
+
         game_booster = discord.utils.find(
-            lambda x: x.length < x.original_length and x.game_type == game_type, 
-            boosters
+            lambda x: x.length < x.original_length and x.game_type == game_type, boosters
         )
         if game_booster:
             embed = await get_booster_embed(game_booster)
@@ -227,9 +218,11 @@ class Hpapi:
     async def hpplayer(self, ctx: commands.Context, name: str):
         """Show info for the specified player"""
         if self.api_client is None:
-            await ctx.send(_("No api key available! Use `{}` to set one!").format("[p]hpset apikey"))
+            await ctx.send(
+                _("No api key available! Use `{}` to set one!").format("[p]hpset apikey")
+            )
             return
-        
+
         try:
             player = await self.api_client.player_from_name(name)
         except PlayerNotFound:
@@ -243,14 +236,17 @@ class Hpapi:
     async def hpfriends(self, ctx, player_name: str):
         """List friends for the specified player"""
         if not self.api_client:
-            await ctx.send(_("No api key available! Use `{}` to set one!").format("[p]hpset apikey"))
+            await ctx.send(
+                _("No api key available! Use `{}` to set one!").format("[p]hpset apikey")
+            )
             return
         player_uuid = await get_player_uuid(player_name, self.api_client._session)
         friends = await self.api_client.friends(player_uuid)
         pages = []
         msg = await ctx.send(
             "Looking up friends for {}. This may take a while if the user has "
-            "a lot of users on their friends list".format(player_name))
+            "a lot of users on their friends list".format(player_name)
+        )
         async with ctx.channel.typing():
             # gives some indication that the command is working, because
             # this could take some time if the specified player has a lot
@@ -269,7 +265,9 @@ class Hpapi:
     async def hpguild(self, ctx, player_name: str):
         """Gets guild info based on the specified player"""
         if not self.api_client:
-            await ctx.send(_("No api key available! Use `{}` to set one!").format("[p]hpset apikey"))
+            await ctx.send(
+                _("No api key available! Use `{}` to set one!").format("[p]hpset apikey")
+            )
             return
         add_to_known = False
         uuid = await get_player_uuid(player_name, session=self.api_client._session)
@@ -281,8 +279,7 @@ class Hpapi:
             try:
                 guild_id = await self.api_client.find_guild_by_uuid(uuid)
             except PlayerNotInGuild:
-                await ctx.send(_("The specified player does not appear to "
-                                 "be in a guild"))
+                await ctx.send(_("The specified player does not appear to " "be in a guild"))
                 return
             else:
                 add_to_known = True
@@ -291,10 +288,7 @@ class Hpapi:
         em = randomize_colour(em)
         await ctx.send(embed=em)
         if add_to_known:  # add to list of known guilds to cut lookups.
-            data_to_add = {
-                "id": guild_id,
-                "members": [x.uuid for x in guild.members]
-            }
+            data_to_add = {"id": guild_id, "members": [x.uuid for x in guild.members]}
             async with self.settings.known_guilds() as known:
                 known.append(data_to_add)
 
@@ -302,20 +296,18 @@ class Hpapi:
     async def hpsession(self, ctx, player_name: str):
         """Shows player session status"""
         if not self.api_client:
-            await ctx.send(_("No api key available! Use `{}` to set one!").format("[p]hpset apikey"))
+            await ctx.send(
+                _("No api key available! Use `{}` to set one!").format("[p]hpset apikey")
+            )
         try:
             session = await self.api_client.session(
-                await get_player_uuid(
-                    player_name, session=self.api_client._session
-                )
+                await get_player_uuid(player_name, session=self.api_client._session)
             )
         except NoSessionForPlayer:
             await ctx.send(_("That player does not appear to have a session!"))
         else:
             await ctx.send(
                 _("{} is online in {}. There are {} players there").format(
-                    player_name,
-                    session.server,
-                    len(session.players)
+                    player_name, session.server, len(session.players)
                 )
             )

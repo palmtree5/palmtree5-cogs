@@ -4,34 +4,30 @@ from redbot.core.context import commands
 from redbot.core.utils.embed import randomize_colour
 
 
-numbs = {
-    "next": "➡",
-    "back": "⬅",
-    "exit": "❌"
-}
+numbs = {"next": "➡", "back": "⬅", "exit": "❌"}
 
 
-async def tweet_menu(ctx: commands.Context, post_list: list,
-                     message: discord.Message=None,
-                     page=0, timeout: int=30):
+async def tweet_menu(
+    ctx: commands.Context,
+    post_list: list,
+    message: discord.Message = None,
+    page=0,
+    timeout: int = 30,
+):
     """menu control logic for this taken from
        https://github.com/Lunar-Dust/Dusty-Cogs/blob/master/menu/menu.py"""
     s = post_list[page]
     created_at = s.created_at
-    post_url =\
-        "https://twitter.com/{}/status/{}".format(s.user.screen_name, s.id)
+    post_url = "https://twitter.com/{}/status/{}".format(s.user.screen_name, s.id)
     desc = "Created at: {}".format(created_at)
-    em = discord.Embed(title="Tweet by {}".format(s.user.name),
-                       url=post_url,
-                       description=desc)
+    em = discord.Embed(title="Tweet by {}".format(s.user.name), url=post_url, description=desc)
     em = randomize_colour(em)
     em.add_field(name="Text", value=s.text)
     em.add_field(name="Retweet count", value=str(s.retweet_count))
     if hasattr(s, "extended_entities"):
         em.set_image(url=s.extended_entities["media"][0]["media_url"] + ":thumb")
     if not message:
-        message =\
-            await ctx.send(embed=em)
+        message = await ctx.send(embed=em)
         await message.add_reaction("⬅")
         await message.add_reaction("❌")
         await message.add_reaction("➡")
@@ -42,9 +38,7 @@ async def tweet_menu(ctx: commands.Context, post_list: list,
         return u == ctx.author and r.emoji in ["➡", "⬅", "❌"]
 
     try:
-        react, _ = await ctx.bot.wait_for(
-            "reaction_add", timeout=timeout, check=check_react
-        )
+        react, _ = await ctx.bot.wait_for("reaction_add", timeout=timeout, check=check_react)
     except asyncio.TimeoutError:
         try:
             await message.clear_reactions()
@@ -67,8 +61,7 @@ async def tweet_menu(ctx: commands.Context, post_list: list,
             next_page = 0  # Loop around to the first item
         else:
             next_page = page + 1
-        return await tweet_menu(ctx, post_list, message=message,
-                                page=next_page, timeout=timeout)
+        return await tweet_menu(ctx, post_list, message=message, page=next_page, timeout=timeout)
     elif react == "back":
         next_page = 0
         perms = message.channel.permissions_for(ctx.guild.me)
@@ -81,7 +74,6 @@ async def tweet_menu(ctx: commands.Context, post_list: list,
             next_page = len(post_list) - 1  # Loop around to the last item
         else:
             next_page = page - 1
-        return await tweet_menu(ctx, post_list, message=message,
-                                page=next_page, timeout=timeout)
+        return await tweet_menu(ctx, post_list, message=message, page=next_page, timeout=timeout)
     else:
         return await message.delete()

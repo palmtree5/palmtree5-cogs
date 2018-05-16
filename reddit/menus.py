@@ -5,21 +5,21 @@ from redbot.core import commands
 
 from .helpers import post_embed
 
-numbs = {
-    "next": "➡",
-    "back": "⬅",
-    "exit": "❌"
-}
+numbs = {"next": "➡", "back": "⬅", "exit": "❌"}
 
 
-async def post_menu(ctx: commands.Context, post_list: list,
-                    message: discord.Message = None,
-                    page=0, timeout: int = 30):
+async def post_menu(
+    ctx: commands.Context,
+    post_list: list,
+    message: discord.Message = None,
+    page=0,
+    timeout: int = 30,
+):
     """menu control logic for this taken from
        https://github.com/Lunar-Dust/Dusty-Cogs/blob/master/menu/menu.py"""
     s = post_list[page]
     em = post_embed(s, ctx.message.created_at)
-    
+
     if not message:
         message = await ctx.send(embed=em)
         await message.add_reaction("⬅")
@@ -32,11 +32,7 @@ async def post_menu(ctx: commands.Context, post_list: list,
         return u == ctx.author and str(r.emoji) in ["➡", "⬅", "❌"]
 
     try:
-        react, user = await ctx.bot.wait_for(
-            "reaction_add",
-            check=react_check,
-            timeout=timeout
-        )
+        react, user = await ctx.bot.wait_for("reaction_add", check=react_check, timeout=timeout)
     except asyncio.TimeoutError:
         try:
             await message.clear_reactions()
@@ -58,8 +54,7 @@ async def post_menu(ctx: commands.Context, post_list: list,
             next_page = 0  # Loop around to the first item
         else:
             next_page = page + 1
-        return await post_menu(ctx, post_list, message=message,
-                               page=next_page, timeout=timeout)
+        return await post_menu(ctx, post_list, message=message, page=next_page, timeout=timeout)
     elif react == "back":
         perms = message.channel.permissions_for(ctx.guild.me)
         if perms.manage_messages:  # Can manage messages, so remove react
@@ -71,7 +66,6 @@ async def post_menu(ctx: commands.Context, post_list: list,
             next_page = len(post_list) - 1  # Loop around to the last item
         else:
             next_page = page - 1
-        return await post_menu(ctx, post_list, message=message,
-                               page=next_page, timeout=timeout)
+        return await post_menu(ctx, post_list, message=message, page=next_page, timeout=timeout)
     else:
         return await message.delete()

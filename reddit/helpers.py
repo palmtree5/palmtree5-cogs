@@ -9,14 +9,16 @@ from reddit.errors import RedditAPIError, AccessForbiddenError, NotFoundError
 
 
 async def make_request(
-        session: aiohttp.ClientSession,
-        method: str, url: str,
-        headers: dict=None, data: dict=None,
-        params: dict=None,
-        auth: aiohttp.BasicAuth=None):
+    session: aiohttp.ClientSession,
+    method: str,
+    url: str,
+    headers: dict = None,
+    data: dict = None,
+    params: dict = None,
+    auth: aiohttp.BasicAuth = None,
+):
     async with session.request(
-            method, url, headers=headers, data=data, params=params,
-            auth=auth, allow_redirects=False
+        method, url, headers=headers, data=data, params=params, auth=auth, allow_redirects=False
     ) as resp:
         if resp.status == 403:
             raise AccessForbiddenError("I do not have access to that.")
@@ -25,9 +27,7 @@ async def make_request(
             # requirements, but the subreddit doesn't exist
             raise NotFoundError("That does not appear to exist.")
         elif resp.status != 200:
-            raise RedditAPIError(
-                "An error occurred. Status code: {}".format(resp.status)
-            )
+            raise RedditAPIError("An error occurred. Status code: {}".format(resp.status))
         return await resp.json()
 
 
@@ -38,38 +38,30 @@ def post_embed(data: dict, now: dt) -> discord.Embed:
         title = "[{}] {}".format(data["data"]["link_flair_text"], data["data"]["title"])
     else:
         title = data["data"]["title"]
-    em = discord.Embed(
-        title=title,
-        url=data["data"]["url"],
-        description=data["data"]["domain"]
-    )
+    em = discord.Embed(title=title, url=data["data"]["url"], description=data["data"]["domain"])
     em = randomize_colour(em)
     em.add_field(name="Author", value=data["data"]["author"])
     em.add_field(
         name="Created",
         value="{} ago (at {} UTC)".format(
             created_at_str, created_at.strftime("%Y-%m-%d %H:%M:%S")
-        )
+        ),
     )
     if data["data"]["stickied"]:
         em.add_field(name="Stickied", value="Yes")
     else:
         em.add_field(name="Stickied", value="No")
-    em.add_field(name="Comments",
-                 value=str(data["data"]["num_comments"]))
+    em.add_field(name="Comments", value=str(data["data"]["num_comments"]))
     return em
 
 
 async def get_modmail_messages(
-        cog, base_url: str, channel: discord.TextChannel, current_sub: dict):
-    url = base_url.format(
-        "/r/{}/about/message/inbox".format(
-            current_sub["subreddit"]
-        )
-    )
+    cog, base_url: str, channel: discord.TextChannel, current_sub: dict
+):
+    url = base_url.format("/r/{}/about/message/inbox".format(current_sub["subreddit"]))
     headers = {
         "Authorization": "bearer " + cog.access_token,
-        "User-Agent": "Red-DiscordBotRedditCog/0.1 by /u/palmtree5"
+        "User-Agent": "Red-DiscordBotRedditCog/0.1 by /u/palmtree5",
     }
     response = await make_request(cog.session, "GET", url, headers=headers)
     resp_json = response["data"]["children"]
@@ -79,12 +71,11 @@ async def get_modmail_messages(
             need_time_update = True
             created_at = dt.utcfromtimestamp(message["data"]["created_utc"])
             desc = "Created at " + created_at.strftime("%m/%d/%Y %H:%M:%S")
-            em = discord.Embed(title=message["data"]["subject"],
-                               url="https://reddit.com/r/"
-                                   + current_sub["subreddit"]
-                                   + "/about/message/inbox",
-                               description="/r/"
-                                           + current_sub["subreddit"])
+            em = discord.Embed(
+                title=message["data"]["subject"],
+                url="https://reddit.com/r/" + current_sub["subreddit"] + "/about/message/inbox",
+                description="/r/" + current_sub["subreddit"],
+            )
             em = randomize_colour(em)
             em.add_field(name="Sent at (UTC)", value=desc)
             em.add_field(name="Author", value=message["data"]["author"])
@@ -96,12 +87,13 @@ async def get_modmail_messages(
                     need_time_update = True
                     created_at = dt.utcfromtimestamp(m["data"]["created_utc"])
                     desc = "Created at " + created_at.strftime("%m/%d/%Y %H:%M:%S")
-                    em = discord.Embed(title=m["data"]["subject"],
-                                       url="https://reddit.com/r/"
-                                           + current_sub["subreddit"]
-                                           + "/about/message/inbox",
-                                       description="/r/"
-                                                   + current_sub["subreddit"])
+                    em = discord.Embed(
+                        title=m["data"]["subject"],
+                        url="https://reddit.com/r/"
+                        + current_sub["subreddit"]
+                        + "/about/message/inbox",
+                        description="/r/" + current_sub["subreddit"],
+                    )
                     em = randomize_colour(em)
                     em.add_field(name="Sent at (UTC)", value=desc)
                     em.add_field(name="Author", value=m["data"]["author"])
@@ -110,19 +102,16 @@ async def get_modmail_messages(
     return need_time_update
 
 
-async def get_subreddit_posts(cog, base_url: str, channel: discord.TextChannel, subreddit: str, last_name: str):
-    url = base_url.format(
-        "/r/{}/new".format(subreddit)
-    )
+async def get_subreddit_posts(
+    cog, base_url: str, channel: discord.TextChannel, subreddit: str, last_name: str
+):
+    url = base_url.format("/r/{}/new".format(subreddit))
 
-    params = {
-        "before": last_name,
-        "limit": 100
-    }
+    params = {"before": last_name, "limit": 100}
 
     headers = {
         "Authorization": "bearer " + cog.access_token,
-        "User-Agent": "Red-DiscordBotRedditCog/0.1 by /u/palmtree5"
+        "User-Agent": "Red-DiscordBotRedditCog/0.1 by /u/palmtree5",
     }
     try:
         response = await make_request(cog.session, "GET", url, headers=headers, params=params)
@@ -157,8 +146,10 @@ def get_delta_str(t1: dt, t2: dt) -> str:
 
 
 def private_only():
+
     def predicate(ctx):
         if isinstance(ctx.channel, discord.abc.GuildChannel):
             raise commands.CheckFailure("This command cannot be used in guild channels.")
         return True
+
     return commands.check(predicate)
