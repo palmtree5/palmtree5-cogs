@@ -1,10 +1,10 @@
 {
-    "AUTHOR" : "palmtree5",
-    "INSTALL_MSG" : "[p]tweets to see commands. Requires peony-twitter[all]. Do [p]tweetset to find commands for setting consumer key and secret and access token and secret. If you need these, visit https://apps.twitter.com/ and create an application. This plugin only needs read only permissions as it will only read public information",
-    "NAME" : "Tweets",
-    "DISABLED" : false,
-    "SHORT" : "Cog for getting info from Twitter",
-    "REQUIREMENTS" : ["peony-twitter[all]"],
-    "DESCRIPTION" : "Gets public information from Twitter's api",
-    "TAGS": ["twitter", "utility"]
+    "author" : ["palmtree5"],
+    "install_msg" : "[p]tweets to see commands. Requires peony-twitter[all]. Do [p]tweetset to find commands for setting consumer key and secret and access token and secret. If you need these, visit https://apps.twitter.com/ and create an application. This plugin only needs read only permissions as it will only read public information",
+    "name" : "Tweets",
+    "disabled" : false,
+    "short" : "Cog for getting info from Twitter",
+    "requirements" : ["peony-twitter[all]"],
+    "description" : "Gets public information from Twitter's api",
+    "tags": ["twitter", "utility"]
 }

@@ -1,9 +1,9 @@
 {
-    "AUTHOR" : "palmtree5",
-    "INSTALL_MSG" : "[p]help MessagePinner to see commands. No additional dependencies needed.",
-    "NAME" : "MessagePinner",
-    "DISABLED" : false,
-    "SHORT" : "Pins messages containing specific text",
-    "DESCRIPTION" : "Pins messages containing configured pin trigger text",
-    "TAGS": ["pins", "utility"]
+    "author" : ["palmtree5"],
+    "install_msg" : "[p]help MessagePinner to see commands. No additional dependencies needed.",
+    "name" : "MessagePinner",
+    "disabled" : false,
+    "short" : "Pins messages containing specific text",
+    "description" : "Pins messages containing configured pin trigger text",
+    "tags": ["pins", "utility"]
 }

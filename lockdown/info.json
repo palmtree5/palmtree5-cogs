@@ -1,9 +1,9 @@
 {
-    "AUTHOR" : "palmtree5",
-    "INSTALL_MSG" : "[p]help Lockdown to see commands, as well as setup instructions.",
-    "NAME" : "Lockdown",
-    "DISABLED" : false,
-    "SHORT" : "Cog for locking down a server in the event of a raid",
-    "DESCRIPTION" : "Locks down a server using roles to affect users below the lockdown role",
-    "TAGS": ["antiraid", "utility", "lockdown"]
+    "author" : ["palmtree5"],
+    "install_msg" : "[p]help Lockdown to see commands, as well as setup instructions.",
+    "name" : "Lockdown",
+    "disabled" : false,
+    "short" : "Cog for locking down a server in the event of a raid",
+    "description" : "Locks down a server using roles to affect users below the lockdown role",
+    "tags": ["antiraid", "utility", "lockdown"]
 }

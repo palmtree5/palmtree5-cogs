@@ -1,7 +1,7 @@
 {
-    "NAME" : "palmtree5's cogs",
-    "AUTHOR" : "palmtree5",
-    "SHORT" : "Various cogs",
-    "DESCRIPTION" : "Cogs created by palmtree5 for varying purposes, some related to Minecraft",
-    "INSTALL_MSG" : "A repository of various cogs by palmtree5. Enjoy them!"
+    "name" : "palmtree5's cogs",
+    "author" : ["palmtree5"],
+    "short" : "Various cogs",
+    "description" : "Cogs created by palmtree5 for varying purposes, some related to Minecraft",
+    "install_msg" : "A repository of various cogs by palmtree5. Enjoy them!"
 }
