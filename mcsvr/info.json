@@ -1,6 +1,6 @@
 {
     "author" : ["palmtree5"],
-    "install_msg" : "Thanks for installing Mcsvr, which enables checking if a server is up, as well as the server's player count.\n[p]mcsvr to see commands. Requires `mcstatus`.\nFor support: <http://support.palmtree5.com>\n\nIf you like my work and want to support me, please consider becoming a Patron over at <https://patreon.com/palmtree5>",
+    "install_msg" : "Thanks for installing Mcsvr, which enables checking if a server is up, as well as the server's player count.\n[p]mcsvr to see commands. Requires `mcstatus`.\nFor support: <https://discord.gg/GET4DVk>\n\nIf you like my work and want to support me, please consider becoming a Patron over at <https://patreon.com/palmtree5>",
     "name" : "Mcsvr",
     "disabled": false,
     "short" : "Cog for getting Minecraft server status",
