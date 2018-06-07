@@ -38,7 +38,13 @@ def post_embed(data: dict, now: dt) -> discord.Embed:
         title = "[{}] {}".format(data["data"]["link_flair_text"], data["data"]["title"])
     else:
         title = data["data"]["title"]
-    em = discord.Embed(title=title, url=data["data"]["url"], description=data["data"]["domain"])
+    if "selftext" in data["data"] and data["data"]["selftext"] != "":
+        desc = data["data"]["selftext"]
+        if len(desc) > 2048:
+            desc = desc[:2044] + "..."
+    else:
+        desc = data["data"]["domain"]
+    em = discord.Embed(title=title, url=data["data"]["url"], description=desc)
     em = randomize_colour(em)
     em.add_field(name="Author", value=data["data"]["author"])
     em.add_field(
