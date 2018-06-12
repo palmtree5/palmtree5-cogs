@@ -1,6 +1,5 @@
 {
     "author" : ["palmtree5"],
-    "bot_version": "3.0.0b14",
     "install_msg" : "[p]help Lockdown to see commands, as well as setup instructions.",
     "name" : "Lockdown",
     "disabled" : false,
