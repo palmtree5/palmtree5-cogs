@@ -47,7 +47,7 @@ class Lockdown:
             await ctx.send("That profile does not exist!")
             return
         role = discord.utils.get(guild.roles, id=profiles[profile])
-        targets = [m for m in guild.roles if m.top_role <= role]
+        targets = [m for m in guild.members if m.top_role <= role]
 
         for target in targets:
             if role in target.roles:
