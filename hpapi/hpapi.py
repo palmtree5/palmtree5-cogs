@@ -8,7 +8,7 @@ from aiopixel import PixelClient
 from aiopixel.exceptions import GuildNotFound, PlayerNotInGuild, PlayerNotFound, NoSessionForPlayer
 from aiopixel.gametypes import GameType
 from aiopixel.utils import get_player_uuid
-from discord.ext import commands
+from redbot.core import commands
 from redbot.core import Config, commands, checks, data_manager
 from redbot.core.bot import Red
 from redbot.core.i18n import Translator

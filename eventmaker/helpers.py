@@ -1,7 +1,7 @@
 import contextlib
 from datetime import timedelta, datetime as dt
 import discord
-from discord.ext import commands
+from redbot.core import commands
 from redbot.core import commands, Config
 
 

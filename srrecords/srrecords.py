@@ -5,7 +5,7 @@ import os
 import aiohttp
 import asyncio
 import discord
-from discord.ext import commands
+from redbot.core import commands
 from redbot.core import checks, Config
 from redbot.core.i18n import Translator
 

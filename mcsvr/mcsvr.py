@@ -4,7 +4,6 @@ from datetime import datetime
 from functools import partial
 
 import discord
-from discord.ext import commands
 from redbot.core import Config, checks, commands
 from redbot.core.bot import Red
 from redbot.core.i18n import Translator

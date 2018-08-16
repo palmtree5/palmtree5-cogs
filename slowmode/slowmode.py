@@ -1,7 +1,7 @@
 import contextlib
 
 import discord
-from discord.ext import commands
+from redbot.core import commands
 from redbot.core import Config, checks, commands
 from redbot.core.bot import Red
 from redbot.core.utils.chat_formatting import bold

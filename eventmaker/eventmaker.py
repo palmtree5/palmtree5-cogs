@@ -3,7 +3,7 @@ import contextlib
 from datetime import datetime as dt, timedelta
 
 import discord
-from discord.ext import commands
+from redbot.core import commands
 from redbot.core import Config, commands, checks
 from redbot.core.bot import Red
 from redbot.core.utils.chat_formatting import pagify, warning

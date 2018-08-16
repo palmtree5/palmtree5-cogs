@@ -2,7 +2,7 @@ import asyncio
 from random import choice as randchoice
 
 import discord
-from discord.ext import commands
+from redbot.core import commands
 from peony import PeonyClient
 from redbot.core import Config, checks
 from redbot.core.bot import Red
