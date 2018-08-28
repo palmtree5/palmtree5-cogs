@@ -4,9 +4,9 @@ from random import choice as randchoice
 import discord
 from redbot.core import commands
 from peony import PeonyClient
-from redbot.core import Config, checks
+from redbot.core import Config, checks, commands
 from redbot.core.bot import Red
-from redbot.core.context import commands
+
 
 from .errors import NoClientException
 from .menus import tweet_menu
