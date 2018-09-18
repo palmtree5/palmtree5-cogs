@@ -191,7 +191,7 @@ class EventMaker:
             participants = "Participants:\n\n"
             mbr_list = [
                 "{}".format(guild.get_member(uid))
-                for uid in to_list["participants"]
+                for uid in to_list["participants"] if not None
                 if guild.get_member(uid)
             ]
             participants += "\n".join(mbr_list)
