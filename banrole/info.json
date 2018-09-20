@@ -1,0 +1,9 @@
+{
+    "author" : ["palmtree5"],
+    "install_msg" : "Check out `[p]help BanRole` for the commands!",
+    "name" : "BanRole",
+    "disabled" : false,
+    "short" : "Ban/unban by role.",
+    "description" : "Ban/unban by role. Keeps track of all users banned via `[p]banrole`",
+    "tags": ["moderation", "banrole"]
+}

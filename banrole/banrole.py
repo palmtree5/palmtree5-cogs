@@ -1,7 +1,5 @@
-from redbot.core import commands
-import discord
-
 from redbot.core import commands, Config, checks
+import discord
 
 
 class BanRole:
@@ -13,6 +11,7 @@ class BanRole:
 
     def __init__(self):
         self.config = Config.get_conf(self, identifier=59595922, force_registration=True)
+        self.config.register_role(**self.default_role)
 
     @commands.command()
     @checks.admin_or_permissions(ban_members=True)
@@ -57,6 +56,8 @@ class BanRole:
                     await ctx.guild.unban(user)
                 except discord.Forbidden:
                     pass
+                except discord.NotFound:
+                    banned_list.remove(uid)
                 else:
                     banned_list.remove(uid)
         await ctx.tick()
