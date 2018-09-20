@@ -1,6 +1,6 @@
 import asyncio
 import discord
-from redbot.core.context import commands
+from redbot.core import commands
 from redbot.core.utils.embed import randomize_colour
 
 

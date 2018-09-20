@@ -187,6 +187,9 @@ class EventMaker:
                 if event["id"] == event_id:
                     to_list = event
                     break
+            else:
+                await ctx.send(_("I could not find an event with that id!"))
+                return
 
             participants = "Participants:\n\n"
             mbr_list = [
