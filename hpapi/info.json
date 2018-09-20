@@ -2,7 +2,7 @@
     "author" : ["palmtree5"],
     "install_msg" : "[p]help Hpapi to see commands. Don't forget to set your key with [p]hpset apikey <your_key>. If you need a key, log onto mc.hypixel.net and do /api",
     "name" : "Hpapi",
-    "disabled" : false,
+    "disabled" : true,
     "requirements": ["aiopixel"],
     "min_python_version": [3, 6, 0],
     "short" : "Cog for getting info from the Hypixel API",
