@@ -2,7 +2,7 @@
     "author" : ["palmtree5"],
     "install_msg" : "[p]help SlowMode shows commands",
     "name" : "SlowMode",
-    "disabled" : false,
+    "disabled" : true,
     "short" : "Slow mode in Discord",
     "description" : "Enforces a limit of one message per set time on non-exempt users",
     "tags": ["slowmode", "moderation"]
