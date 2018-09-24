@@ -65,10 +65,7 @@ async def get_guild_embed(guild: Guild) -> discord.Embed:
         description="Created at {} UTC".format(guild.created.strftime("%Y-%m-%d %H:%M:%S")),
     )
     em.add_field(name="Guildmaster", value=gmaster, inline=False)
-    em.add_field(name="Guild coins", value=guild.coins)
+    em.add_field(name="Guild experience", value=str(guild.exp) if guild.exp else "0")
     em.add_field(name="Member count", value=str(len(guild.members)))
-    em.add_field(
-        name="Officer count", value=str(len([m for m in guild.members if m.rank == "OFFICER"]))
-    )
     em.set_thumbnail(url=gmaster_face)
     return em
