@@ -15,7 +15,7 @@ log = logging.getLogger("red.mcsvr")
 _ = Translator("Mcsvr", __file__)
 
 
-class Mcsvr:
+class Mcsvr(commands.Cog):
     """
     Get info about a Minecraft server.
 

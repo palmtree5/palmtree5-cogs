@@ -2,7 +2,7 @@ from redbot.core import commands, Config, checks
 import discord
 
 
-class BanRole:
+class BanRole(commands.Cog):
     """
     Ban and unban by role
     """

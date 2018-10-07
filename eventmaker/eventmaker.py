@@ -21,7 +21,7 @@ from .menus import event_menu
 _ = Translator("EventMaker", __file__)
 
 
-class EventMaker:
+class EventMaker(commands.Cog):
     """
     A tool for creating events inside of Discord. Anyone can
     create an event by default. If a specific role has been

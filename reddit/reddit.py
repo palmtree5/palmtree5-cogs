@@ -23,7 +23,7 @@ REDDIT_ACCESSTOKEN_URL = "https://www.reddit.com/api/v1/access_token"
 REDDIT_OAUTH_API_ROOT = "https://oauth.reddit.com{}"
 
 
-class Reddit:
+class Reddit(commands.Cog):
     """Cog for getting things from Reddit's API"""
 
     default_global = {"client_id": "", "client_secret": "", "username": "", "password": ""}

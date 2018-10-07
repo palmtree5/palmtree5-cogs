@@ -22,7 +22,7 @@ _ = Translator("Hpapi", __file__)
 log = logging.getLogger("palmtree5.cogs.hpapi")
 
 
-class Hpapi:
+class Hpapi(commands.Cog):
     """Cog for getting info from Hypixel's API"""
     default_global = {"api_key": "", "known_guilds": []}
 

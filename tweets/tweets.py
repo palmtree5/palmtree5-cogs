@@ -12,7 +12,7 @@ from .errors import NoClientException
 from .menus import tweet_menu
 
 
-class Tweets:
+class Tweets(commands.Cog):
     """Cog for displaying info from Twitter's API"""
     default_global = {
         "consumer_key": None, "consumer_secret": None, "access_token": None, "access_secret": None

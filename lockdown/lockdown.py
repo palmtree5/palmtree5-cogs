@@ -5,7 +5,7 @@ from redbot.core import commands
 from redbot.core.utils.chat_formatting import box
 
 
-class Lockdown:
+class Lockdown(commands.Cog):
     """
     Locks down the current server
 

@@ -12,7 +12,7 @@ from redbot.core.i18n import Translator
 numbs = {"next": "➡", "back": "⬅", "exit": "❌"}
 
 
-class SRRecords:
+class SRRecords(commands.Cog):
     """An interface for viewing speedrun records from speedrun.com"""
 
     default_guild = {"game": ""}

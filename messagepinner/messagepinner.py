@@ -7,7 +7,7 @@ from redbot.core.i18n import Translator
 _ = Translator("MessagePinner", __file__)
 
 
-class MessagePinner:
+class MessagePinner(commands.Cog):
     """Pins messages based on configured text"""
 
     default_channel = {"text": ""}

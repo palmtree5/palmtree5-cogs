@@ -7,7 +7,7 @@ from redbot.core.bot import Red
 from redbot.core.utils.chat_formatting import bold
 
 
-class SlowMode:
+class SlowMode(commands.Cog):
     """A slowmode cog for Red V3"""
 
     default_channel = {"time": 0}
