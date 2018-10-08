@@ -48,8 +48,7 @@ class EventMaker(commands.Cog):
     @commands.guild_only()
     async def event(self, ctx: commands.Context):
         """Base command for events"""
-        if ctx.invoked_subcommand is None:
-            await ctx.send_help()
+        pass
 
     @event.command(name="create")
     @allowed_to_create()
