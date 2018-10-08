@@ -222,8 +222,7 @@ class EventMaker(commands.Cog):
     @commands.guild_only()
     async def eventset(self, ctx: commands.Context):
         """Event maker settings"""
-        if ctx.invoked_subcommand is None:
-            await ctx.send_help()
+        pass
 
     @eventset.command(name="toggledms")
     @commands.guild_only()
