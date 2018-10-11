@@ -22,7 +22,11 @@ class SlowMode(commands.Cog):
         if time < 0 or time > 120:
             await ctx.send("Invalid time specified! Time must be between 0 and 120 (inclusive)")
             return
-        await ctx.channel.edit(slowmode_delay=time)
+        try:
+            await ctx.channel.edit(slowmode_delay=time)
+        except discord.Forbidden:
+            await ctx.send("I am forbidden from doing that.")
+            return
         if time > 0:
             await ctx.send(
                 bold(
