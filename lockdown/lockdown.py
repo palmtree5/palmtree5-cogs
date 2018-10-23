@@ -9,13 +9,13 @@ class Lockdown(commands.Cog):
     """
     Locks down the current server
 
-    To get started, you will need to set up a role to be used for locking
+    To get started, you will need to set up a role to be used when locking
     down your server. This role needs to be above all roles it should affect
-    in the hierarchy as it will be applied to all users with a top role below
-    it in the hierarchy. The role's permissions should be set up to deny
-    access to things the affected users should not be able to do during a
-    lockdown (such as sending messages, talking in voice channels, adding
-    reactions, etc).
+    in the hierarchy as it will be used to determine who should be affected
+    by the lockdown and its permissions will be applied to each user. The 
+    role's permissions should be set up to deny access to things the affected 
+    users should not be able to do during a lockdown (such as sending messages, 
+    talking in voice channels, adding reactions, etc).
 
     Once you've set up the role, you can create a new profile with
     `[p]lockdownset addprofile` (which takes the role (ID, mention, or name)
@@ -26,10 +26,12 @@ class Lockdown(commands.Cog):
     """
 
     default_guild = {"profiles": {}, "next_profile_id": 1, "current_lockdown_role_id": 0}
+    default_member = {"old_permissions": {}}
 
     def __init__(self):
         self.settings = Config.get_conf(self, identifier=59595922, force_registration=True)
         self.settings.register_guild(**self.default_guild)
+        self.settings.register_member(**self.default_member)
 
     @commands.command()
     @commands.guild_only()
@@ -50,16 +52,19 @@ class Lockdown(commands.Cog):
         targets = [m for m in guild.members if m.top_role <= role]
 
         for target in targets:
-            if role in target.roles:
-                continue
-            try:
-                await target.add_roles(role)
-            except discord.Forbidden:
-                await ctx.send(
-                    "I don't have permissions to manage roles! "
-                    "As a result, lockdown has NOT been activated!"
-                )
-                return
+            for channel in guild.channels:
+                if isinstance(channel, (discord.VoiceChannel, discord.TextChannel)):
+                    old_perms = channel.overwrites_for(target)
+                    await self.settings.member(target).set_raw(str(channel.id), value=dict(old_perms))
+                    new_perms = channel.overwrites_for(role)
+                    try:
+                        await channel.set_permissions(target, overwrite=new_perms)
+                    except discord.Forbidden:
+                        await ctx.send(
+                            "I don't have permissions to manage permissions! "
+                            "As a result, lockdown has NOT been activated!"
+                        )
+                        return
         await self.settings.guild(ctx.guild).current_lockdown_role_id.set(role.id)
         await ctx.send(
             "Server is locked down. You can unlock the server by doing "
@@ -77,16 +82,21 @@ class Lockdown(commands.Cog):
         role = discord.utils.get(guild.roles, id=role_id)
         targets = [m for m in guild.members if m.top_role == role]
         for target in targets:
-            if role not in target.roles:
-                continue
-            try:
-                await target.remove_roles(role)
-            except discord.Forbidden:
-                await ctx.send(
-                    "I do not have permissions to manage roles, "
-                    "so I cannot end this lockdown at this time!"
-                )
-                return
+            for channel in guild.channels:
+                if isinstance(channel, (discord.VoiceChannel, discord.TextChannel)):
+                    old_perms = channel.overwrites_for(target)
+                    new_perms = await self.settings.member(target).get_raw(str(channel.id))
+                    new_perms = discord.PermissionOverwrite(**new_perms)
+                    try:
+                        await channel.set_permissions(target, overwrite=new_perms)
+                    except discord.Forbidden:
+                        await ctx.send(
+                            "I don't have permissions to manage permissions! "
+                            "As a result, I cannot end the lockdown at this time"
+                        )
+                        return
+                    else:
+                        await self.settings.member(target).clear_raw(str(channel.id))
         await self.settings.guild(guild).current_lockdown_role_id.set(0)
         await ctx.send("Server has been unlocked!")
 
