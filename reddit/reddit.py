@@ -53,7 +53,8 @@ class Reddit(commands.Cog):
         if not self.post_checker.cancelled():
             self.post_checker.cancel()
         if not self.session.closed:
-            self.session.close()
+            fut = asyncio.ensure_future(self.session.close())
+            yield from fut.__await__()
 
     async def __error(self, ctx, error):
         await ctx.send(
