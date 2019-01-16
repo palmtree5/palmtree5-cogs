@@ -152,7 +152,7 @@ class Tweets(commands.Cog):
 
         # Attempt to get the client going after setting creds
         self.creds = await self.get_creds()
-        self.client = self.get_client()
+        self.client = await self.get_client()
         await ctx.send("Set the access credentials!")
         try:
             await ctx.message.delete()
