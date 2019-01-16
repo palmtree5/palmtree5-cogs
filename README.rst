@@ -14,9 +14,6 @@
 palmtree5-cogs
 **************
 
-**Please note that rewrites are a work in progress and as such may be incomplete
-and/or broken. Keep that in mind before using**
-
 Various plugins for `Red (v3) <https://github.com/Cog-Creators/Red-DiscordBot/tree/V3/develop>`_
 
 Do `[p]repo add palmtree5-cogs https://github.com/palmtree5/palmtree5-cogs redv3-rewrites` to add this repo to Red V3
