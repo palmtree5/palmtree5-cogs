@@ -476,7 +476,9 @@ class Reddit(commands.Cog):
                             for k in current_sub:
                                 if self.token_expiration_time - dt.utcnow().timestamp() <= 60:
                                     # close to token expiry time, so wait for a new token
-                                    await self.get_access_token()
+                                    task = asyncio.ensure_future(self.get_access_token())
+                                    while not task.done():
+                                        asyncio.sleep(5)
                                 need_time_update = await get_modmail_messages(
                                     self, REDDIT_OAUTH_API_ROOT, channel, k
                                 )
@@ -497,9 +499,11 @@ class Reddit(commands.Cog):
                         not self.token_expiration_time
                         or self.token_expiration_time - dt.utcnow().timestamp() <= 60
                     ):
-                        await self.get_access_token()
+                        task = asyncio.ensure_future(self.get_access_token())
+                        while not task.done():
+                            await asyncio.sleep(5)
                     new_name = await get_subreddit_posts(
-                        self, REDDIT_OAUTH_API_ROOT, channel, subreddit, last_name
+                        self.access_token, self.session, REDDIT_OAUTH_API_ROOT, channel, subreddit, last_name
                     )
                     if new_name:
                         async with self.settings.channel(channel).subreddits() as subs:
