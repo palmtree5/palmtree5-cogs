@@ -98,7 +98,7 @@ class Hpapi(commands.Cog):
     # End Section: Load and update
 
     @commands.group()
-    @checks.mod_or_permissions(manage_channel=True)
+    @checks.mod_or_permissions(manage_channels=True)
     async def hpset(self, ctx: commands.Context):
         """Settings for Hypixel cog"""
         if ctx.invoked_subcommand is None:
