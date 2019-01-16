@@ -101,8 +101,7 @@ class Reddit(commands.Cog):
     @commands.group(name="subreddit")
     async def _subreddit(self, ctx: commands.Context):
         """Commands for getting subreddits"""
-        if ctx.invoked_subcommand is None:
-            await ctx.send_help()
+        pass
 
     @_subreddit.command(name="info")
     async def subreddit_info(self, ctx: commands.Context, subreddit: str):
@@ -285,8 +284,7 @@ class Reddit(commands.Cog):
     @commands.group(name="redditset")
     async def _redditset(self, ctx: commands.Context):
         """Commands for setting reddit settings."""
-        if ctx.invoked_subcommand is None:
-            await ctx.send_help()
+        pass
 
     @checks.admin_or_permissions(manage_guild=True)
     @_redditset.group(name="modmail", hidden=True)
@@ -296,8 +294,7 @@ class Reddit(commands.Cog):
         Commands for dealing with modmail settings
         NOTE: not really well tested
         """
-        if ctx.invoked_subcommand is None:
-            await ctx.send_help()
+        pass
 
     @checks.admin_or_permissions(manage_guild=True)
     @modmail.command(name="enable")

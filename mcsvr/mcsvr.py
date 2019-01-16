@@ -213,7 +213,7 @@ class Mcsvr(commands.Cog):
                 if current_server:
                     topic = await self.config.channel(channel).original_topic()
                     await channel.edit(topic=topic)
-                    await self.config.channel(channel).current_server.set("")
+                    await self.config.channel(channel).server_ip.set("")
                     await self.config.channel(channel).original_topic.set("")
         else:
             for channel in guild.text_channels:
