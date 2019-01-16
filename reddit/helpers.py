@@ -62,14 +62,14 @@ def post_embed(data: dict, now: dt) -> discord.Embed:
 
 
 async def get_modmail_messages(
-    cog, base_url: str, channel: discord.TextChannel, current_sub: dict
+    access_token: str, session: aiohttp.ClientSession, base_url: str, channel: discord.TextChannel, current_sub: dict
 ):
     url = base_url.format("/r/{}/about/message/inbox".format(current_sub["subreddit"]))
     headers = {
-        "Authorization": "bearer " + cog.access_token,
+        "Authorization": "bearer " + access_token,
         "User-Agent": "Red-DiscordBotRedditCog/0.1 by /u/palmtree5",
     }
-    response = await make_request(cog.session, "GET", url, headers=headers)
+    response = await make_request(session, "GET", url, headers=headers)
     resp_json = response["data"]["children"]
     need_time_update = False
     for message in resp_json:
@@ -109,18 +109,18 @@ async def get_modmail_messages(
 
 
 async def get_subreddit_posts(
-    cog, base_url: str, channel: discord.TextChannel, subreddit: str, last_name: str
+    access_token: str, session: aiohttp.ClientSession, base_url: str, channel: discord.TextChannel, subreddit: str, last_name: str
 ):
     url = base_url.format("/r/{}/new".format(subreddit))
 
     params = {"before": last_name, "limit": 100}
 
     headers = {
-        "Authorization": "bearer " + cog.access_token,
+        "Authorization": "bearer " + access_token,
         "User-Agent": "Red-DiscordBotRedditCog/0.1 by /u/palmtree5",
     }
     try:
-        response = await make_request(cog.session, "GET", url, headers=headers, params=params)
+        response = await make_request(session, "GET", url, headers=headers, params=params)
     except NotFoundError as e:
         await channel.send(str(e))
         return
