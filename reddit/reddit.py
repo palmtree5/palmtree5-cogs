@@ -480,7 +480,7 @@ class Reddit(commands.Cog):
                                     while not task.done():
                                         asyncio.sleep(5)
                                 need_time_update = await get_modmail_messages(
-                                    self, REDDIT_OAUTH_API_ROOT, channel, k
+                                    self.access_token, self.session, REDDIT_OAUTH_API_ROOT, channel, k
                                 )
                                 if need_time_update:
                                     current_sub.update({k: int(dt.utcnow().timestamp())})
