@@ -23,3 +23,11 @@ or open an issue on this repo. For security issues, please message me on Discord
 
 Note that my cogs will support V3's i18n system, but you should plan to provide your own translations
 should you wish to use that.
+
+------------
+Requirements
+------------
+
+* **hpapi**: aiopixel
+* **tweets**: peony-twitter[all]
+* **mcsvr**: mcstatus
