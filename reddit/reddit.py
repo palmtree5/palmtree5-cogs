@@ -508,4 +508,4 @@ class Reddit(commands.Cog):
                     if new_name:
                         async with self.settings.channel(channel).subreddits() as subs:
                             subs.update({subreddit: new_name})
-            await asyncio.sleep(60)
+            await asyncio.sleep(300)

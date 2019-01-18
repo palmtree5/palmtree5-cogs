@@ -38,6 +38,8 @@ def post_embed(data: dict, now: dt) -> discord.Embed:
         title = "[{}] {}".format(data["data"]["link_flair_text"], data["data"]["title"])
     else:
         title = data["data"]["title"]
+    if len(title) > 256:
+        title = title[:252] + "..."
     if "selftext" in data["data"] and data["data"]["selftext"] != "":
         desc = data["data"]["selftext"]
         if len(desc) > 2048:
