@@ -422,7 +422,7 @@ class Reddit(commands.Cog):
                 "POST",
                 REDDIT_ACCESSTOKEN_URL,
                 headers=headers,
-                data=post_data,
+                json=post_data,
                 auth=auth,
             )
             if "error" in response:  # Something went wrong in the process
