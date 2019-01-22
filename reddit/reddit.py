@@ -43,7 +43,7 @@ class Reddit(commands.Cog):
         self.modmail_checker = loop.create_task(self.modmail_check())
         self.post_checker = loop.create_task(self.posts_check())
         self.access_token = ""
-        self.token_expiration_time = None
+        self.token_expiration_time = 0
 
         self.session = aiohttp.ClientSession()
 
