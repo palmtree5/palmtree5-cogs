@@ -120,7 +120,7 @@ class Reddit(commands.Cog):
             await ctx.send(str(e))
             return
         resp_json = resp_json["data"]
-        created_at = resp_json["created_utc"].strftime("%m/%d/%Y %H:%M:%S")
+        created_at = dt.utcfromtimestamp(resp_json["created_utc"]).strftime("%m/%d/%Y %H:%M:%S")
         em = discord.Embed(
             title=resp_json["url"],
             url="https://reddit.com" + resp_json["url"],
