@@ -120,7 +120,7 @@ class Reddit(commands.Cog):
             await ctx.send(str(e))
             return
         resp_json = resp_json["data"]
-        created_at = resp_json["created_at"].strftime("%m/%d/%Y %H:%M:%S")
+        created_at = resp_json["created_utc"].strftime("%m/%d/%Y %H:%M:%S")
         em = discord.Embed(
             title=resp_json["url"],
             url="https://reddit.com" + resp_json["url"],
@@ -487,6 +487,7 @@ class Reddit(commands.Cog):
             await asyncio.sleep(280)
 
     async def posts_check(self):
+        await self.bot.wait_until_ready()
         while self == self.bot.get_cog("Reddit"):
             if not self.access_token:
                 await asyncio.sleep(30)
@@ -494,6 +495,8 @@ class Reddit(commands.Cog):
             channels = await self.settings.all_channels()
             for ch_id, data in channels.items():
                 channel = self.bot.get_channel(ch_id)
+                if not channel:
+                    continue
                 for subreddit, last_name in data["subreddits"].items():
                     if (
                         not self.token_expiration_time
