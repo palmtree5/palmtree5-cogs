@@ -13,7 +13,7 @@ from redbot.core.i18n import Translator
 
 from reddit.menus import post_menu
 from .errors import NoAccessTokenError, RedditAPIError, NotFoundError, AccessForbiddenError
-from .helpers import get_modmail_messages, make_request, private_only, get_subreddit_posts
+from .helpers import make_request, private_only
 
 log = logging.getLogger("red.reddit")
 
@@ -239,127 +239,11 @@ class Reddit(commands.Cog):
             resp_json = resp_json["data"]["children"]
             await post_menu(ctx, resp_json, page=0, timeout=30)
 
-    @commands.command()
-    @commands.guild_only()
-    @checks.mod_or_permissions(manage_channels=True)
-    async def postnotify(self, ctx: commands.Context, subreddit: str):
-        """
-        Set up automatic posting of the specified subreddit's posts.
-        """
-        removed = False
-        async with self.settings.channel(ctx.channel).subreddits() as subreddits:
-            if subreddit in subreddits:
-                del subreddits[subreddit]
-                await ctx.send(_("Removed automatic posting of posts from {}").format(subreddit))
-                removed = True
-        if removed:
-            async with self.settings.guild(ctx.guild).posts_channels() as posts_channels:
-                if ctx.channel.id in posts_channels:
-                    posts_channels.remove(ctx.channel.id)
-            return
-
-        url = REDDIT_OAUTH_API_ROOT.format("/r/{}/new".format(subreddit))
-        data = {"limit": 1}
-        headers = await self.get_headers()
-        try:
-            resp_json = await make_request(self.session, "GET", url, headers=headers, params=data)
-        except NotFoundError as e:
-            await ctx.send(str(e))
-            return
-        except AccessForbiddenError as e:
-            await ctx.send(str(e))
-            return
-        except RedditAPIError as e:
-            await ctx.send(str(e))
-            return
-        current_name = resp_json["data"]["children"][0]["data"]["name"]
-        async with self.settings.channel(ctx.channel).subreddits() as subreddits:
-            subreddits[subreddit] = current_name
-        async with self.settings.guild(ctx.guild).posts_channels() as posts_channels:
-            if ctx.channel.id not in posts_channels:
-                posts_channels.append(ctx.channel.id)
-        await ctx.tick()
-
     @checks.admin_or_permissions(manage_guild=True)
     @commands.group(name="redditset")
     async def _redditset(self, ctx: commands.Context):
         """Commands for setting reddit settings."""
         pass
-
-    @checks.admin_or_permissions(manage_guild=True)
-    @_redditset.group(name="modmail", hidden=True)
-    @commands.guild_only()
-    async def modmail(self, ctx: commands.Context):
-        """
-        Commands for dealing with modmail settings
-        NOTE: not really well tested
-        """
-        pass
-
-    @checks.admin_or_permissions(manage_guild=True)
-    @modmail.command(name="enable")
-    async def enable_modmail(
-        self, ctx: commands.Context, subreddit: str, channel: discord.TextChannel
-    ):
-        """Enable posting modmail to the specified channel"""
-        guild = ctx.guild
-
-        await ctx.send(
-            _(
-                "WARNING: Anybody with access to {0.mention} will be able to see "
-                "your subreddit's modmail messages. Therefore you should make "
-                "sure that only your subreddit mods have access to that channel"
-                ""
-            ).format(
-                channel
-            )
-        )
-        await asyncio.sleep(5)
-        url = REDDIT_OAUTH_API_ROOT.format("/r/{}/about".format(subreddit))
-        headers = await self.get_headers()
-        try:
-            resp_json = await make_request(self.session, "GET", url, headers=headers)
-        except NotFoundError as e:
-            await ctx.send(str(e))
-            return
-        except AccessForbiddenError as e:
-            await ctx.send(str(e))
-            return
-        except RedditAPIError as e:
-            await ctx.send(str(e))
-            return
-        resp_json = resp_json["data"]
-        if resp_json["user_is_moderator"]:
-            async with self.settings.channel(channel).modmail() as mm:
-                mm.update({subreddit: int(time.time())})
-            async with self.settings.guild(ctx.guild).modmail_channels() as mm_chns:
-                mm_chns.append(channel.id)
-            await ctx.send("Enabled modmail for " + subreddit)
-        else:
-            await ctx.send("I'm sorry, this user does not appear " "to be a mod of that subreddit")
-
-    @checks.admin_or_permissions(manage_guild=True)
-    @modmail.command(name="disable")
-    async def disable_modmail(
-        self, ctx: commands.Context, subreddit: str, channel: discord.TextChannel
-    ):
-        """Disable modmail posting to discord"""
-        async with self.settings.channel(channel).modmail() as mm:
-            try:
-                mm.pop(subreddit)
-            except KeyError:
-                await ctx.send(
-                    "It doesn't appear modmail posting is enabled for "
-                    "that subreddit in the specified channel!"
-                )
-                return
-        async with self.settings.guild(ctx.guild).modmail_channels() as mm_chns:
-            try:
-                mm_chns.remove(channel.id)
-            except ValueError:
-                await ctx.send("Channel not in the modmail channel list...")
-                return
-        await ctx.send("Disabled modmail posting for this server")
 
     @checks.is_owner()
     @private_only()
@@ -459,56 +343,5 @@ class Reddit(commands.Cog):
     def toggle_commands(self, val: bool):
         reddituser_command = self.bot.get_command("reddituser")
         reddituser_command.enabled = val
-        postnotify_command = self.bot.get_command("postnotify")
-        postnotify_command.enabled = val
         subreddit_command = self.bot.get_command("subreddit")
         subreddit_command.enabled = val
-        modmail_set_command = self.bot.get_command("redditset modmail")
-        modmail_set_command.enabled = val
-
-    async def modmail_check(self):
-        while self == self.bot.get_cog("Reddit"):
-            for guild in self.bot.guilds:
-                async with self.settings.guild(guild).modmail_channels() as mm_chns:
-                    for chn in mm_chns:
-                        channel = guild.get_channel(chn)
-                        async with self.settings.channel(channel).modmail() as current_sub:
-                            for k in current_sub:
-                                if self.token_expiration_time - dt.utcnow().timestamp() <= 60:
-                                    # close to token expiry time, so wait for a new token
-                                    task = asyncio.ensure_future(self.get_access_token())
-                                    while not task.done():
-                                        asyncio.sleep(5)
-                                need_time_update = await get_modmail_messages(
-                                    self.access_token, self.session, REDDIT_OAUTH_API_ROOT, channel, k
-                                )
-                                if need_time_update:
-                                    current_sub.update({k: int(dt.utcnow().timestamp())})
-            await asyncio.sleep(280)
-
-    async def posts_check(self):
-        await self.bot.wait_until_ready()
-        while self == self.bot.get_cog("Reddit"):
-            if not self.access_token:
-                await asyncio.sleep(30)
-                continue
-            channels = await self.settings.all_channels()
-            for ch_id, data in channels.items():
-                channel = self.bot.get_channel(ch_id)
-                if not channel:
-                    continue
-                for subreddit, last_name in data["subreddits"].items():
-                    if (
-                        not self.token_expiration_time
-                        or self.token_expiration_time - dt.utcnow().timestamp() <= 60
-                    ):
-                        task = asyncio.ensure_future(self.get_access_token())
-                        while not task.done():
-                            await asyncio.sleep(5)
-                    new_name = await get_subreddit_posts(
-                        self.access_token, self.session, REDDIT_OAUTH_API_ROOT, channel, subreddit, last_name
-                    )
-                    if new_name:
-                        async with self.settings.channel(channel).subreddits() as subs:
-                            subs.update({subreddit: new_name})
-            await asyncio.sleep(300)
