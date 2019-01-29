@@ -40,18 +40,12 @@ class Reddit(commands.Cog):
         self.settings.register_channel(**self.default_channel)
         loop = asyncio.get_event_loop()
         self.access_token_getter = loop.create_task(self.get_access_token())
-        self.modmail_checker = loop.create_task(self.modmail_check())
-        self.post_checker = loop.create_task(self.posts_check())
         self.access_token = ""
         self.token_expiration_time = 0
 
         self.session = aiohttp.ClientSession()
 
     def __unload(self):
-        if not self.modmail_checker.cancelled():
-            self.modmail_checker.cancel()
-        if not self.post_checker.cancelled():
-            self.post_checker.cancel()
         if not self.session.closed:
             fut = asyncio.ensure_future(self.session.close())
             yield from fut.__await__()
