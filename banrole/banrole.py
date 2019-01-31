@@ -1,4 +1,5 @@
 from redbot.core import commands, Config, checks
+from redbot.core.bot import Red
 import discord
 
 
@@ -9,9 +10,10 @@ class BanRole(commands.Cog):
 
     default_role = {"banned_members": []}
 
-    def __init__(self):
+    def __init__(self, bot: Red):
         self.config = Config.get_conf(self, identifier=59595922, force_registration=True)
         self.config.register_role(**self.default_role)
+        self.bot = bot
 
     @commands.command()
     @checks.admin_or_permissions(ban_members=True)
@@ -24,11 +26,15 @@ class BanRole(commands.Cog):
         """
         failures = "I failed to ban the following members:\n"
         failure_list = []
+        mod_cog = self.bot.get_cog("Mod")
         async with self.config.role(role).banned_members() as banned_list:
             for member in role.members:
                 try:
+                    assert ctx.guild.me.top_role > member.top_role and ctx.guild.owner != member
+                    if (mod_cog and await mod_cog.settings.guild(ctx.guild).respect_hierarchy()) or not mod_cog:
+                        assert ctx.author.top_role > member.top_role or ctx.author == ctx.guild.owner
                     await ctx.guild.ban(member)
-                except discord.Forbidden:
+                except (discord.HTTPException, AssertionError):
                     failure_list.append("{0.name}#{0.discriminator} (id {0.id})".format(member))
                 else:
                     banned_list.append(member.id)
@@ -47,17 +53,10 @@ class BanRole(commands.Cog):
         """
         async with self.config.role(role).banned_members() as banned_list:
             for uid in banned_list:
-                user = ctx.bot.get_user(uid)
-                if user is None:
-                    try:
-                        user = await ctx.bot.get_user_info(uid)
-                    except discord.NotFound:
-                        banned_list.remove(uid)
-                        return
                 try:
-                    await ctx.guild.unban(user)
+                    await ctx.guild.unban(discord.Object(id=uid))
                 except discord.Forbidden:
-                    pass
+                    return await ctx.send("I am unable to do that for some reason.")
                 except discord.NotFound:
                     banned_list.remove(uid)
                 else:
