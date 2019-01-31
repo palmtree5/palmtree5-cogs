@@ -51,19 +51,25 @@ class Lockdown(commands.Cog):
         role = discord.utils.get(guild.roles, id=profiles[profile])
         targets = [m for m in guild.members if m.top_role <= role]
 
+        fail_list = []
+        for channel in (*guild.text_channels, *guild.voice_channels):
+            if not channel.permissions_for(ctx.guild.me).manage_roles:
+                fail_list.append(channel)
+        
+        if fail_list:
+            await ctx.send(
+                "I do not have permissions to manage permissions in the following channels: {}.\n"
+                "Please correct this if you wish to be able to lock the server down.".format(
+                    ", ".join([c.mention for c in fail_list])
+                )
+            )
+            return
         for target in targets:
             for channel in (*guild.text_channels, *guild.voice_channels):
                 old_perms = channel.overwrites_for(target)
                 await self.settings.member(target).set_raw(str(channel.id), value=dict(old_perms))
                 new_perms = channel.overwrites_for(role)
-                try:
-                    await channel.set_permissions(target, overwrite=new_perms)
-                except discord.Forbidden:
-                    await ctx.send(
-                        "I don't have permissions to manage permissions! "
-                        "As a result, lockdown has NOT been activated!"
-                    )
-                    return
+                await channel.set_permissions(target, overwrite=new_perms)
         await self.settings.guild(ctx.guild).current_lockdown_role_id.set(role.id)
         await ctx.send(
             "Server is locked down. You can unlock the server by doing "
@@ -80,21 +86,28 @@ class Lockdown(commands.Cog):
         role_id = await self.settings.guild(guild).current_lockdown_role_id()
         role = discord.utils.get(guild.roles, id=role_id)
         targets = [m for m in guild.members if m.top_role == role]
+
+        fail_list = []
+        for channel in (*guild.text_channels, *guild.voice_channels):
+            if not channel.permissions_for(ctx.guild.me).manage_roles:
+                fail_list.append(channel)
+        
+        if fail_list:
+            await ctx.send(
+                "I do not have permissions to manage permissions in the following channels: {}.\n"
+                "Please correct this if you wish to be able to unlock the server.".format(
+                    ", ".join([c.mention for c in fail_list])
+                )
+            )
+            return
+        
         for target in targets:
             for channel in (*guild.text_channels, *guild.voice_channels):
                 old_perms = channel.overwrites_for(target)
                 new_perms = await self.settings.member(target).get_raw(str(channel.id))
                 new_perms = discord.PermissionOverwrite(**new_perms)
-                try:
-                    await channel.set_permissions(target, overwrite=new_perms)
-                except discord.Forbidden:
-                    await ctx.send(
-                        "I don't have permissions to manage permissions! "
-                        "As a result, I cannot end the lockdown at this time"
-                    )
-                    return
-                else:
-                    await self.settings.member(target).clear_raw(str(channel.id))
+                await channel.set_permissions(target, overwrite=new_perms)
+                await self.settings.member(target).clear_raw(str(channel.id))
         await self.settings.guild(guild).current_lockdown_role_id.set(0)
         await ctx.send("Server has been unlocked!")
 
