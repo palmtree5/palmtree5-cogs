@@ -121,7 +121,7 @@ class Tweets(commands.Cog):
         else:
             await ctx.send("No tweets available to display!")
 
-    @commands.group(name="tweetset")
+    @commands.group(name="tweetset", autohelp=False)
     @checks.admin_or_permissions(manage_guild=True)
     async def _tweetset(self, ctx):
         """Command for setting required access information for the API."""
