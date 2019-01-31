@@ -52,19 +52,18 @@ class Lockdown(commands.Cog):
         targets = [m for m in guild.members if m.top_role <= role]
 
         for target in targets:
-            for channel in guild.channels:
-                if isinstance(channel, (discord.VoiceChannel, discord.TextChannel)):
-                    old_perms = channel.overwrites_for(target)
-                    await self.settings.member(target).set_raw(str(channel.id), value=dict(old_perms))
-                    new_perms = channel.overwrites_for(role)
-                    try:
-                        await channel.set_permissions(target, overwrite=new_perms)
-                    except discord.Forbidden:
-                        await ctx.send(
-                            "I don't have permissions to manage permissions! "
-                            "As a result, lockdown has NOT been activated!"
-                        )
-                        return
+            for channel in (*guild.text_channels, *guild.voice_channels):
+                old_perms = channel.overwrites_for(target)
+                await self.settings.member(target).set_raw(str(channel.id), value=dict(old_perms))
+                new_perms = channel.overwrites_for(role)
+                try:
+                    await channel.set_permissions(target, overwrite=new_perms)
+                except discord.Forbidden:
+                    await ctx.send(
+                        "I don't have permissions to manage permissions! "
+                        "As a result, lockdown has NOT been activated!"
+                    )
+                    return
         await self.settings.guild(ctx.guild).current_lockdown_role_id.set(role.id)
         await ctx.send(
             "Server is locked down. You can unlock the server by doing "
@@ -82,21 +81,20 @@ class Lockdown(commands.Cog):
         role = discord.utils.get(guild.roles, id=role_id)
         targets = [m for m in guild.members if m.top_role == role]
         for target in targets:
-            for channel in guild.channels:
-                if isinstance(channel, (discord.VoiceChannel, discord.TextChannel)):
-                    old_perms = channel.overwrites_for(target)
-                    new_perms = await self.settings.member(target).get_raw(str(channel.id))
-                    new_perms = discord.PermissionOverwrite(**new_perms)
-                    try:
-                        await channel.set_permissions(target, overwrite=new_perms)
-                    except discord.Forbidden:
-                        await ctx.send(
-                            "I don't have permissions to manage permissions! "
-                            "As a result, I cannot end the lockdown at this time"
-                        )
-                        return
-                    else:
-                        await self.settings.member(target).clear_raw(str(channel.id))
+            for channel in (*guild.text_channels, *guild.voice_channels):
+                old_perms = channel.overwrites_for(target)
+                new_perms = await self.settings.member(target).get_raw(str(channel.id))
+                new_perms = discord.PermissionOverwrite(**new_perms)
+                try:
+                    await channel.set_permissions(target, overwrite=new_perms)
+                except discord.Forbidden:
+                    await ctx.send(
+                        "I don't have permissions to manage permissions! "
+                        "As a result, I cannot end the lockdown at this time"
+                    )
+                    return
+                else:
+                    await self.settings.member(target).clear_raw(str(channel.id))
         await self.settings.guild(guild).current_lockdown_role_id.set(0)
         await ctx.send("Server has been unlocked!")
 
@@ -105,8 +103,7 @@ class Lockdown(commands.Cog):
     @checks.mod_or_permissions(manage_roles=True)
     async def lockdownset(self, ctx: commands.Context):
         """Settings for lockdown"""
-        if ctx.invoked_subcommand is None:
-            await ctx.send_help()
+        pass
 
     @lockdownset.command(name="reset")
     @checks.guildowner_or_permissions(administrator=True)
