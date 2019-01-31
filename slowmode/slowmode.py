@@ -1,6 +1,7 @@
 from redbot.core import checks, commands
 from redbot.core.bot import Red
 from redbot.core.utils.chat_formatting import bold
+import discord
 
 
 class SlowMode(commands.Cog):
