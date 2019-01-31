@@ -69,8 +69,7 @@ class SRRecords(commands.Cog):
     @commands.group()
     async def srset(self, ctx):
         """Speedrun settings"""
-        if ctx.invoked_subcommand is None:
-            await ctx.bot.send_cmd_help(ctx)
+        pass
 
     @checks.admin_or_permissions(manage_guild=True)
     @srset.command(name="game")
