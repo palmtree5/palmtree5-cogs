@@ -139,7 +139,6 @@ class EventMaker(commands.Cog):
         guild = ctx.guild
         to_leave = None
         async with self.settings.guild(guild).events() as event_list:
-            counter = 0
             for event in event_list:
                 if event["id"] == event_id:
                     to_leave = event
