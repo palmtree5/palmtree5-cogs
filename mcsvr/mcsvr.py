@@ -159,8 +159,7 @@ class Mcsvr(commands.Cog):
         """
         Settings for the server tracker
         """
-        if ctx.invoked_subcommand is None:
-            await ctx.send_help()
+        pass
 
     @mcset.command(name="mode")
     async def mcset_mode(self, ctx: commands.Context, mode: str, confirm: bool = False):
