@@ -2,11 +2,12 @@ from redbot.core import commands
 import discord
 
 from redbot.core import Config, checks, commands
-from redbot.core.i18n import Translator
+from redbot.core.i18n import Translator, cog_i18n
 
 _ = Translator("MessagePinner", __file__)
 
 
+@cog_i18n(_)
 class MessagePinner(commands.Cog):
     """Pins messages based on configured text"""
 
