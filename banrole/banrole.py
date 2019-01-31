@@ -15,7 +15,7 @@ class BanRole(commands.Cog):
 
     @commands.command()
     @checks.admin_or_permissions(ban_members=True)
-    @checks.bot_has_permissions(ban_members=True)
+    @commands.bot_has_permissions(ban_members=True)
     async def banrole(self, ctx: commands.Context, *, role: discord.Role):
         """
         Ban all members with the specified role
@@ -40,7 +40,7 @@ class BanRole(commands.Cog):
 
     @commands.command()
     @checks.admin_or_permissions(ban_members=True)
-    @checks.bot_has_permissions(ban_members=True)
+    @commands.bot_has_permissions(ban_members=True)
     async def unbanrole(self, ctx: commands.Context, *, role: discord.Role):
         """
         Unban members who were banned via banrole and who had the specified role at ban time
