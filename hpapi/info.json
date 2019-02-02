@@ -3,7 +3,7 @@
     "install_msg" : "[p]help Hpapi to see commands. Don't forget to set your key with [p]hpset apikey <your_key>. If you need a key, log onto mc.hypixel.net and do /api",
     "name" : "Hpapi",
     "disabled" : false,
-    "requirements": ["aiopixel==0.2.0"],
+    "requirements": ["aiopixel==0.2.1"],
     "min_python_version": [3, 6, 0],
     "short" : "Cog for getting info from the Hypixel API",
     "description" : "Gets data from the Hypixel API including player stats, guild info, and active boosters",
