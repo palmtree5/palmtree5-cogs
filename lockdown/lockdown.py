@@ -106,6 +106,8 @@ class Lockdown(commands.Cog):
                 old_perms = channel.overwrites_for(target)
                 new_perms = await self.settings.member(target).get_raw(str(channel.id))
                 new_perms = discord.PermissionOverwrite(**new_perms)
+                if new_perms.is_empty():
+                    new_perms = None
                 await channel.set_permissions(target, overwrite=new_perms)
                 await self.settings.member(target).clear_raw(str(channel.id))
         await self.settings.guild(guild).current_lockdown_role_id.set(0)
