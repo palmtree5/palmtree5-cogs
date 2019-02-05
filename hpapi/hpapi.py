@@ -116,6 +116,8 @@ class Hpapi(commands.Cog):
             return
         add_to_known = False
         uuid = await get_player_uuid(player_name, self.api_client._session)
+        if uuid is None:
+            return await ctx.send(_("It doesn't seem like there is a player with that name."))
         for g in await self.settings.known_guilds():
             if uuid in g["members"]:
                 guild_id = g["id"]
@@ -241,6 +243,8 @@ class Hpapi(commands.Cog):
             )
             return
         player_uuid = await get_player_uuid(player_name, self.api_client._session)
+        if player_uuid is None:
+            return await ctx.send(_("It doesn't seem like there is a player with that name."))
         friends = await self.api_client.friends(player_uuid)
         pages = []
         msg = await ctx.send(
@@ -271,6 +275,8 @@ class Hpapi(commands.Cog):
             return
         add_to_known = False
         uuid = await get_player_uuid(player_name, session=self.api_client._session)
+        if uuid is None:
+            return await ctx.send(_("It doesn't seem like there is a player with that name."))
         for g in await self.settings.known_guilds():
             if uuid in g["members"]:
                 guild_id = g["id"]
@@ -299,10 +305,11 @@ class Hpapi(commands.Cog):
             await ctx.send(
                 _("No api key available! Use `{}` to set one!").format("[p]hpset apikey")
             )
+        uuid = await get_player_uuid(player_name, session=self.api_client._session)
+        if uuid is None:
+            return await ctx.send(_("It doesn't seem like there is a player with that name."))
         try:
-            session = await self.api_client.session(
-                await get_player_uuid(player_name, session=self.api_client._session)
-            )
+            session = await self.api_client.session(uuid)
         except NoSessionForPlayer:
             await ctx.send(_("That player does not appear to have a session!"))
         else:
