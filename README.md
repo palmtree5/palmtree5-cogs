@@ -1,6 +1,6 @@
 [![Patreon](https://img.shields.io/badge/My-Patreon-orange.svg)](https://www.patreon.com/palmtree5) [![Donate](https://img.shields.io/badge/Paypal-donate-blue.svg)](https://paypal.me/palmtree5) [![Build Status](https://travis-ci.org/palmtree5/palmtree5-cogs.svg?branch=master)](https://travis-ci.org/palmtree5/palmtree5-cogs)
 
-**This branch is for Red V2. This branch is no longer receiving many updates as a result of my work on the rewrite**
+# ATTENTION: THIS BRANCH IS FOR RED V2 AND IS UNSUPPORTED
 
 # palmtree5-cogs
 
