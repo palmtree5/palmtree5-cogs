@@ -21,19 +21,20 @@ class SlowMode(commands.Cog):
         to be able to send another message.
         """
         if time < 0 or time > 120:
-            await ctx.send("Invalid time specified! Time must be between 0 and 120 (inclusive)")
+            embed = discord.Embed(title="Error!", description="Invalid time specified! Time must be between 0 and 120 (inclusive)", color=0xf44146)
+            await ctx.send(embed=embed)
             return
         try:
             await ctx.channel.edit(slowmode_delay=time)
         except discord.Forbidden:
-            await ctx.send("I am forbidden from doing that.")
+            embed = discord.Embed(title="Error!", description="I am forbidden from doing that...Sorry!", color=0xf44146)
+            await ctx.send(embed=embed)
             return
         if time > 0:
-            await ctx.send(
-                bold(
-                    "{0.mention} is now in slow mode. You may send 1 message "
-                    "every {1} seconds".format(ctx.channel, time)
-                )
-            )
+            embed = discord.Embed(title="Slow Mode Activated", description="{0.mention} is now in slow mode. You may send 1 message every {1} seconds)".format(ctx.channel, time), color=0x41f4e8)
+            embed.set_thumbnail(url="https://i.imgur.com/zegCAq4.png")
+            await ctx.send(embed=embed)
         else:
-            await ctx.send(bold("Slow mode has been disabled for {0.mention}".format(ctx.channel)))
+            embed = discord.Embed(title="Slow Mode Disabled", description="Slow mode has been disabled for {0.mention}".format(ctx.channel), color=0xaaf442)
+            embed.set_thumbnail(url="https://i.imgur.com/zegCAq4.png")
+            await ctx.send(embed=embed)
