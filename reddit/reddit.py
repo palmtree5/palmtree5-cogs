@@ -467,6 +467,7 @@ class Reddit(commands.Cog):
         modmail_set_command.enabled = val
 
     async def modmail_check(self):
+        await self.bot.wait_until_ready()
         while self == self.bot.get_cog("Reddit"):
             for guild in self.bot.guilds:
                 async with self.settings.guild(guild).modmail_channels() as mm_chns:
