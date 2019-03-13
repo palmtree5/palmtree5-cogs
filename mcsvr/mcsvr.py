@@ -8,7 +8,7 @@ from redbot.core import Config, checks, commands
 from redbot.core.bot import Red
 from redbot.core.i18n import Translator
 
-from mcsvr.helpers import check_server, get_server_embed, is_valid_ip, get_server_string
+from .helpers import check_server, get_server_embed, is_valid_ip, get_server_string
 
 log = logging.getLogger("red.mcsvr")
 
