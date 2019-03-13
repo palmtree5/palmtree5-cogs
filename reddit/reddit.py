@@ -11,7 +11,7 @@ from redbot.core.utils.chat_formatting import error
 from redbot.core.utils.embed import randomize_colour
 from redbot.core.i18n import Translator
 
-from reddit.menus import post_menu
+from .menus import post_menu
 from .errors import NoAccessTokenError, RedditAPIError, NotFoundError, AccessForbiddenError
 from .helpers import make_request, private_only
 
