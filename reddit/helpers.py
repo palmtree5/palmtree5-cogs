@@ -5,7 +5,7 @@ import discord
 from redbot.core.utils.embed import randomize_colour
 import logging
 
-from reddit.errors import RedditAPIError, AccessForbiddenError, NotFoundError
+from .errors import RedditAPIError, AccessForbiddenError, NotFoundError
 
 
 async def make_request(
