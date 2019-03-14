@@ -225,7 +225,7 @@ class Mcsvr(commands.Cog):
     async def server_check_loop(self):
         check_time = 300
         while self == self.bot.get_cog("Mcsvr"):
-            log.warning("Starting server checks")
+            log.debug("Starting server checks")
             all_channels = await self.config.all_channels()
             for channel_id, info in all_channels.items():
                 now = datetime.utcnow().timestamp()
@@ -268,5 +268,5 @@ class Mcsvr(commands.Cog):
 
             now = datetime.utcnow()
             next_check = datetime.utcfromtimestamp(now.timestamp() + check_time)
-            log.warning("Done. Next check at {}".format(next_check.strftime("%Y-%m-%d %H:%M:%S")))
+            log.debug("Done. Next check at {}".format(next_check.strftime("%Y-%m-%d %H:%M:%S")))
             await asyncio.sleep(check_time)
