@@ -1,5 +1,8 @@
 from .slowmode import SlowMode
+import asyncio
 
 
 def setup(bot):
-    bot.add_cog(SlowMode(bot))
+    obj = bot.add_cog(SlowMode(bot))
+    if asyncio.iscoroutine(obj):
+        await obj

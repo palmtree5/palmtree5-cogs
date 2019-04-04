@@ -1,6 +1,8 @@
 from .messagepinner import MessagePinner
+import asyncio
 
 
 def setup(bot):
-    to_add = MessagePinner()
-    bot.add_cog(to_add)
+    obj = bot.add_cog(MessagePinner())
+    if asyncio.iscoroutine(obj):
+        await obj

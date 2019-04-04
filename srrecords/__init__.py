@@ -1,5 +1,8 @@
 from .srrecords import SRRecords
+import asyncio
 
 
 def setup(bot):
-    bot.add_cog(SRRecords())
+    obj = bot.add_cog(SRRecords())
+    if asyncio.iscoroutine(obj):
+        await obj
