@@ -144,7 +144,7 @@ class Tweets(commands.Cog):
         access_token: str,
         access_secret: str,
     ):
-        """Sets the access credentials. See [p]help tweetset for instructions on getting these"""
+        """Sets the access credentials. See [p]tweetset for instructions on getting these"""
         await self.config.consumer_key.set(consumer_key)
         await self.config.consumer_secret.set(consumer_secret)
         await self.config.access_token.set(access_token)
