@@ -50,11 +50,6 @@ class Reddit(commands.Cog):
             fut = asyncio.ensure_future(self.session.close())
             yield from fut.__await__()
 
-    async def __error(self, ctx, error):
-        await ctx.send(
-            _("Error in command {0.command.qualified_name}:\n\n{1.original}").format(ctx, error)
-        )
-
     @commands.command(name="reddituser")
     async def _user(self, ctx: commands.Context, username: str):
         """Commands for getting user info"""
