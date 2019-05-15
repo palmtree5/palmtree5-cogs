@@ -36,7 +36,7 @@ class Mcsvr(commands.Cog):
         self.config.register_guild(**self.default_guild)
         self.svr_chk_task = self.bot.loop.create_task(self.server_check_loop())
 
-    def __unload(self):
+    def cog_unload(self):
         self.svr_chk_task.cancel()
 
     @commands.command()
@@ -57,7 +57,8 @@ class Mcsvr(commands.Cog):
             chk_svr = partial(check_server, server_ip)
             svr = await ctx.bot.loop.run_in_executor(None, chk_svr)
             self._svr_cache[server_ip] = {
-                "resp": svr, "invalid_at": ctx.message.created_at.timestamp() + 180
+                "resp": svr,
+                "invalid_at": ctx.message.created_at.timestamp() + 180,
             }
         else:
             svr = self._svr_cache[server_ip]["resp"]
@@ -88,7 +89,8 @@ class Mcsvr(commands.Cog):
                 chk_svr = partial(check_server, server_ip)
                 svr = await ctx.bot.loop.run_in_executor(None, chk_svr)
                 self._svr_cache[server_ip] = {
-                    "resp": svr, "invalid_at": ctx.message.created_at.timestamp() + 180
+                    "resp": svr,
+                    "invalid_at": ctx.message.created_at.timestamp() + 180,
                 }
             else:
                 svr = self._svr_cache[server_ip]["resp"]
@@ -146,7 +148,7 @@ class Mcsvr(commands.Cog):
             else:
                 await ctx.send("I was not tracking that server!")
                 return
-            msg = await channel.get_message(to_remove["message"])
+            msg = await channel.fetch_message(to_remove["message"])
             await msg.delete()
             servers.remove(to_remove)
             await self.config.channel(channel).servers.set(servers)
@@ -185,9 +187,7 @@ class Mcsvr(commands.Cog):
                     _(
                         "This will remove all currently tracked servers! "
                         "To confirm this is what you want to do, type {}"
-                    ).format(
-                        "`{}mcset mode {} yes`".format(ctx.prefix, mode)
-                    )
+                    ).format("`{}mcset mode {} yes`".format(ctx.prefix, mode))
                 )
                 return
             await self.do_mode_toggle_cleanup(current_mode, ctx.guild)
@@ -218,7 +218,7 @@ class Mcsvr(commands.Cog):
             for channel in guild.text_channels:
                 servers = await self.config.channel(channel).servers()
                 for server in servers:
-                    msg = await channel.get_message(server["message"])
+                    msg = await channel.fetch_message(server["message"])
                     await msg.delete()
                 await self.config.channel(channel).servers.set([])
 
@@ -231,12 +231,9 @@ class Mcsvr(commands.Cog):
                 now = datetime.utcnow().timestamp()
                 channel = self.bot.get_channel(channel_id)
                 cur_mode = await self.config.guild(channel.guild).tracker_mode()
-                if (
-                    channel is None
-                    or (
-                        cur_mode == "text"
-                        and not channel.permissions_for(channel.guild.me).manage_channels
-                    )
+                if channel is None or (
+                    cur_mode == "text"
+                    and not channel.permissions_for(channel.guild.me).manage_channels
                 ):
                     continue
 
@@ -255,7 +252,7 @@ class Mcsvr(commands.Cog):
                 else:
                     for server in info["servers"]:
                         server_ip = server["server_ip"]
-                        message = await channel.get_message(server["message"])
+                        message = await channel.fetch_message(server["message"])
                         if message is None:
                             continue
                         if not self.server_ip_in_cache(server_ip, now):

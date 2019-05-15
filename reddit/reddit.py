@@ -45,7 +45,7 @@ class Reddit(commands.Cog):
 
         self.session = aiohttp.ClientSession()
 
-    def __unload(self):
+    def cog_unload(self):
         if not self.session.closed:
             fut = asyncio.ensure_future(self.session.close())
             yield from fut.__await__()
@@ -277,7 +277,8 @@ class Reddit(commands.Cog):
             raise NoAccessTokenError("Have you set the credentials with `[p]redditset creds`?")
         user_agent = "Red-DiscordBotRedditCog/0.1 by /u/palmtree5"
         headers = {
-            "Authorization": "bearer {}".format(self.access_token), "User-Agent": user_agent
+            "Authorization": "bearer {}".format(self.access_token),
+            "User-Agent": user_agent,
         }
         return headers
 
@@ -299,7 +300,7 @@ class Reddit(commands.Cog):
                 auth=auth,
             )
             if "error" in response:  # Something went wrong in the process
-                owner = await self.bot.get_user_info(self.bot.owner_id)
+                owner = await self.bot.fetch_user(self.bot.owner_id)
                 try:
                     await owner.send(
                         error(

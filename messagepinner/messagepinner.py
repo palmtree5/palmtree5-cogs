@@ -29,6 +29,7 @@ class MessagePinner(commands.Cog):
             await self.settings.channel(ctx.channel).text.set(text)
             await ctx.send(_("Pin trigger text set!"))
 
+    @commands.Cog.listener()
     async def on_message(self, message):
         """Message listener"""
         if not isinstance(message.channel, discord.abc.PrivateChannel):

@@ -24,6 +24,7 @@ log = logging.getLogger("palmtree5.cogs.hpapi")
 
 class Hpapi(commands.Cog):
     """Cog for getting info from Hypixel's API"""
+
     default_global = {"api_key": "", "known_guilds": []}
 
     default_channel = {"guild_id": "", "message": 0}
@@ -38,7 +39,7 @@ class Hpapi(commands.Cog):
         self.guild_update_task = loop.create_task(self.update_guilds())
         loop.create_task(self.check_api_key())
 
-    def __unload(self):
+    def cog_unload(self):
         self.guild_update_task.cancel()
 
     async def __error(self, ctx: commands.Context, error):

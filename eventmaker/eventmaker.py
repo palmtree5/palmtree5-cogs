@@ -41,7 +41,7 @@ class EventMaker(commands.Cog):
         loop = self.bot.loop
         self.event_check_task = loop.create_task(self.check_events())
 
-    def __unload(self):
+    def cog_unload(self):
         self.event_check_task.cancel()
 
     @commands.group()
