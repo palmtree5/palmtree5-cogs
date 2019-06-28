@@ -6,6 +6,8 @@ from redbot.core import commands, Config
 
 
 async def allowed_to_edit(ctx: commands.Context, event: dict) -> bool:
+    if not ctx.guild:
+        return False
     if ctx.author.id == event["creator"]:
         return True
     elif await ctx.bot.is_mod(ctx.author):
@@ -16,8 +18,9 @@ async def allowed_to_edit(ctx: commands.Context, event: dict) -> bool:
 
 
 def allowed_to_create():
-
     async def pred(ctx):
+        if not ctx.guild:
+            return False
         min_role_id = await ctx.cog.settings.guild(ctx.guild).min_role()
         if min_role_id == 0:
             min_role = ctx.guild.default_role
@@ -27,7 +30,7 @@ def allowed_to_create():
             return True
         elif await ctx.bot.is_mod(ctx.author):
             return True
-        elif ctx.author.top_role in sorted(ctx.guild.roles)[min_role.position:]:
+        elif ctx.author.top_role in sorted(ctx.guild.roles)[min_role.position :]:
             return True
         else:
             return False
