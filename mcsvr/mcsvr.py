@@ -43,6 +43,8 @@ class Mcsvr(commands.Cog):
     async def mcserver(self, ctx: commands.Context, server_ip: str):
         """
         Display info about the specified server
+
+        NOTE: There may be a delay between when the command is run and when the bot responds
         """
         if not is_valid_ip(server_ip):
             await ctx.send(
