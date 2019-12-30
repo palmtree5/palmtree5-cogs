@@ -1,5 +1,6 @@
 import sys
 import discord
+import asyncio
 from redbot.core import Config, checks, commands
 from redbot.core.utils.chat_formatting import box
 
@@ -52,27 +53,12 @@ class Lockdown(commands.Cog):
         role = discord.utils.get(guild.roles, id=profiles[profile])
         targets = [m for m in guild.members if m.top_role <= role]
 
-        fail_list = []
-        for channel in (*guild.text_channels, *guild.voice_channels):
-            if not channel.permissions_for(ctx.guild.me).manage_roles:
-                fail_list.append(channel)
+        if not guild.permissions_for(guild.me).manage_roles:
+            return await ctx.send("I can't manage roles in this server!")
 
-        if fail_list:
-            await ctx.send(
-                "I do not have permissions to manage permissions in the following channels: {}.\n"
-                "Please correct this if you wish to be able to lock the server down.".format(
-                    ", ".join([c.mention for c in fail_list])
-                )
-            )
-            return
         for target in targets:
-            for channel in (*guild.text_channels, *guild.voice_channels):
-                old_perms = channel.overwrites_for(target)
-                await self.settings.member(target).set_raw(str(channel.id), value=dict(old_perms))
-                if sys.platform == "win32":  # Why Windows why
-                    await asyncio.sleep(2)
-                new_perms = channel.overwrites_for(role)
-                await channel.set_permissions(target, overwrite=new_perms)
+            await target.add_roles(role, reason=f"Server lockdown requested by {ctx.author}.")
+            await asyncio.sleep(1)
         await self.settings.guild(ctx.guild).current_lockdown_role_id.set(role.id)
         await ctx.send(
             "Server is locked down. You can unlock the server by doing "
@@ -90,29 +76,9 @@ class Lockdown(commands.Cog):
         role = discord.utils.get(guild.roles, id=role_id)
         targets = [m for m in guild.members if m.top_role == role]
 
-        fail_list = []
-        for channel in (*guild.text_channels, *guild.voice_channels):
-            if not channel.permissions_for(ctx.guild.me).manage_roles:
-                fail_list.append(channel)
-
-        if fail_list:
-            await ctx.send(
-                "I do not have permissions to manage permissions in the following channels: {}.\n"
-                "Please correct this if you wish to be able to unlock the server.".format(
-                    ", ".join([c.mention for c in fail_list])
-                )
-            )
-            return
-
         for target in targets:
-            for channel in (*guild.text_channels, *guild.voice_channels):
-                old_perms = channel.overwrites_for(target)
-                new_perms = await self.settings.member(target).get_raw(str(channel.id))
-                new_perms = discord.PermissionOverwrite(**new_perms)
-                if new_perms.is_empty():
-                    new_perms = None
-                await channel.set_permissions(target, overwrite=new_perms)
-                await self.settings.member(target).clear_raw(str(channel.id))
+            await target.remove_roles(role, reason=f"Lockdown end requested by {ctx.author}.")
+            await asyncio.sleep(1)
         await self.settings.guild(guild).current_lockdown_role_id.set(0)
         await ctx.send("Server has been unlocked!")
 
@@ -191,80 +157,3 @@ class Lockdown(commands.Cog):
             return
         role = discord.utils.get(member.guild.roles, id=role_id)
         await member.add_roles(role)
-
-    @commands.Cog.listener()
-    async def on_member_update(self, before: discord.Member, after: discord.Member):
-        """
-        Handle applying/removing lockdown perms on role modifications if necessary
-        """
-        guild = before.guild
-        role_id = await self.settings.guild(guild).current_lockdown_role_id()
-
-        if role_id == 0:  # No lockdown in progress, nothing to do
-            return
-
-        ld_role = guild.get_role(role_id)
-
-        if before.roles == after.roles:  # No role changes, nothing to do
-            return
-        if before.top_role > ld_role and after.top_role > ld_role:
-            return
-
-        if before.top_role <= ld_role and after.top_role <= ld_role:
-            return
-
-        if after.top_role <= ld_role and before.top_role > ld_role:
-            for channel in (*guild.text_channels, *guild.voice_channels):
-                old_perms = channel.overwrites_for(after)
-                await self.settings.member(after).set_raw(str(channel.id), value=dict(old_perms))
-                new_perms = channel.overwrites_for(ld_role)
-                await channel.set_permissions(after, overwrite=new_perms)
-                return
-        elif after.top_role > ld_role and before.top_role <= ld_role:
-            for channel in (*guild.text_channels, *guild.voice_channels):
-                old_perms = channel.overwrites_for(after)
-                new_perms = await self.settings.member(after).get_raw(str(channel.id))
-                new_perms = discord.PermissionOverwrite(**new_perms)
-                if new_perms.is_empty():
-                    new_perms = None
-                await channel.set_permissions(after, overwrite=new_perms)
-                await self.settings.member(after).clear_raw(str(channel.id))
-                return
-
-    @commands.Cog.listener()
-    async def on_guild_channel_update(
-        self, before: discord.abc.GuildChannel, after: discord.abc.GuildChannel
-    ):
-        if before.overwrites == after.overwrites:
-            return
-
-        guild = before.guild
-
-        role_id = await self.settings.guild(guild).current_lockdown_role_id()
-
-        if role_id == 0:
-            return
-
-        ld_role = guild.get_role(role_id)
-        ld_overwrites = after.overwrites_for(ld_role)
-
-        prev_overwrites = sorted(before.overwrites, key=lambda x: x[0].id)
-        new_overwrites = sorted(after.overwrites, key=lambda x: x[0].id)
-
-        combined = zip_longest(prev_overwrites, new_overwrites)
-        combined = map(lambda x: (x[0][0], x[0][1], x[1][1]), combined)
-
-        for item in combined:
-            if isinstance(item[0], discord.Role):
-                continue
-            member = item[0]
-            old = dict(item[1])
-            new = dict(item[2])
-
-            changed = {}
-            if old != new and member.top_role <= ld_role:
-                for key in new.keys():
-                    if new[key] != old[key]:
-                        changed[key] = new[key]
-                async with self.settings.member(member) as m:
-                    m.update({after.id: changed})
