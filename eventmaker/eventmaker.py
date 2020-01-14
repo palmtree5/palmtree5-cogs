@@ -1,6 +1,6 @@
 import asyncio
 import contextlib
-from datetime import datetime as dt, timedelta
+from datetime import datetime as dt, timezone
 
 import discord
 from redbot.core import commands
@@ -65,7 +65,7 @@ class EventMaker(commands.Cog):
 
         event_id = await self.settings.guild(guild).next_available_id()
 
-        creation_time = ctx.message.created_at.timestamp()
+        creation_time = ctx.message.created_at.replace(tzinfo=timezone.utc).timestamp()
         await ctx.send(_("Enter a name for the event: "))
 
         def same_author_check(msg):
