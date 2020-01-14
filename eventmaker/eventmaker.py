@@ -65,7 +65,11 @@ class EventMaker(commands.Cog):
 
         event_id = await self.settings.guild(guild).next_available_id()
 
-        creation_time = ctx.message.created_at.replace(tzinfo=timezone.utc).timestamp()
+        creation_time = ctx.message.created_at
+        if creation_time.tzinfo is None:
+            creation_time = creation_time.replace(tzinfo=timezone.utc)()
+        else:
+            creation_time = creation_time.timestamp()
         await ctx.send(_("Enter a name for the event: "))
 
         def same_author_check(msg):
