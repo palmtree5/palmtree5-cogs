@@ -67,7 +67,7 @@ class EventMaker(commands.Cog):
 
         creation_time = ctx.message.created_at
         if creation_time.tzinfo is None:
-            creation_time = creation_time.replace(tzinfo=timezone.utc)()
+            creation_time = creation_time.replace(tzinfo=timezone.utc).timestamp()
         else:
             creation_time = creation_time.timestamp()
         await ctx.send(_("Enter a name for the event: "))
