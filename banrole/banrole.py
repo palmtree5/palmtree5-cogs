@@ -1,5 +1,6 @@
 from redbot.core import commands, Config, checks
 from redbot.core.bot import Red
+from redbot.core.utils.chat_formatting import pagify
 import discord
 
 
@@ -40,7 +41,7 @@ class BanRole(commands.Cog):
                     banned_list.append(member.id)
         if failure_list:
             failures += "\n".join(failure_list)
-            await ctx.send(failures)
+            await ctx.send(pagify(failures))
         else:
             await ctx.tick()
 
@@ -51,14 +52,21 @@ class BanRole(commands.Cog):
         """
         Unban members who were banned via banrole and who had the specified role at ban time
         """
+        failures = "I failed to unban the following users:\n"
+        failure_list = []
         async with self.config.role(role).banned_members() as banned_list:
             for uid in banned_list:
                 try:
                     await ctx.guild.unban(discord.Object(id=uid))
                 except discord.Forbidden:
-                    return await ctx.send("I am unable to do that for some reason.")
+                    failure_list.append(uid)
+                    banned_list.remove(uid)
                 except discord.NotFound:
+                    failure_list.append(uid)
                     banned_list.remove(uid)
                 else:
                     banned_list.remove(uid)
+        if failure_list:
+            failures += "\n".join(failure_list)
+            await ctx.send(pagify(failures))
         await ctx.tick()
