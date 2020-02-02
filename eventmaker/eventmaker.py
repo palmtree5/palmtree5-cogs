@@ -112,6 +112,7 @@ class EventMaker(commands.Cog):
         async with self.settings.guild(guild).events() as event_list:
             event_list.append(new_event)
             event_list.sort(key=lambda x: x["create_time"])
+        await self.settings.guild(guild).next_available_id.set(event_id + 1)
         await ctx.send(embed=get_event_embed(guild, ctx.message.created_at, new_event))
 
     @event.command(name="join")
