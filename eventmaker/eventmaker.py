@@ -79,7 +79,7 @@ class EventMaker(commands.Cog):
         name = msg.content
         if len(name) > 256:
             await ctx.send(
-                _("That name is too long! Event names " "must be 256 charcters or less.")
+                _("That name is too long! Event names must be 256 charcters or less.")
             )
             return
         await ctx.send(
@@ -127,6 +127,9 @@ class EventMaker(commands.Cog):
                     event_list.remove(event)
                     break
 
+            if not to_join:
+                return await ctx.send("I could not find an event with that id!")
+
             if not to_join["has_started"]:
                 if ctx.author.id not in to_join["participants"]:
                     to_join["participants"].append(ctx.author.id)
@@ -149,6 +152,9 @@ class EventMaker(commands.Cog):
                     to_leave = event
                     event_list.remove(event)
                     break
+
+            if not to_leave:
+                return await ctx.send("I could not find an event with that id!")
 
             if not to_leave["has_started"]:
                 if ctx.author.id in to_leave["participants"]:
