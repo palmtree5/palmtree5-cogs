@@ -21,6 +21,7 @@ _ = Translator("Reddit", __file__)
 
 REDDIT_ACCESSTOKEN_URL = "https://www.reddit.com/api/v1/access_token"
 REDDIT_OAUTH_API_ROOT = "https://oauth.reddit.com{}"
+VALID_TOP_CONTROVERSIAL_TIMEFRAMES = ["hour", "day", "week", "month", "year", "all"]
 
 
 class Reddit(commands.Cog):
@@ -177,13 +178,15 @@ class Reddit(commands.Cog):
             await post_menu(ctx, resp_json, page=0, timeout=30)
 
     @_subreddit.command(name="top")
-    async def subreddit_top(self, ctx: commands.Context, subreddit: str, post_count: int = 3):
+    async def subreddit_top(self, ctx: commands.Context, subreddit: str, time_frame: str="week", post_count: int = 3):
         """Command for getting subreddit's top posts"""
         if post_count <= 0 or post_count > 100:
             await ctx.send("Sorry, I can't do that")
         else:
+            if time_frame not in VALID_TOP_CONTROVERSIAL_TIMEFRAMES:
+                time_frame = "week"
             url = REDDIT_OAUTH_API_ROOT.format("/r/{}/top".format(subreddit))
-            data = {"limit": post_count}
+            data = {"limit": post_count, "t": time_frame}
             headers = await self.get_headers()
             try:
                 resp_json = await make_request(
@@ -203,14 +206,16 @@ class Reddit(commands.Cog):
 
     @_subreddit.command(name="controversial")
     async def subreddit_controversial(
-        self, ctx: commands.Context, subreddit: str, post_count: int = 3
+        self, ctx: commands.Context, subreddit: str, time_frame: str="week", post_count: int = 3
     ):
         """Command for getting subreddit's controversial posts"""
         if post_count <= 0 or post_count > 100:
             await ctx.send("Sorry, I can't do that")
         else:
+            if time_frame not in VALID_TOP_CONTROVERSIAL_TIMEFRAMES:
+                time_frame = "week"
             url = REDDIT_OAUTH_API_ROOT.format("/r/{}/controversial".format(subreddit))
-            data = {"limit": post_count}
+            data = {"limit": post_count, "t": time_frame}
             headers = await self.get_headers()
             try:
                 resp_json = await make_request(
