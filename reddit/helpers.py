@@ -59,7 +59,9 @@ def post_embed(data: dict, now: dt) -> discord.Embed:
         em.add_field(name="Stickied", value="Yes")
     else:
         em.add_field(name="Stickied", value="No")
-    em.add_field(name="Comments", value=str(data["data"]["num_comments"]))
+    em.add_field(name="Comments", value="[{}]({})".format(data["data"]["num_comments"], "https://reddit.com{}".format(data["data"]["permalink"]))
+    if data["data"]["thumbnail"] != "self":
+        em.set_thumbnail(url=data["data"]["thumbnail"])
     return em
 
 
