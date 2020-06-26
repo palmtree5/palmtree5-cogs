@@ -32,7 +32,7 @@ class BanRole(commands.Cog):
             for member in role.members:
                 try:
                     assert ctx.guild.me.top_role > member.top_role and ctx.guild.owner != member
-                    if (mod_cog and await mod_cog.settings.guild(ctx.guild).respect_hierarchy()) or not mod_cog:
+                    if (mod_cog and await mod_cog.config.guild(ctx.guild).respect_hierarchy()) or not mod_cog:
                         assert ctx.author.top_role > member.top_role or ctx.author == ctx.guild.owner
                     await ctx.guild.ban(member)
                 except (discord.HTTPException, AssertionError):
