@@ -41,7 +41,8 @@ class BanRole(commands.Cog):
                     banned_list.append(member.id)
         if failure_list:
             failures += "\n".join(failure_list)
-            await ctx.send(pagify(failures))
+            for page in pagify(failures):
+                await ctx.send(page)
         else:
             await ctx.tick()
 
@@ -68,5 +69,6 @@ class BanRole(commands.Cog):
                     banned_list.remove(uid)
         if failure_list:
             failures += "\n".join(failure_list)
-            await ctx.send(pagify(failures))
+            for page in pagify(failures):
+                await ctx.send(page)
         await ctx.tick()
