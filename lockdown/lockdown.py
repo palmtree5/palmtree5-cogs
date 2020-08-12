@@ -14,7 +14,7 @@ class Lockdown(commands.Cog):
     To get started, you will need to set up a role to be used when locking
     down your server. This role needs to be above all roles it should affect
     in the hierarchy as it will be used to determine who should be affected
-    by the lockdown and its permissions will be applied to each user. The 
+    by the lockdown and this role will be applied to each user. The 
     role's permissions should be set up to deny access to things the affected 
     users should not be able to do during a lockdown (such as sending messages, 
     talking in voice channels, adding reactions, etc).
