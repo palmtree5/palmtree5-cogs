@@ -5,7 +5,7 @@ from datetime import timedelta
 
 import discord
 from aiopixel import PixelClient
-from aiopixel.exceptions import GuildNotFound, PlayerNotInGuild, PlayerNotFound, NoSessionForPlayer
+from aiopixel.exceptions import GuildNotFound, PlayerNotInGuild, PlayerNotFound, NoStatusForPlayer
 from aiopixel.gametypes import GameType
 from aiopixel.utils import get_player_uuid
 from redbot.core import commands
