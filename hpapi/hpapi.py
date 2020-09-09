@@ -309,8 +309,8 @@ class Hpapi(commands.Cog):
         if uuid is None:
             return await ctx.send(_("It doesn't seem like there is a player with that name."))
         try:
-            session = await self.api_client.session(uuid)
-        except NoSessionForPlayer:
+            session = await self.api_client.status(uuid)
+        except NoStatusForPlayer:
             await ctx.send(_("That player does not appear to have a session!"))
         else:
             await ctx.send(
