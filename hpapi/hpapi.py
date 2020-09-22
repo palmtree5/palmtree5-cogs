@@ -2,6 +2,7 @@
 import asyncio
 import logging
 from datetime import timedelta
+from typing import Literal
 
 import discord
 from aiopixel import PixelClient
@@ -16,6 +17,9 @@ from redbot.core.utils.embed import randomize_colour
 from redbot.core.utils.menus import DEFAULT_CONTROLS, menu
 
 from .helpers import get_booster_embed, get_friend_embed, get_guild_embed, get_player_embed
+
+
+RequesterTypes = Literal["discord_deleted_user", "owner", "user", "user_strict"]
 
 _ = Translator("Hpapi", __file__)
 
@@ -44,6 +48,14 @@ class Hpapi(commands.Cog):
 
     async def __error(self, ctx: commands.Context, error):
         await ctx.send("`Error in {0.command.qualified_name}: {1}`".format(ctx, error))
+    
+    async def red_get_data_for_user(self, *, user_id: int) -> Dict[str, Any]:
+        # Cog does not store end user data
+        return {}
+
+    async def red_delete_data_for_user(self, *, requester: RequesterTypes, user_id: int) -> None:
+        # Cog does not store end user data
+        pass
 
     # Section: Load and update
 

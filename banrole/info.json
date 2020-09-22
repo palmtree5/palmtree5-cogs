@@ -2,6 +2,7 @@
     "author" : ["palmtree5"],
     "install_msg" : "Check out `[p]help BanRole` for the commands!",
     "name" : "BanRole",
+    "end_user_data_statement": "This extension stores a mapping of role ids to a list of banned user ids. This data is necessary for the functionality allowing the unbanning of a previously banned role, but a user id can be removed if the account is deleted or the owner specifically requests the deletion not on behalf of a user.",
     "disabled" : false,
     "short" : "Ban/unban by role.",
     "description" : "Ban/unban by role. Keeps track of all users banned via `[p]banrole`",
