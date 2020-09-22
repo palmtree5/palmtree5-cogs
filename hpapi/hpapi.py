@@ -2,7 +2,7 @@
 import asyncio
 import logging
 from datetime import timedelta
-from typing import Literal
+from typing import Any, Dict, Literal
 
 import discord
 from aiopixel import PixelClient
