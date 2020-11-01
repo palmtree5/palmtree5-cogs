@@ -63,6 +63,15 @@ class MessagePinner(commands.Cog):
                     "Action Toggled: Whenever channel hits 49 pins I will remove the oldest pin to add a new one"
                 )
                 return
+        else:
+            load_set = await self.settings.guild(ctx.guild).cycle_pins()
+            await self.settings.guild(ctx.guild).cycle_pins.set(cycle)
+            if cycle:
+                await ctx.send(
+                    "Action Toggled: Whenever channel hits 49 pins I will remove the oldest pin to add a new one"
+                )
+            else:
+                await ctx.send("Action Toggled: Will not unpin old pins for new pins")
 
     @commands.Cog.listener()
     async def on_message(self, message):
