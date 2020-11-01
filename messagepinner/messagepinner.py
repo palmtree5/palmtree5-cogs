@@ -26,14 +26,14 @@ class MessagePinner(commands.Cog):
         If channel pins are full bot will unpin oldest pinned message
         """
         if text is None:
-                channel_check = await self.settings.channel(ctx.channel).text()
-                if channel_check != "":
-                    await self.settings.channel(ctx.channel).text.set("")
-                    await ctx.send(_("Cleared pin trigger!"))
-                else:
-                    await ctx.send(_("No trigger found in this channel"))
-                    await ctx.send_help()
-                    return
+            channel_check = await self.settings.channel(ctx.channel).text()
+            if channel_check != "":
+                await self.settings.channel(ctx.channel).text.set("")
+                await ctx.send(_("Cleared pin trigger!"))
+            else:
+                await ctx.send(_("No trigger found in this channel"))
+                await ctx.send_help()
+                return
         else:
             await self.settings.channel(ctx.channel).text.set(text)
             await ctx.send(_("Pin trigger text set!"))
@@ -88,7 +88,9 @@ class MessagePinner(commands.Cog):
                                 "permission to unpin messages!"
                             )
                     else:
-                        await message.channel.send("Channel pins are full. Turn on infinite pins ([p]pinset infinite`), clear the pins, or make a new channel")
+                        await message.channel.send(
+                            "Channel pins are full. Turn on infinite pins ([p]pinset infinite`), clear the pins, or make a new channel"
+                        )
                         return
                 try:
                     await message.pin()  # then pin it
