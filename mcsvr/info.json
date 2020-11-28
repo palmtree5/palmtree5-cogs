@@ -4,7 +4,7 @@
     "name" : "Mcsvr",
     "disabled": false,
     "short" : "Cog for getting Minecraft server status",
-    "requirements" : ["mcstatus", "validators"],
+    "requirements" : ["mcstatus==4.1.0", "validators"],
     "description" : "Gets the status of a Minecraft Server (specifically version and player count)",
     "tags": ["minecraft", "utility", "gaming"]
 }

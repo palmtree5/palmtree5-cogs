@@ -50,8 +50,9 @@ def is_valid_ip(addr: str):
         return False
     return True
 
-
+@DeprecationWarning
 def check_server(addr: str) -> Union[discord.Embed, str, None]:
+    # Deprecated in favor of using async_status vs status. async_query is not implemented yet
     mc_server = MinecraftServer.lookup(addr)
 
     query = None

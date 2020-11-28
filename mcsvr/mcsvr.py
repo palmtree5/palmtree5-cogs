@@ -2,11 +2,13 @@ import asyncio
 import logging
 from datetime import datetime
 from functools import partial
+from typing import Union
 
 import discord
 from redbot.core import Config, checks, commands
 from redbot.core.bot import Red
 from redbot.core.i18n import Translator
+from mcstatus import MinecraftServer, PingResponse
 
 from .helpers import check_server, get_server_embed, is_valid_ip, get_server_string
 
@@ -43,8 +45,6 @@ class Mcsvr(commands.Cog):
     async def mcserver(self, ctx: commands.Context, server_ip: str):
         """
         Display info about the specified server
-
-        NOTE: There may be a delay between when the command is run and when the bot responds
         """
         if not is_valid_ip(server_ip):
             await ctx.send(
@@ -55,9 +55,9 @@ class Mcsvr(commands.Cog):
             )
             return
         if not self.server_ip_in_cache(server_ip, ctx.message.created_at.timestamp()):
-            await ctx.trigger_typing()
-            chk_svr = partial(check_server, server_ip)
-            svr = await ctx.bot.loop.run_in_executor(None, chk_svr)
+            svr = await self.check_server(server_ip)
+            if isinstance(svr, str):  # An error occurred, send that and stop
+                return await ctx.send(f"An error occured. Message: {svr}")
             self._svr_cache[server_ip] = {
                 "resp": svr,
                 "invalid_at": ctx.message.created_at.timestamp() + 180,
@@ -87,9 +87,9 @@ class Mcsvr(commands.Cog):
             return
         if is_valid_ip(server_ip):
             if not self.server_ip_in_cache(server_ip, ctx.message.created_at.timestamp()):
-                await ctx.trigger_typing()
-                chk_svr = partial(check_server, server_ip)
-                svr = await ctx.bot.loop.run_in_executor(None, chk_svr)
+                svr = await self.check_server(server_ip)
+                if isinstance(svr, str):  # An error occurred, send that and stop
+                    return await ctx.send(f"An error occured. Message: {svr}")
                 self._svr_cache[server_ip] = {
                     "resp": svr,
                     "invalid_at": ctx.message.created_at.timestamp() + 180,
@@ -197,6 +197,15 @@ class Mcsvr(commands.Cog):
             await ctx.tick()
         else:
             await ctx.send(_("I was already in mode `{}`").format(mode))
+    
+    async def check_server(self, addr: str) -> Union[PingResponse, str, None]:
+        server = MinecraftServer.lookup(addr)
+
+        try:
+            status = await server.async_status()
+        except Exception as e:
+            return e
+        return status
 
     def server_ip_in_cache(self, server_ip: str, time: float):
         if server_ip not in self._svr_cache:
@@ -244,8 +253,9 @@ class Mcsvr(commands.Cog):
                     if not server_ip:
                         continue
                     if not self.server_ip_in_cache(server_ip, now):
-                        chk_svr = partial(check_server, server_ip)
-                        svr = await self.bot.loop.run_in_executor(None, chk_svr)
+                        svr = await self.check_server(server_ip)
+                        if isinstance(svr, str):
+                            continue
                         self._svr_cache[server_ip] = {"resp": svr, "invalid_at": now + 180}
                     else:
                         svr = self._svr_cache[server_ip]["resp"]
@@ -258,8 +268,9 @@ class Mcsvr(commands.Cog):
                         if message is None:
                             continue
                         if not self.server_ip_in_cache(server_ip, now):
-                            chk_svr = partial(check_server, server_ip)
-                            svr = await self.bot.loop.run_in_executor(None, chk_svr)
+                            svr = await self.check_server(server_ip)
+                            if isinstance(svr, str):
+                                continue
                             self._svr_cache[server_ip] = {"resp": svr, "invalid_at": now + 180}
                         else:
                             svr = self._svr_cache[server_ip]["resp"]
