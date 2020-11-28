@@ -8,7 +8,8 @@ import discord
 from redbot.core import Config, checks, commands
 from redbot.core.bot import Red
 from redbot.core.i18n import Translator
-from mcstatus import MinecraftServer, PingResponse
+from mcstatus import MinecraftServer
+from mcstatus.pinger import PingResponse
 
 from .helpers import check_server, get_server_embed, is_valid_ip, get_server_string
 
