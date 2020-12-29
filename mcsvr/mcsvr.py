@@ -57,7 +57,7 @@ class Mcsvr(commands.Cog):
             return
         if not self.server_ip_in_cache(server_ip, ctx.message.created_at.timestamp()):
             svr = await self.check_server(server_ip)
-            if isinstance(svr, str):  # An error occurred, send that and stop
+            if isinstance(svr, (str, Exception)):  # An error occurred, send that and stop
                 return await ctx.send(f"An error occured. Message: {svr}")
             self._svr_cache[server_ip] = {
                 "resp": svr,
@@ -89,7 +89,7 @@ class Mcsvr(commands.Cog):
         if is_valid_ip(server_ip):
             if not self.server_ip_in_cache(server_ip, ctx.message.created_at.timestamp()):
                 svr = await self.check_server(server_ip)
-                if isinstance(svr, str):  # An error occurred, send that and stop
+                if isinstance(svr, (str, Exception)):  # An error occurred, send that and stop
                     return await ctx.send(f"An error occured. Message: {svr}")
                 self._svr_cache[server_ip] = {
                     "resp": svr,
@@ -255,7 +255,7 @@ class Mcsvr(commands.Cog):
                         continue
                     if not self.server_ip_in_cache(server_ip, now):
                         svr = await self.check_server(server_ip)
-                        if isinstance(svr, str):
+                        if isinstance(svr, (str, Exception)):
                             continue
                         self._svr_cache[server_ip] = {"resp": svr, "invalid_at": now + 180}
                     else:
@@ -270,7 +270,7 @@ class Mcsvr(commands.Cog):
                             continue
                         if not self.server_ip_in_cache(server_ip, now):
                             svr = await self.check_server(server_ip)
-                            if isinstance(svr, str):
+                            if isinstance(svr, (str, Exception)):
                                 continue
                             self._svr_cache[server_ip] = {"resp": svr, "invalid_at": now + 180}
                         else:
