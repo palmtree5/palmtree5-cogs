@@ -44,7 +44,10 @@ async def post_menu(
     reacts = {v: k for k, v in numbs.items()}
     react = reacts[react.emoji]
     if react == "next":
-        perms = message.channel.permissions_for(ctx.guild.me)
+        try:
+            perms = message.channel.permissions_for(ctx.guild.me)
+        except AttributeError:
+            perms = message.channel.permissions_for(ctx.bot.user)
         if perms.manage_messages:  # Can manage messages, so remove react
             try:
                 await message.remove_reaction("➡", ctx.author)
@@ -56,7 +59,10 @@ async def post_menu(
             next_page = page + 1
         return await post_menu(ctx, post_list, message=message, page=next_page, timeout=timeout)
     elif react == "back":
-        perms = message.channel.permissions_for(ctx.guild.me)
+        try:
+            perms = message.channel.permissions_for(ctx.guild.me)
+        except AttributeError:
+            perms = message.channel.permissions_for(ctx.bot.user)
         if perms.manage_messages:  # Can manage messages, so remove react
             try:
                 await message.remove_reaction("⬅", ctx.author)

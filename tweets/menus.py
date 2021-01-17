@@ -51,7 +51,10 @@ async def tweet_menu(
     react = reacts[react.emoji]
     if react == "next":
         next_page = 0
-        perms = message.channel.permissions_for(ctx.guild.me)
+        try:
+            perms = message.channel.permissions_for(ctx.guild.me)
+        except AttributeError:
+            perms = message.channel.permissions_for(ctx.bot.user)
         if perms.manage_messages:  # Can manage messages, so remove react
             try:
                 await message.remove_reaction("➡", ctx.author)
@@ -64,7 +67,10 @@ async def tweet_menu(
         return await tweet_menu(ctx, post_list, message=message, page=next_page, timeout=timeout)
     elif react == "back":
         next_page = 0
-        perms = message.channel.permissions_for(ctx.guild.me)
+        try:
+            perms = message.channel.permissions_for(ctx.guild.me)
+        except AttributeError:
+            perms = message.channel.permissions_for(ctx.bot.user)
         if perms.manage_messages:  # Can manage messages, so remove react
             try:
                 await message.remove_reaction("⬅", ctx.author)
