@@ -38,8 +38,14 @@ async def get_player_embed(player: Player) -> discord.Embed:
         em.add_field(name="Last Playing", value=player.most_recent_game_type.clean_name)
     if player.online():
         em.add_field(name="Online", value="Yes")
-    first_login = player.first_login.strftime("%Y-%m-%d %H:%M:%S")
-    last_login = player.last_login.strftime("%Y-%m-%d %H:%M:%S")
+    try:
+        first_login = player.first_login.strftime("%Y-%m-%d %H:%M:%S")
+    except AttributeError:
+        first_login = "Never"
+    try:
+        last_login = player.last_login.strftime("%Y-%m-%d %H:%M:%S")
+    except AttributeError:
+        last_login = "Never"
     em.add_field(
         name="First/Last login", value="{} / {}".format(first_login, last_login), inline=False
     )
