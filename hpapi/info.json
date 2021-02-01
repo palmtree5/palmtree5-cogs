@@ -7,7 +7,7 @@
     "name": "Hpapi",
     "disabled": false,
     "requirements": [
-        "aiopixel==0.2.11"
+        "aiopixel==0.2.12"
     ],
     "min_python_version": [
         3,
