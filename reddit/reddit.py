@@ -28,7 +28,7 @@ VALID_TOP_CONTROVERSIAL_TIMEFRAMES = ["hour", "day", "week", "month", "year", "a
 class Reddit(commands.Cog):
     """Cog for getting things from Reddit's API"""
 
-    default_global = {"client_id": "", "client_secret": "", "username": "", "password": "", "migration_completed": False}
+    default_global = {"client_id": "", "client_secret": "", "username": "", "password": "", "migration_complete": False}
 
     default_guild = {"modmail_channels": [], "posts_channels": []}
 
@@ -162,7 +162,7 @@ class Reddit(commands.Cog):
             return
         embeds = []
         async for post in sub.hot(limit=post_count):
-            embeds.append(post_embed(post))
+            embeds.append(post_embed(post, ctx.message.created_at))
         await menu(ctx, embeds, DEFAULT_CONTROLS)
 
     @_subreddit.command(name="new")
@@ -175,7 +175,7 @@ class Reddit(commands.Cog):
             return
         embeds = []
         async for post in sub.new(limit=post_count):
-            embeds.append(post_embed(post))
+            embeds.append(post_embed(post, ctx.message.created_at))
         await menu(ctx, embeds, DEFAULT_CONTROLS)
 
     @_subreddit.command(name="top")
@@ -192,7 +192,7 @@ class Reddit(commands.Cog):
                 return
             embeds = []
             async for post in sub.top(time_filter=time_frame, limit=post_count):
-                embeds.append(post_embed(post))
+                embeds.append(post_embed(post, ctx.message.created_at))
             await menu(ctx, embeds, DEFAULT_CONTROLS)
 
     @_subreddit.command(name="controversial")
@@ -211,7 +211,7 @@ class Reddit(commands.Cog):
                 return
             embeds = []
             async for post in sub.top(time_filter=time_frame, limit=post_count):
-                embeds.append(post_embed(post))
+                embeds.append(post_embed(post, ctx.message.created_at))
             await menu(ctx, embeds, DEFAULT_CONTROLS)
 
     @checks.admin_or_permissions(manage_guild=True)
