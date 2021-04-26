@@ -5,5 +5,6 @@
     "disabled" : false,
     "short" : "Cog for getting stuff from Reddit",
     "description" : "Gets posts, user info, etc from Reddit's API",
-    "tags": ["reddit", "web", "utility"]
+    "tags": ["reddit", "web", "utility"],
+    "requirements": ["asyncpraw"]
 }

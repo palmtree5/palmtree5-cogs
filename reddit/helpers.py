@@ -1,34 +1,22 @@
 from datetime import datetime as dt
 from redbot.core import commands
-import aiohttp
 import discord
 from redbot.core.utils.embed import randomize_colour
-import logging
+import asyncpraw
+import asyncprawcore
 
-from .errors import RedditAPIError, AccessForbiddenError, NotFoundError
 
-
-async def make_request(
-    session: aiohttp.ClientSession,
-    method: str,
-    url: str,
-    headers: dict = None,
-    data: dict = None,
-    params: dict = None,
-    auth: aiohttp.BasicAuth = None,
-):
-    async with session.request(
-        method, url, headers=headers, data=data, params=params, auth=auth, allow_redirects=False
-    ) as resp:
-        if resp.status == 403:
-            raise AccessForbiddenError("I do not have access to that.")
-        elif resp.status == 404 or resp.status == 302:
-            # 302 will happen if the subreddit name meets the
-            # requirements, but the subreddit doesn't exist
-            raise NotFoundError("That does not appear to exist.")
-        elif resp.status != 200:
-            raise RedditAPIError("An error occurred. Status code: {}".format(resp.status))
-        return await resp.json()
+async def get_subreddit(reddit: asyncpraw.Reddit, ctx: commands.Context, subreddit: str) -> asyncpraw.reddit.Subreddit:
+    try:
+        return await reddit.subreddit(subreddit, fetch=True)
+    except asyncprawcore.exceptions.Forbidden:
+        await ctx.send("That subreddit is a private subreddit I cannot read.")
+        return None
+    except asyncprawcore.exceptions.NotFound:
+        await ctx.send(
+            "That subreddit does not exist. If it previously existed, it may have been banned."
+        )
+        return None
 
 
 def post_embed(data: dict, now: dt) -> discord.Embed:
@@ -84,3 +72,12 @@ def private_only():
         return True
 
     return commands.check(predicate)
+
+
+def get_color(sub: asyncpraw.reddit.Subreddit):
+    if hasattr(sub, "primary_color") and sub.primary_color:
+        return sub.primary_color
+    elif hasattr(sub, "key_color") and sub.key_color:
+        return sub.key_color
+    else:
+        return None
