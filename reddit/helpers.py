@@ -19,37 +19,37 @@ async def get_subreddit(reddit: asyncpraw.Reddit, ctx: commands.Context, subredd
         return None
 
 
-def post_embed(data: dict, now: dt) -> discord.Embed:
-    created_at = dt.utcfromtimestamp(data["data"]["created_utc"])
+def post_embed(post: asyncpraw.reddit.Submission, now: dt) -> discord.Embed:
+    created_at = dt.utcfromtimestamp(post.created_utc)
     created_at_str = get_delta_str(created_at, now)
-    if data["data"]["link_flair_text"] is not None:
-        title = "[{}] {}".format(data["data"]["link_flair_text"], data["data"]["title"])
+    if post.link_flair_text is not None:
+        title = f"[{post.link_flair_text}] {post.title}"
     else:
-        title = data["data"]["title"]
+        title = post.title
     if len(title) > 256:
         title = title[:252] + "..."
-    if "selftext" in data["data"] and data["data"]["selftext"] != "":
-        desc = data["data"]["selftext"]
+    if hasattr(post, "selftext") and post.selftext != "":
+        desc = post.selftext
         if len(desc) > 2048:
             desc = desc[:2044] + "..."
     else:
-        desc = data["data"]["domain"]
-    em = discord.Embed(title=title, url=data["data"]["url"], description=desc)
+        desc = post.domain
+    em = discord.Embed(title=title, url=post.url, description=desc)
     em = randomize_colour(em)
-    em.add_field(name="Author", value=data["data"]["author"])
+    em.add_field(name="Author", value=f"[{post.author.name}](https://reddit.com/u/{post.author.name})")
     em.add_field(
         name="Created",
         value="{} ago (at {} UTC)".format(
-            created_at_str, created_at.strftime("%Y-%m-%d %H:%M:%S")
+            created_at_str, created_at.strftime("%Y-%m-%d at %H:%M:%S UTC")
         ),
     )
-    if data["data"]["stickied"]:
+    if post.stickied:
         em.add_field(name="Stickied", value="Yes")
     else:
         em.add_field(name="Stickied", value="No")
-    em.add_field(name="Comments", value="[{count}]({link})".format(count=str(data["data"]["num_comments"]), link="https://reddit.com{}".format(data["data"]["permalink"])))
-    if data["data"]["thumbnail"] != "self":
-        em.set_thumbnail(url=data["data"]["thumbnail"])
+    em.add_field(name="Comments", value=f"[{post.num_comments}]({post.permalink})")
+    if post.thumbnail != "self":
+        em.set_thumbnail(url=post.thumbnail)
     return em
 
 
