@@ -181,8 +181,7 @@ class Hpapi(commands.Cog):
         Note that this command and all subcommands will be disabled 
         if a guild member list update is running in order to finish 
         that process more quickly"""
-        if ctx.invoked_subcommand is None:
-            await ctx.send_help()
+        pass
 
     @hp.command()
     async def currentboosters(self, ctx: commands.Context):
