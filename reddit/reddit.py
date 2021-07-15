@@ -305,28 +305,25 @@ class Reddit(commands.Cog):
                 auth=auth,
             )
             if "error" in response:  # Something went wrong in the process
-                owner = await self.bot.fetch_user(self.bot.owner_id)
-                try:
-                    await owner.send(
-                        error(
-                            "I tried to get an access token for the Reddit "
-                            "cog but failed to do so because something was "
-                            "wrong with the credentials you provided me. Try "
-                            "setting them up again with `[p]redditset creds`, "
-                            "ensuring that A) you copy and paste them "
-                            "correctly, and B) that you put them in the "
-                            "correct order when running the command"
-                        )
+                await self.bot.send_to_owners(
+                    error(
+                        "I tried to get an access token for the Reddit "
+                        "cog but failed to do so because something was "
+                        "wrong with the credentials you provided me. Try "
+                        "setting them up again with `[p]redditset creds`, "
+                        "ensuring that A) you copy and paste them "
+                        "correctly, and B) that you put them in the "
+                        "correct order when running the command"
                     )
-                except discord.Forbidden:
-                    log.warning(
-                        "Something's wrong with the credentials for the "
-                        "Reddit cog. I tried sending my owner a message "
-                        "but that failed because I cannot send messages "
-                        "to them.\nIt is recommended you do [p]redditset "
-                        "creds and ensure you enter them correctly and in "
-                        "the right order."
-                    )
+                )
+                log.warning(
+                    "Something's wrong with the credentials for the "
+                    "Reddit cog. I tried sending my owner a message "
+                    "but that failed because I cannot send messages "
+                    "to them.\nIt is recommended you do [p]redditset "
+                    "creds and ensure you enter them correctly and in "
+                    "the right order."
+                )
                 self.toggle_commands(False)
                 return
             self.access_token = response["access_token"]
