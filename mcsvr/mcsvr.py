@@ -43,18 +43,12 @@ class Mcsvr(commands.Cog):
         self.svr_chk_task.cancel()
 
     @commands.command()
-    async def mcserver(self, ctx: commands.Context, server_type: str, server_ip: str):
+    async def mcserver(self, ctx: commands.Context, server_ip: str):
         """
         Display info about the specified server
 
         Server type must either be 'Java' or 'Bedrock'
         """
-        if server_type.lower() not in ['java', 'bedrock']:
-            await ctx.send(
-                "That is not a valid server type! Server type must be either "
-                "'Java' or 'Bedrock'. Please check what you entered and try again."
-            )
-            return
         if not is_valid_ip(server_ip):
             await ctx.send(
                 "That is not a valid server IP! The IP must be in the form "
