@@ -213,7 +213,7 @@ class Mcsvr(commands.Cog):
         server = JavaServer.lookup(addr)
         try:
             status = await server.async_status()
-        except asyncio.TimeoutError:  # Status check timed out, so check if Bedrock works
+        except (asyncio.TimeoutError, ConnectionRefusedError):  # Status check timed out, so check if Bedrock works
             server = BedrockServer.lookup(addr)
             try:
                 status = await server.async_status()
