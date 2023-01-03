@@ -8,7 +8,7 @@ import discord
 from redbot.core import Config, checks, commands
 from redbot.core.bot import Red
 from redbot.core.i18n import Translator
-from mcstatus import MinecraftServer
+from mcstatus import JavaServer, BedrockServer
 from mcstatus.pinger import PingResponse
 
 from .helpers import check_server, get_server_embed, is_valid_ip, get_server_string
@@ -43,10 +43,18 @@ class Mcsvr(commands.Cog):
         self.svr_chk_task.cancel()
 
     @commands.command()
-    async def mcserver(self, ctx: commands.Context, server_ip: str):
+    async def mcserver(self, ctx: commands.Context, server_type: str, server_ip: str):
         """
         Display info about the specified server
+
+        Server type must either be 'Java' or 'Bedrock'
         """
+        if server_type.lower() not in ['java', 'bedrock']:
+            await ctx.send(
+                "That is not a valid server type! Server type must be either "
+                "'Java' or 'Bedrock'. Please check what you entered and try again."
+            )
+            return
         if not is_valid_ip(server_ip):
             await ctx.send(
                 "That is not a valid server IP! The IP must be in the form "
@@ -200,13 +208,31 @@ class Mcsvr(commands.Cog):
             await ctx.send(_("I was already in mode `{}`").format(mode))
     
     async def check_server(self, addr: str) -> Union[PingResponse, str, None]:
-        server = MinecraftServer.lookup(addr)
+        """server = MinecraftServer.lookup(addr)
 
         try:
             status = await server.async_status()
         except Exception as e:
             return e
         return status
+        """
+        server = JavaServer.lookup(addr)
+        try:
+            status = await server.async_status()
+        except asyncio.TimeoutError:  # Status check timed out, so check if Bedrock works
+            server = BedrockServer.lookup(addr)
+            try:
+                status = await server.async_status()
+            except asyncio.TimeoutError:  # Status check also failed for Bedrock, is the server valid
+                return "Could not get the status of a Java or Bedrock server at that address."
+            except Exception as e:
+                return e
+            else:
+                return status
+        except Exception as e:
+            return e
+        else:
+            return status
 
     def server_ip_in_cache(self, server_ip: str, time: float):
         if server_ip not in self._svr_cache:

@@ -5,7 +5,8 @@ from typing import Union
 
 import discord
 import validators
-from mcstatus import MinecraftServer
+from mcstatus.pinger import PingResponse
+from mcstatus.bedrock_status import BedrockStatusResponse
 
 log = logging.getLogger("red.mcsvr")
 
@@ -50,38 +51,6 @@ def is_valid_ip(addr: str):
         return False
     return True
 
-@DeprecationWarning
-def check_server(addr: str) -> Union[discord.Embed, str, None]:
-    # Deprecated in favor of using async_status vs status. async_query is not implemented yet
-    mc_server = MinecraftServer.lookup(addr)
-
-    query = None
-    status = None
-
-    try:
-        query = mc_server.query()
-    except socket.timeout:
-        try:
-            status = mc_server.status()
-        except socket.timeout:
-            log.warning("Cannot reach server {}".format(addr))
-        except ConnectionRefusedError:
-            log.warning("Connection to {} was refused".format(addr))
-        except OSError:
-            log.warning("No route to {}".format(addr))
-            return None
-    except ConnectionRefusedError:
-        log.warning("Connection to {} was refused".format(addr))
-    except OSError:
-        log.warning("No route to {}".format(addr))
-        return None
-    if query:
-        return query
-    elif status:
-        return status
-    else:
-        return None
-
 
 def get_server_string(mc_server, server_ip):
     if mc_server is None:
@@ -89,37 +58,67 @@ def get_server_string(mc_server, server_ip):
         data += "Online: No"
         return data
     else:
-        players = None
-        brand = None
-        motd = None
-        if hasattr(mc_server, "software"):
-            players = mc_server.players.names
-            version = mc_server.software.version
-            brand = mc_server.software.brand
-            motd = mc_server.motd
+        if isinstance(mc_server, PingResponse):
+            return java_string(mc_server, server_ip)
+        elif isinstance(mc_server, BedrockStatusResponse):
+            return bedrock_string(mc_server, server_ip)
+
+
+def java_string(mc_server, server_ip):
+    players = None
+    brand = None
+    motd = None
+    if hasattr(mc_server, "software"):
+        players = mc_server.players.names
+        version = mc_server.software.version
+        brand = mc_server.software.brand
+        motd = mc_server.motd
+    else:
+        version = mc_server.version.name
+    online_count = mc_server.players.online
+    max_count = mc_server.players.max
+    data = "Server info for {}:\n\n".format(server_ip)
+    data += "Online: Yes\n"
+    data += "Online count: {}/{}\n".format(online_count, max_count)
+    if players:
+        s = "Players online: {}\n"
+        if len(players) > 5:
+            s.format(", ".join(players[:5]) + " and {} more".format(len(players[5:])))
         else:
-            version = mc_server.version.name
-        online_count = mc_server.players.online
-        max_count = mc_server.players.max
-        data = "Server info for {}:\n\n".format(server_ip)
-        data += "Online: Yes\n"
-        data += "Online count: {}/{}\n".format(online_count, max_count)
-        if players:
-            s = "Players online: {}\n"
-            if len(players) > 5:
-                s.format(", ".join(players[:5]) + " and {} more".format(len(players[5:])))
-            else:
-                s.format(", ".join(players))
-            data += s
-        data += "Version: {}\n".format(version)
-        if brand:
-            data += "Type: {}\n".format(brand)
-        if motd:
-            for code in MC_FORMATTING_CODES:
-                if code in motd:
-                    motd = motd.replace(code, "")
-            data += "MOTD: {}\n".format(motd)
-        return data.strip()
+            s.format(", ".join(players))
+        data += s
+    data += "Version: {}\n".format(version)
+    if brand:
+        data += "Type: {}\n".format(brand)
+    if motd:
+        for code in MC_FORMATTING_CODES:
+            if code in motd:
+                motd = motd.replace(code, "")
+        data += "MOTD: {}\n".format(motd)
+    return data.strip()
+
+
+def bedrock_string(mc_server, server_ip):
+    version = mc_server.version.version
+    brand = mc_server.version.brand
+    motd = mc_server.motd
+    online_count = mc_server.players_online
+    max_count = mc_server.players_max
+    gamemode = mc_server.gamemode
+
+    data = "Server info for {}:\n\n".format(server_ip)
+    data += "Online: Yes\n"
+    data += "Online count: {}/{}\n".format(online_count, max_count)
+    data += "Game mode: {}\n".format(gamemode)
+    data += "Version: {}\n".format(version)
+    if brand:
+        data += "Type: {}\n".format(brand)
+    if motd:
+        for code in MC_FORMATTING_CODES:
+            if code in motd:
+                motd = motd.replace(code, "")
+        data += "MOTD: {}\n".format(motd)
+    return data.strip()
 
 
 def get_server_embed(mc_server, server_ip):
@@ -128,30 +127,61 @@ def get_server_embed(mc_server, server_ip):
         emb.add_field(name="Online", value="No")
         return emb
     else:
-        players = None
-        brand = None
-        motd = None
-        if hasattr(mc_server, "software"):
-            players = mc_server.players.names
-            version = mc_server.software.version
-            brand = mc_server.software.brand
-            motd = mc_server.motd
-        else:
-            version = mc_server.version.name
-        online_count = mc_server.players.online
-        max_count = mc_server.players.max
-        emb = discord.Embed(title="Server info for {}".format(server_ip))
-        emb.add_field(name="Online", value="Yes")
-        emb.add_field(name="Online count", value="{}/{}".format(online_count, max_count))
-        if players:
-            emb.set_footer(text="Players online: {}".format(", ".join(players)))
-        emb.add_field(name="Version", value=version)
-        if brand:
-            emb.add_field(name="Type", value=brand)
-        if motd:
-            for code in MC_FORMATTING_CODES:
-                if code in motd:
-                    motd = motd.replace(code, "")
-            emb.add_field(name="MOTD", value=motd)
+        if isinstance(mc_server, PingResponse):
+            return java_embed(mc_server, server_ip)
+        elif isinstance(mc_server, BedrockStatusResponse):
+            return bedrock_embed(mc_server, server_ip)
+    
 
-        return emb
+def java_embed(mc_server, server_ip):
+    players = None
+    brand = None
+    motd = None
+    if hasattr(mc_server, "software"):
+        players = mc_server.players.names
+        version = mc_server.software.version
+        brand = mc_server.software.brand
+        motd = mc_server.motd
+    else:
+        version = mc_server.version.name
+    online_count = mc_server.players.online
+    max_count = mc_server.players.max
+    emb = discord.Embed(title="Server info for {}".format(server_ip))
+    emb.add_field(name="Online", value="Yes")
+    emb.add_field(name="Online count", value="{}/{}".format(online_count, max_count))
+    if players:
+        emb.set_footer(text="Players online: {}".format(", ".join(players)))
+    emb.add_field(name="Version", value=version)
+    if brand:
+        emb.add_field(name="Type", value=brand)
+    if motd:
+        for code in MC_FORMATTING_CODES:
+            if code in motd:
+                motd = motd.replace(code, "")
+        emb.add_field(name="MOTD", value=motd)
+
+    return emb
+
+
+def bedrock_embed(mc_server, server_ip):
+    version = mc_server.version.version
+    brand = mc_server.version.brand
+    motd = mc_server.motd
+    online_count = mc_server.players_online
+    max_count = mc_server.players_max
+    gamemode = mc_server.gamemode
+    
+    emb = discord.Embed(title="Server info for {}".format(server_ip))
+    emb.add_field(name="Online", value="Yes")
+    emb.add_field(name="Online count", value="{}/{}".format(online_count, max_count))
+    emb.add_field(name="Game mode", value=gamemode)
+    emb.add_field(name="Version", value=version)
+    if brand:
+        emb.add_field(name="Type", value=brand)
+    if motd:
+        for code in MC_FORMATTING_CODES:
+            if code in motd:
+                motd = motd.replace(code, "")
+        emb.add_field(name="MOTD", value=motd)
+
+    return emb
