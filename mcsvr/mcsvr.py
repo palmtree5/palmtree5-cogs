@@ -11,7 +11,7 @@ from redbot.core.i18n import Translator
 from mcstatus import JavaServer, BedrockServer
 from mcstatus.pinger import PingResponse
 
-from .helpers import check_server, get_server_embed, is_valid_ip, get_server_string
+from .helpers import get_server_embed, is_valid_ip, get_server_string
 
 log = logging.getLogger("red.mcsvr")
 
