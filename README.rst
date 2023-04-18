@@ -29,5 +29,4 @@ Requirements
 ------------
 
 * **hpapi**: aiopixel
-* **tweets**: peony-twitter[all]
 * **mcsvr**: mcstatus
