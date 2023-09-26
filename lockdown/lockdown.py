@@ -34,6 +34,8 @@ class Lockdown(commands.Cog):
         self.settings = Config.get_conf(self, identifier=59595922, force_registration=True)
         self.settings.register_guild(**self.default_guild)
         self.settings.register_member(**self.default_member)
+        self.affected_targets = []
+        self.cancel_lockdown = False
 
     @commands.command()
     @commands.guild_only()
@@ -55,11 +57,16 @@ class Lockdown(commands.Cog):
 
         if not guild.me.guild_permissions.manage_roles:
             return await ctx.send("I can't manage roles in this server!")
-
         for target in targets:
             await target.add_roles(role, reason=f"Server lockdown requested by {ctx.author}.")
+            self.affected_targets.append(target)
             await asyncio.sleep(1)
+            if self.cancel_lockdown:
+                self.cancel_lockdown = False
+                return  # Lockdown cancelled, affected targets will be reversed in [p]unlockdown
+
         await self.settings.guild(ctx.guild).current_lockdown_role_id.set(role.id)
+        self.affected_targets = []  # Reset affected targets as the lockdown was successfully completed
         await ctx.send(
             "Server is locked down. You can unlock the server by doing "
             "{}unlockdown".format(ctx.prefix)
@@ -71,10 +78,14 @@ class Lockdown(commands.Cog):
     async def unlockdown(self, ctx: commands.Context):
         """Ends the lockdown for this server"""
         guild = ctx.guild
-
-        role_id = await self.settings.guild(guild).current_lockdown_role_id()
-        role = discord.utils.get(guild.roles, id=role_id)
-        targets = [m for m in guild.members if m.top_role == role]
+        targets = []
+        if self.affected_targets:  # Lockdown in progress, we need to stop it
+            self.cancel_lockdown = True
+            targets = self.affected_targets
+        else:
+            role_id = await self.settings.guild(guild).current_lockdown_role_id()
+            role = discord.utils.get(guild.roles, id=role_id)
+            targets = [m for m in guild.members if m.top_role == role]
         
         if not guild.me.guild_permissions.manage_roles:
             return await ctx.send("I can't manage roles in this server!")
@@ -82,6 +93,9 @@ class Lockdown(commands.Cog):
         for target in targets:
             await target.remove_roles(role, reason=f"Lockdown end requested by {ctx.author}.")
             await asyncio.sleep(1)
+        if self.cancel_lockdown:
+            self.cancel_lockdown = False
+            self.affected_targets = []  # Reset affected targets as the lockdown was successfully cancelled
         await self.settings.guild(guild).current_lockdown_role_id.set(0)
         await ctx.send("Server has been unlocked!")
 
