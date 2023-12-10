@@ -1,4 +1,4 @@
-from datetime import datetime as dt
+from datetime import datetime as dt, timezone as tz
 from redbot.core import commands
 import aiohttp
 import discord
@@ -32,7 +32,7 @@ async def make_request(
 
 
 def post_embed(data: dict, now: dt) -> discord.Embed:
-    created_at = dt.utcfromtimestamp(data["data"]["created_utc"])
+    created_at = dt.fromtimestamp(data["data"]["created_utc"], tz.utc)
     created_at_str = get_delta_str(created_at, now)
     if data["data"]["link_flair_text"] is not None:
         title = "[{}] {}".format(data["data"]["link_flair_text"], data["data"]["title"])
