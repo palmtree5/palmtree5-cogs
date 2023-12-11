@@ -1,5 +1,5 @@
 import contextlib
-from datetime import timedelta, datetime as dt
+from datetime import timedelta, datetime as dt, timezone as tz
 import discord
 from redbot.core import commands
 from redbot.core import commands, Config
@@ -39,7 +39,7 @@ def allowed_to_create():
 
 
 async def check_event_start(channel: discord.TextChannel, event: dict, config: Config):
-    cur_time = dt.utcnow()
+    cur_time = dt.now(tz.utc)
     guild = channel.guild
     if cur_time.timestamp() < event["event_start_time"] or event["has_started"]:
         return False, None
@@ -60,18 +60,18 @@ def get_event_embed(guild: discord.Guild, now: dt, event: dict) -> discord.Embed
     emb = discord.Embed(title=event["event_name"], description=event["description"])
     emb.add_field(name="Created by", value=guild.get_member(event["creator"]))
 
-    created_delta_str = get_delta_str(dt.utcfromtimestamp(event["create_time"]), now)
+    created_delta_str = get_delta_str(dt.fromtimestamp(event["create_time"], tz.utc), now)
     created_str = "{} ago (at {} UTC)".format(
-        created_delta_str, dt.utcfromtimestamp(event["create_time"]).strftime("%Y-%m-%d %H:%M:%S")
+        created_delta_str, dt.fromtimestamp(event["create_time"], tz.utc).strftime("%Y-%m-%d %H:%M:%S")
     )
 
-    start_delta_str = get_delta_str(now, dt.utcfromtimestamp(event["event_start_time"]))
+    start_delta_str = get_delta_str(now, dt.fromtimestamp(event["event_start_time"], tz.utc))
     if event["has_started"]:
         start_str = "Already started!"
     else:
         start_str = "In {} (at {} UTC)".format(
             start_delta_str,
-            dt.utcfromtimestamp(event["event_start_time"]).strftime("%Y-%m-%d %H:%M:%S"),
+            dt.fromtimestamp(event["event_start_time"], tz.utc).strftime("%Y-%m-%d %H:%M:%S"),
         )
     emb.add_field(name="Created", value=created_str, inline=False)
     emb.add_field(name="Starts", value=start_str, inline=False)

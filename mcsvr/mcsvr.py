@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from datetime import datetime
+from datetime import datetime, timezone as tz
 from functools import partial
 from typing import Union
 
@@ -260,7 +260,7 @@ class Mcsvr(commands.Cog):
             log.debug("Starting server checks")
             all_channels = await self.config.all_channels()
             for channel_id, info in all_channels.items():
-                now = datetime.utcnow().timestamp()
+                now = datetime.now(tz.utc).timestamp()
                 channel = self.bot.get_channel(channel_id)
                 cur_mode = await self.config.guild(channel.guild).tracker_mode()
                 if channel is None or (
@@ -297,7 +297,7 @@ class Mcsvr(commands.Cog):
                             svr = self._svr_cache[server_ip]["resp"]
                         await message.edit(embed=get_server_embed(svr, server_ip))
 
-            now = datetime.utcnow()
-            next_check = datetime.utcfromtimestamp(now.timestamp() + check_time)
+            now = datetime.now(tz.utc)
+            next_check = datetime.fromtimestamp(now.timestamp() + check_time, tz.utc)
             log.debug("Done. Next check at {}".format(next_check.strftime("%Y-%m-%d %H:%M:%S")))
             await asyncio.sleep(check_time)

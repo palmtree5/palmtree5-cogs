@@ -1,7 +1,7 @@
 import asyncio
 import logging
 import time
-from datetime import datetime as dt
+from datetime import datetime as dt, timezone as tz
 
 import aiohttp
 import discord
@@ -68,7 +68,7 @@ class Reddit(commands.Cog):
             await ctx.send(str(e))
             return
         resp_json = resp_json["data"]
-        created_at = dt.utcfromtimestamp(resp_json["created_utc"])
+        created_at = dt.fromtimestamp(resp_json["created_utc"], tz.utc)
         desc = "Created at " + created_at.strftime("%m/%d/%Y %H:%M:%S")
         em = discord.Embed(
             title=resp_json["name"],
@@ -110,7 +110,7 @@ class Reddit(commands.Cog):
             await ctx.send(str(e))
             return
         resp_json = resp_json["data"]
-        created_at = dt.utcfromtimestamp(resp_json["created_utc"]).strftime("%m/%d/%Y %H:%M:%S")
+        created_at = dt.fromtimestamp(resp_json["created_utc"], tz.utc).strftime("%m/%d/%Y %H:%M:%S")
         em = discord.Embed(
             title=resp_json["url"],
             url="https://reddit.com" + resp_json["url"],
@@ -275,7 +275,7 @@ class Reddit(commands.Cog):
     # End commands
 
     async def get_headers(self):
-        remaining = self.token_expiration_time - dt.utcnow().timestamp()
+        remaining = self.token_expiration_time - dt.now(tz.utc).timestamp()
         if remaining < 60:
             await self.get_access_token()
         if not self.access_token:  # No access token for some reason
@@ -327,7 +327,7 @@ class Reddit(commands.Cog):
                 self.toggle_commands(False)
                 return
             self.access_token = response["access_token"]
-            self.token_expiration_time = dt.utcnow().timestamp() + response["expires_in"]
+            self.token_expiration_time = dt.now(tz.utc).timestamp() + response["expires_in"]
             self.toggle_commands(True)
         else:
             self.toggle_commands(False)
